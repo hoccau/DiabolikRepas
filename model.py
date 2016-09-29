@@ -30,12 +30,34 @@ class Model(QSqlQueryModel):
         Date varchar(10),\
         Designation varchar(20),\
         Prix real NOT NULL,\
-        Quantite real NOT NULL,\
+        Quantite integer NOT NULL,\
+        output integer,\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")
-        if req == False:
-            print(self.query.lastError().text())
         self.query.exec_("CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM)")
+
+        req = self.query.exec_("CREATE TABLE repas(\
+        id integer PRIMARY KEY,\
+        date varchar(10) NOT NULL,\
+        type_id integer NOT NULL,\
+        FOREIGN KEY (type_id) REFERENCES type_repas(id)\
+        )")
+        req = self.query.exec_("CREATE TABLE type_repas(\
+        id integer PRIMARY KEY,\
+        type varchar(20)\
+        )")
+        repas_types = ['petit déjeuner','déjeuner','gouter','souper','cinquième']
+        for repas_type in repas_types:
+            req = self.query.exec_("INSERT INTO type_repas(type) VALUES ('"\
+            +repas_type+"')")
+        req = self.query.exec_("CREATE TABLE output(\
+        id integer PRIMARY KEY,\
+        quantity integer,\
+        repas_id integer,\
+        FOREIGN KEY (repas_id) REFERENCES repas(id)\
+        )")
+        if req == False:
+            print(self.query.lastError().databaseText())
 
     def connect_db(self, db_name):
         self.db.setDatabaseName(db_name)
@@ -75,13 +97,19 @@ class Model(QSqlQueryModel):
         +str(datas["fournisseur_id"])+",'"\
         +str(datas["date"])+"','"\
         +datas["product"]+"',"\
-        +datas["price"]+","\
+        +datas["price"]\
         +datas["quantity"]\
         +")"
         print(query)
         q = self.query.exec_(query)
         print("query success:", q)
         if q == False:
+            print(self.query.lastError().databaseText())
+
+    def add_repas(self, datas):
+        req = self.query.exec_("INSERT INTO repas(date, type) VALUES("\
+        +datas['date']+","+datas['type']+')')
+        if req == False:
             print(self.query.lastError().databaseText())
 
     def get_last_id(self):
