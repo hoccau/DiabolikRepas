@@ -30,6 +30,8 @@ class Form(QDialog):
         regexp = QRegExp('\d[\d\,\.]+')
         self.price.setValidator(QRegExpValidator(regexp))
 
+        self.quantity = QLineEdit()
+
         self.date = QCalendarWidget()
 
         self.submitButton = QPushButton("Enregistrer")
@@ -42,6 +44,7 @@ class Form(QDialog):
         self.add_field("Date:", self.date)
         self.add_field("Désignation", self.product)
         self.add_field("Prix (€):", self.price)
+        self.add_field("quantité:", self.quantity)
         self.field_index += 1
         self.grid.addWidget(self.submitButton, self.field_index, 0)
         self.grid.addWidget(quitButton, self.field_index, 1)
@@ -71,6 +74,7 @@ class Form(QDialog):
             record["date"] = self.date.selectedDate().toString('yyyy-MM-dd')
             record["product"] = self.product.text()
             record["price"] = self.price.text()
+            record["quantity"] = self.quantity.text()
             self.model.set_line(record)
             self.model.update_table_model()
 

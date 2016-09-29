@@ -29,8 +29,8 @@ class Model(QSqlQueryModel):
         Fournisseur_id integer NOT NULL,\
         Date varchar(10),\
         Designation varchar(20),\
-        Prix real,\
-        Quantite real\
+        Prix real NOT NULL,\
+        Quantite real NOT NULL,\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")
         if req == False:
@@ -69,16 +69,14 @@ class Model(QSqlQueryModel):
             return req
 
     def set_line(self, datas):
-        query = "INSERT INTO reserve (Fournisseur_id,  Date, Designation, Prix, Cumul, CodeCompta, TypePayement_id)"
+        query = "INSERT INTO reserve (Fournisseur_id,  Date, Designation, Prix, quantite)"
         query += " VALUES "
         query += "("\
         +str(datas["fournisseur_id"])+",'"\
         +str(datas["date"])+"','"\
         +datas["product"]+"',"\
         +datas["price"]+","\
-        +str(last_cumul + float(datas["price"]))+","\
-        +str(datas["codeCompta_id"])+","\
-        +str(datas["typePayement_id"])\
+        +datas["quantity"]\
         +")"
         print(query)
         q = self.query.exec_(query)
