@@ -31,7 +31,6 @@ class Model(QSqlQueryModel):
         Designation varchar(20),\
         Prix real NOT NULL,\
         Quantite integer NOT NULL,\
-        output integer,\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")
         self.query.exec_("CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM)")
@@ -46,7 +45,7 @@ class Model(QSqlQueryModel):
         id integer PRIMARY KEY,\
         type varchar(20)\
         )")
-        repas_types = ['petit déjeuner','déjeuner','gouter','souper','cinquième']
+        repas_types = ['petit déjeuner','déjeuner','gouter','souper','cinquième','autre']
         for repas_type in repas_types:
             req = self.query.exec_("INSERT INTO type_repas(type) VALUES ('"\
             +repas_type+"')")
@@ -54,7 +53,9 @@ class Model(QSqlQueryModel):
         id integer PRIMARY KEY,\
         quantity integer,\
         repas_id integer,\
+        product_id integer,\
         FOREIGN KEY (repas_id) REFERENCES repas(id)\
+        FOREIGN KEY (product_id) REFERENCES reserve(id)\
         )")
         if req == False:
             print(self.query.lastError().databaseText())
@@ -66,6 +67,7 @@ class Model(QSqlQueryModel):
         self.qt_table_reserve = QSqlRelationalTableModel(self, self.db)
         self.update_table_model()
         self.qt_table_infos = InfosModel(self, self.db)
+        self.qt_table_repas = RepasModel(self, self.db)
 
     def update_table_model(self):
         self.qt_table_reserve.setTable('reserve')
@@ -76,11 +78,27 @@ class Model(QSqlQueryModel):
         self.qt_table_reserve.setHeaderData(1, Qt.Horizontal, "Fournisseur")
 
     def get_fournisseurs(self):
-        fournisseurs = {}
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
-        while self.query.next():
-            fournisseurs[self.query.value(0)] = self.query.value(1)
-        return fournisseurs
+        return self.query2dic()
+
+    def get_(self, values=[], table=None):
+        values = ",".join(values)
+        q = "SELECT "+values+" FROM "+table
+        req = self.query.exec_(q)
+        if req == False:
+           print(q, self.query.lastError().databaseText())
+        else: 
+            return self.query2dic()
+
+    def set_(self, dic={}, table=None):
+        q = "INSERT INTO "+table+"("+",".join(dic.keys())+")  VALUES('"
+        q += "','".join(dic.values())+"')"
+        req = self.query.exec_(q)
+        if req == False:
+            print(q, self.query.lastError().databaseText())
+        else:
+            print(q, "success!")
+
 
     def add_fournisseur(self, name):
         req = self.query.exec_("insert into fournisseurs (nom) values('"+name+"')")
@@ -97,7 +115,7 @@ class Model(QSqlQueryModel):
         +str(datas["fournisseur_id"])+",'"\
         +str(datas["date"])+"','"\
         +datas["product"]+"',"\
-        +datas["price"]\
+        +datas["price"]+","\
         +datas["quantity"]\
         +")"
         print(query)
@@ -153,4 +171,11 @@ class InfosModel(QSqlTableModel):
         super(InfosModel, self).__init__(parent, db)
 
         self.setTable("infos")
+        self.select()
+
+class RepasModel(QSqlTableModel):
+    def __init__(self, parent, db):
+        super(RepasModel, self).__init__(parent, db)
+
+        self.setTable("repas")
         self.select()

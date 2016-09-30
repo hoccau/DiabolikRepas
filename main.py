@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
         delRowAction = self.add_action('&Supprimer la ligne', self.remove_current_row)
         addFormAction = self.add_action('&Ligne de comptabilité', self.addDatas)
         addFournisseurAction = self.add_action('&Fournisseur', self.addFournisseur)
+        addRepasAction = self.add_action('Repas', self.add_repas)
         setInfosAction = self.add_action('Editer les infos du centre', self.set_infos)
         ViewRapportAction = self.add_action('Rapport', self.viewRapport)
 
@@ -42,6 +43,7 @@ class MainWindow(QMainWindow):
         addMenu = menubar.addMenu('&Ajouter')
         addMenu.addAction(addFormAction)
         addMenu.addAction(addFournisseurAction)
+        addMenu.addAction(addRepasAction)
 
         self.statusBar().showMessage('Ready')
         self.setMinimumSize(850,300)
@@ -49,7 +51,7 @@ class MainWindow(QMainWindow):
         
         self.model = Model(self)
         self.retrieve_db()
-        self.form = Form(self)
+        self.form = ProductForm(self)
 
         self.mainView = QTableView(self)
         self.mainView.setModel(self.model.qt_table_reserve)
@@ -128,6 +130,10 @@ class MainWindow(QMainWindow):
 
     def addDatas(self):
         self.form.show()
+    
+    def add_repas(self):
+        self.repas_window = RepasForm(self)
+        self.repas_window.show()
 
     def addFournisseur(self):
         name, ok = QInputDialog.getText(self, 'Input Dialog',

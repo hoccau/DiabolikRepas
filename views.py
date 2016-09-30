@@ -7,65 +7,66 @@ from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtChart import *
 
 class Form(QDialog):
+    """Abstract class"""
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
-
         self.parent = parent
         self.model = parent.model
-        self.fournisseurs = []
-
-        comp = QCompleter(self.fournisseurs)
-        
-        nameFournisseur = QLabel("Fournisseur:")
-        self.fournisseur = QComboBox() #Choisir plutôt dans une liste de fournisseurs
-        self.refresh_fournisseurs()
-        self.fournisseur.setCompleter(comp)
-        nameProduct = QLabel("Désignation:")
-        self.product = QLineEdit()
-
-        namePrice = QLabel("Prix (€)")
-        self.price = QLineEdit()
-        #self.price.decimals = 2
-        #self.price.setInputMask('00.00€')
-        regexp = QRegExp('\d[\d\,\.]+')
-        self.price.setValidator(QRegExpValidator(regexp))
-
-        self.quantity = QLineEdit()
-
-        self.date = QCalendarWidget()
-
-        self.submitButton = QPushButton("Enregistrer")
-        quitButton = QPushButton("Fermer")
-
         self.grid = QGridLayout()
-
         self.field_index = 0
-        self.add_field("Fournisseur:", self.fournisseur)
-        self.add_field("Date:", self.date)
-        self.add_field("Désignation", self.product)
-        self.add_field("Prix (€):", self.price)
-        self.add_field("quantité:", self.quantity)
-        self.field_index += 1
-        self.grid.addWidget(self.submitButton, self.field_index, 0)
-        self.grid.addWidget(quitButton, self.field_index, 1)
-
-        self.setLayout(self.grid)
-
-        self.submitButton.clicked.connect(self.verif_datas)
-        quitButton.clicked.connect(self.reject)
-    
+        self.submitButton = QPushButton("Enregistrer")
+        self.quitButton = QPushButton("Fermer")
+        
     def add_field(self, label_name, widget):
         self.field_index += 1
         self.grid.addWidget(QLabel(label_name), self.field_index, 0)
         self.grid.addWidget(widget, self.field_index, 1)
 
-    def verif_datas(self):
+    def initUI(self):
+        self.field_index += 1
+        self.grid.addWidget(self.submitButton, self.field_index, 0)
+        self.grid.addWidget(self.quitButton, self.field_index, 1)
+        self.setLayout(self.grid)
+        self.submitButton.clicked.connect(self.submit_datas)
+        self.quitButton.clicked.connect(self.reject)
+
+class ProductForm(Form):
+    def __init__(self, parent=None):
+        super(ProductForm, self).__init__(parent)
+
+        self.fournisseurs = []
+
+        comp = QCompleter(self.fournisseurs)
+        
+        self.fournisseur = QComboBox() #Choisir plutôt dans une liste de fournisseurs
+        self.refresh_fournisseurs()
+        self.fournisseur.setCompleter(comp)
+        self.product = QLineEdit()
+        self.price = QLineEdit()
+        #self.price.decimals = 2
+        #self.price.setInputMask('00.00€')
+        regexp = QRegExp('\d[\d\,\.]+')
+        self.price.setValidator(QRegExpValidator(regexp))
+        self.quantity = QLineEdit()
+        self.date = QCalendarWidget()
+
+        self.add_field("Fournisseur:", self.fournisseur)
+        self.add_field("Date:", self.date)
+        self.add_field("Désignation", self.product)
+        self.add_field("Prix (€):", self.price)
+        self.add_field("quantité:", self.quantity)
+        
+        self.initUI()
+
+    def submit_datas(self):
         if self.fournisseur.currentText() == "":
             QMessageBox.warning(self, "Erreur", "Il faut entrer un nom de fournisseur")
         elif self.product.text() == "":
             QMessageBox.warning(self, "Erreur", "Il faut entrer un nom de désignation")
         elif self.price.text() == "":
             QMessageBox.warning(self, "Erreur", "Il faut entrer un Prix")
+        elif self.quantity.text() == "":
+            QMessageBox.warning(self, "Erreur", "Il faut entrer une quantité")
         else:
             record = {}
             #below : can be improved for faster ?
@@ -80,8 +81,31 @@ class Form(QDialog):
 
     def refresh_fournisseurs(self):
         self.fournisseur.clear()
-        for fournisseur, rowid in list(self.model.get_fournisseurs().items()):
+        for fournisseur, id_ in list(self.model.get_fournisseurs().items()):
             self.fournisseur.addItem(fournisseur)
+
+class RepasForm(Form):
+    def __init__(self, parent=None):
+        super(RepasForm, self).__init__(parent)
+        
+        self.type = QComboBox()
+        self.refresh_type()
+        self.date = QCalendarWidget()
+        self.add_field("Type:", self.type)
+        self.add_field("Date:", self.date) 
+        self.initUI()
+    
+    def refresh_type(self):
+        self.type.clear()
+        for type_, id_ in list(self.model.get_(['type','id'], 'type_repas').items()):
+            self.type.addItem(type_)
+
+    def submit_datas(self):
+        datas = {
+            'type_id':str(self.model.get_(['type', 'id'], 'type_repas')[self.type.currentText()]),
+            'date':self.date.selectedDate().toString('yyyy-MM-dd')
+            }
+        self.model.set_(datas, 'repas')
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
