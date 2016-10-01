@@ -22,10 +22,17 @@ class Form(QDialog):
         self.grid.addWidget(QLabel(label_name), self.field_index, 0)
         self.grid.addWidget(widget, self.field_index, 1)
 
+    def add_layout(self, label_name, layout):
+        self.field_index += 1
+        self.grid.addWidget(QLabel(label_name), self.field_index, 0)
+        self.grid.addLayout(layout, self.field_index, 1)
+
     def initUI(self):
         self.field_index += 1
-        self.grid.addWidget(self.submitButton, self.field_index, 0)
-        self.grid.addWidget(self.quitButton, self.field_index, 1)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.submitButton)
+        buttons_layout.addWidget(self.quitButton)
+        self.grid.addLayout(buttons_layout, 100, 1) #100 means at the end
         self.setLayout(self.grid)
         self.submitButton.clicked.connect(self.submit_datas)
         self.quitButton.clicked.connect(self.reject)
@@ -92,13 +99,22 @@ class RepasForm(Form):
         self.refresh_type()
         self.date = QCalendarWidget()
         self.add_field("Type:", self.type)
-        self.add_field("Date:", self.date) 
+        self.add_field("Date:", self.date)
+        self.addOutputButton = QPushButton("Ajouter une sortie")
+        self.outputs = []
+        self.add_output()
         self.initUI()
+        self.grid.addWidget(self.addOutputButton, 100, 0)
+        self.addOutputButton.clicked.connect(self.add_output)
     
     def refresh_type(self):
         self.type.clear()
         for type_, id_ in list(self.model.get_(['type','id'], 'type_repas').items()):
             self.type.addItem(type_)
+
+    def add_output(self):
+        output = OutputLine(self)
+        self.outputs.append(output)
 
     def submit_datas(self):
         datas = {
@@ -106,6 +122,34 @@ class RepasForm(Form):
             'date':self.date.selectedDate().toString('yyyy-MM-dd')
             }
         self.model.set_(datas, 'repas')
+        repas_id = self.model.get_last_id(table='repas')
+        datas = {'repas_id':repas_id, 'product_id':'', quantity:0}
+
+class OutputLine():
+    def __init__(self, parent):
+        line_widgets = QHBoxLayout()
+        self.parent = parent
+        self.quantity = QSpinBox()
+        self.quantity.setEnabled(False)
+        self.produit = QLineEdit()
+        line_widgets.addWidget(self.produit)
+        line_widgets.addWidget(self.quantity)
+        self.parent.add_layout("Sortie:", line_widgets)
+        #self.quantity.valueChanged.connect(self.verif_stock)
+        self.produit.editingFinished.connect(self.verif_stock)
+
+    def verif_stock(self):
+        quantity = self.parent.model.get_(
+            values=['quantity'],
+            table='reserve',
+            condition=["product", "=", self.produit.text()])
+        print("quantity in stock:", quantity)
+        if len(quantity.keys()) >= 1:
+            quantity = list(quantity)[0]
+            self.quantity.setMaximum(quantity)
+            self.quantity.setEnabled(True)
+        else:
+            QMessageBox.warning(self.parent, "Erreur", "Le produit n'est pas dans la réserve")
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):

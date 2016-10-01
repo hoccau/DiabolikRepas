@@ -28,9 +28,10 @@ class Model(QSqlQueryModel):
         id integer PRIMARY KEY,\
         Fournisseur_id integer NOT NULL,\
         Date varchar(10),\
-        Designation varchar(20),\
+        Product varchar(20),\
         Prix real NOT NULL,\
-        Quantite integer NOT NULL,\
+        start_quantity integer NOT NULL,\
+        quantity NOT NULL,\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")
         self.query.exec_("CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM)")
@@ -81,9 +82,27 @@ class Model(QSqlQueryModel):
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
         return self.query2dic()
 
-    def get_(self, values=[], table=None):
+    def get_quantity(self, product):
+        req = "SELECT quantity, id FROM reserve WHERE product = "+product
+        self.query.exec_(req)
+        if req == False:
+           print(req, self.query.lastError().databaseText())
+        else: 
+            result = []
+            while self.query.next():
+                result.append(self.query.value(0), self.query.value(1))
+            return result
+
+    def get_(self, values=[], table=None, condition=None):
         values = ",".join(values)
-        q = "SELECT "+values+" FROM "+table
+        if condition == None:
+            condition = ""
+        else:
+            if type(condition[2]) == str:
+                condition[2] = "'"+condition[2]+"'"
+            condition = " WHERE "+str(condition[0])+condition[1]+condition[2]
+        q = "SELECT "+values+" FROM "+table + condition
+        print(q)
         req = self.query.exec_(q)
         if req == False:
            print(q, self.query.lastError().databaseText())
@@ -99,7 +118,6 @@ class Model(QSqlQueryModel):
         else:
             print(q, "success!")
 
-
     def add_fournisseur(self, name):
         req = self.query.exec_("insert into fournisseurs (nom) values('"+name+"')")
         if req == False:
@@ -109,13 +127,14 @@ class Model(QSqlQueryModel):
             return req
 
     def set_line(self, datas):
-        query = "INSERT INTO reserve (Fournisseur_id,  Date, Designation, Prix, quantite)"
+        query = "INSERT INTO reserve (Fournisseur_id,  Date, Product, Prix, start_quantity, quantity)"
         query += " VALUES "
         query += "("\
         +str(datas["fournisseur_id"])+",'"\
         +str(datas["date"])+"','"\
         +datas["product"]+"',"\
         +datas["price"]+","\
+        +datas["quantity"]+','\
         +datas["quantity"]\
         +")"
         print(query)
@@ -130,8 +149,8 @@ class Model(QSqlQueryModel):
         if req == False:
             print(self.query.lastError().databaseText())
 
-    def get_last_id(self):
-        query = "SELECT id FROM reserve ORDER BY id DESC LIMIT 1"
+    def get_last_id(self, table='reserve'):
+        query = "SELECT id FROM "+table+" ORDER BY id DESC LIMIT 1"
         self.query.exec_(query)
         while self.query.next():
             return self.query.value(0)
