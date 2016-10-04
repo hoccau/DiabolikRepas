@@ -50,7 +50,7 @@ class Model(QSqlQueryModel):
         for repas_type in repas_types:
             req = self.query.exec_("INSERT INTO type_repas(type) VALUES ('"\
             +repas_type+"')")
-        req = self.query.exec_("CREATE TABLE output(\
+        req = self.query.exec_("CREATE TABLE outputs(\
         id integer PRIMARY KEY,\
         quantity integer,\
         repas_id integer,\
@@ -83,14 +83,17 @@ class Model(QSqlQueryModel):
         return self.query2dic()
 
     def get_quantity(self, product):
-        req = "SELECT quantity, id FROM reserve WHERE product = "+product
+        req = "SELECT reserve.id, quantity, prix, fournisseurs.nom\
+        FROM reserve INNER JOIN fournisseurs on fournisseurs.id = reserve.Fournisseur_id\
+        WHERE product = '"+product+"'"
         self.query.exec_(req)
         if req == False:
            print(req, self.query.lastError().databaseText())
         else: 
             result = []
             while self.query.next():
-                result.append(self.query.value(0), self.query.value(1))
+                line = [self.query.value(x) for x in range(4)]
+                result.append(line)
             return result
 
     def get_(self, values=[], table=None, condition=None):
@@ -117,6 +120,7 @@ class Model(QSqlQueryModel):
             print(q, self.query.lastError().databaseText())
         else:
             print(q, "success!")
+        return req
 
     def add_fournisseur(self, name):
         req = self.query.exec_("insert into fournisseurs (nom) values('"+name+"')")
@@ -125,6 +129,18 @@ class Model(QSqlQueryModel):
             return self.query.lastError().databaseText()
         else:
             return req
+
+    def add_output(self, datas):
+        req = "INSERT INTO outputs ("\
+        +','.join(datas.keys())+") VALUES("\
+        +','.join([str(x) for x in list(datas.values())])+')'
+        self.exec_(req)
+    
+    def exec_(self, request):
+        print(request)
+        req = self.query.exec_(request)
+        if not req:
+            print(self.query.lastError().databaseText())
 
     def set_line(self, datas):
         query = "INSERT INTO reserve (Fournisseur_id,  Date, Product, Prix, start_quantity, quantity)"
@@ -137,23 +153,13 @@ class Model(QSqlQueryModel):
         +datas["quantity"]+','\
         +datas["quantity"]\
         +")"
-        print(query)
-        q = self.query.exec_(query)
-        print("query success:", q)
-        if q == False:
-            print(self.query.lastError().databaseText())
+        self.exec_(query)
 
     def add_repas(self, datas):
         req = self.query.exec_("INSERT INTO repas(date, type) VALUES("\
         +datas['date']+","+datas['type']+')')
         if req == False:
             print(self.query.lastError().databaseText())
-
-    def get_last_id(self, table='reserve'):
-        query = "SELECT id FROM "+table+" ORDER BY id DESC LIMIT 1"
-        self.query.exec_(query)
-        while self.query.next():
-            return self.query.value(0)
 
     def query2dic(self):
         dic = {}
@@ -183,7 +189,12 @@ class Model(QSqlQueryModel):
                 return self.query.value(0), self.query.value(1), self.value(2)
         else:
             return " ", " ", " "
-        
+
+    def get_last_id(self, table):
+        req = "SELECT DISTINCT last_insert_rowid() FROM "+table
+        self.exec_(req)
+        while self.query.next():
+            return self.query.value(0)
 
 class InfosModel(QSqlTableModel):
     def __init__(self, parent, db):

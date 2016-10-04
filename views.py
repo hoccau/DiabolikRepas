@@ -36,6 +36,7 @@ class Form(QDialog):
         self.setLayout(self.grid)
         self.submitButton.clicked.connect(self.submit_datas)
         self.quitButton.clicked.connect(self.reject)
+        self.show()
 
 class ProductForm(Form):
     def __init__(self, parent=None):
@@ -91,6 +92,27 @@ class ProductForm(Form):
         for fournisseur, id_ in list(self.model.get_fournisseurs().items()):
             self.fournisseur.addItem(fournisseur)
 
+class OutputForm(Form):
+    def __init__(self, parent=None, repas_id=None):
+        super(OutputForm, self).__init__(parent)
+        self.repas_id = repas_id
+        self.addOutputButton = QPushButton("Ajouter une sortie")
+        self.outputs = []
+        self.outputs.append(OutputLine(self))
+        self.grid.addWidget(self.addOutputButton, 100, 0)
+        self.addOutputButton.clicked.connect(self.add_output)
+        self.initUI()
+    
+    def add_output(self):
+        submit = self.outputs[-1].submit_datas()
+        if submit:
+            output = OutputLine(self)
+            self.outputs.append(output)
+
+    def submit_datas(self):
+        repas_id = self.model.get_last_id(table='repas')
+        datas = {'repas_id':repas_id, 'product_id':'', 'quantity':0}
+
 class RepasForm(Form):
     def __init__(self, parent=None):
         super(RepasForm, self).__init__(parent)
@@ -100,30 +122,23 @@ class RepasForm(Form):
         self.date = QCalendarWidget()
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
-        self.addOutputButton = QPushButton("Ajouter une sortie")
-        self.outputs = []
-        self.add_output()
         self.initUI()
-        self.grid.addWidget(self.addOutputButton, 100, 0)
-        self.addOutputButton.clicked.connect(self.add_output)
     
     def refresh_type(self):
         self.type.clear()
         for type_, id_ in list(self.model.get_(['type','id'], 'type_repas').items()):
             self.type.addItem(type_)
 
-    def add_output(self):
-        output = OutputLine(self)
-        self.outputs.append(output)
-
     def submit_datas(self):
         datas = {
             'type_id':str(self.model.get_(['type', 'id'], 'type_repas')[self.type.currentText()]),
             'date':self.date.selectedDate().toString('yyyy-MM-dd')
             }
-        self.model.set_(datas, 'repas')
-        repas_id = self.model.get_last_id(table='repas')
-        datas = {'repas_id':repas_id, 'product_id':'', quantity:0}
+        submited = self.model.set_(datas, 'repas')
+        if submited:
+            self.parent.add_outputs(self.model.get_last_id('repas'))
+        else:
+            QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
 
 class OutputLine():
     def __init__(self, parent):
@@ -131,25 +146,52 @@ class OutputLine():
         self.parent = parent
         self.quantity = QSpinBox()
         self.quantity.setEnabled(False)
+        self.product_variant = QComboBox()
+        self.product_variant.setEnabled(False)
         self.produit = QLineEdit()
         line_widgets.addWidget(self.produit)
+        line_widgets.addWidget(self.product_variant)
         line_widgets.addWidget(self.quantity)
         self.parent.add_layout("Sortie:", line_widgets)
         #self.quantity.valueChanged.connect(self.verif_stock)
-        self.produit.editingFinished.connect(self.verif_stock)
+        self.produit.editingFinished.connect(self.select_variant)
+        self.product_variant.currentIndexChanged.connect(self.select_quantity)
+        self.ready_to_submit = False
 
-    def verif_stock(self):
-        quantity = self.parent.model.get_(
-            values=['quantity'],
-            table='reserve',
-            condition=["product", "=", self.produit.text()])
-        print("quantity in stock:", quantity)
-        if len(quantity.keys()) >= 1:
-            quantity = list(quantity)[0]
-            self.quantity.setMaximum(quantity)
-            self.quantity.setEnabled(True)
-        else:
+    def select_variant(self):
+        #quantity = self.parent.model.get_(
+        #    values=['quantity'],
+        #    table='reserve',
+        #    condition=["product", "=", self.produit.text()])
+        #print("quantity in stock:", quantity)
+        stock = self.parent.model.get_quantity(self.produit.text())
+        if len(stock) >= 1:
+            self.indexes = {}
+            for i, line in enumerate(stock):
+                self.indexes[i] = line
+                self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
+            self.product_variant.setEnabled(True)
+        elif self.produit.text() != "":
             QMessageBox.warning(self.parent, "Erreur", "Le produit n'est pas dans la réserve")
+
+    def select_quantity(self, index):
+        self.quantity.setMaximum(self.indexes[index][1])
+        self.quantity.setEnabled(True)
+        self.ready_to_submit = True
+
+    def submit_datas(self):
+        if self.ready_to_submit:
+            product_id = self.indexes[self.product_variant.currentIndex()][0]
+            datas = {'repas_id':self.parent.repas_id,
+            'product_id':product_id,
+            'quantity':self.quantity.value()
+            }
+            self.parent.model.add_output(datas)
+            return True
+        else:
+            QMessageBox.warning(self.parent, "Erreur", "Veuillez compléter la sortie avant d'en ajouter une nouvelle.")
+            return False
+            
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):

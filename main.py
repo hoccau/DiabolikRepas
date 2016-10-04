@@ -51,7 +51,6 @@ class MainWindow(QMainWindow):
         
         self.model = Model(self)
         self.retrieve_db()
-        self.form = ProductForm(self)
 
         self.mainView = QTableView(self)
         self.mainView.setModel(self.model.qt_table_reserve)
@@ -129,11 +128,13 @@ class MainWindow(QMainWindow):
         InfosCentreDialog(self)
 
     def addDatas(self):
-        self.form.show()
+        self.form = ProductForm(self)
     
     def add_repas(self):
         self.repas_window = RepasForm(self)
-        self.repas_window.show()
+
+    def add_outputs(self, repas_id=None):
+        self.output_view = OutputForm(self, repas_id)
 
     def addFournisseur(self):
         name, ok = QInputDialog.getText(self, 'Input Dialog',
