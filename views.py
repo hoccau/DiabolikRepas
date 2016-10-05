@@ -81,7 +81,7 @@ class ProductForm(Form):
             f_id = self.model.get_fournisseurs()[self.fournisseur.currentText()]
             record["fournisseur_id"] = f_id
             record["date"] = self.date.selectedDate().toString('yyyy-MM-dd')
-            record["product"] = self.product.text()
+            record["product"] = self.product.text().lower()
             record["price"] = self.price.text()
             record["quantity"] = self.quantity.text()
             self.model.set_line(record)
@@ -95,6 +95,8 @@ class ProductForm(Form):
 class OutputForm(Form):
     def __init__(self, parent=None, repas_id=None):
         super(OutputForm, self).__init__(parent)
+        repas = parent.model.get_repas_by_id(repas_id)
+        self.setWindowTitle(repas['type']+" du "+repas['date'])
         self.repas_id = repas_id
         self.addOutputButton = QPushButton("Ajouter une sortie")
         self.outputs = []
@@ -110,8 +112,11 @@ class OutputForm(Form):
             self.outputs.append(output)
 
     def submit_datas(self):
-        repas_id = self.model.get_last_id(table='repas')
-        datas = {'repas_id':repas_id, 'product_id':'', 'quantity':0}
+        #repas_id = self.model.get_last_id(table='repas')
+        #datas = {'repas_id':repas_id, 'product_id':'', 'quantity':0}
+        submit = self.outputs[-1].submit_datas()
+        if submit:
+            self.close()
 
 class RepasForm(Form):
     def __init__(self, parent=None):
@@ -142,6 +147,7 @@ class RepasForm(Form):
         submited = self.model.set_(datas, 'repas')
         if submited:
             self.parent.add_outputs(self.model.get_last_id('repas'))
+            self.close()
         else:
             QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
 
@@ -154,6 +160,7 @@ class OutputLine():
         self.product_variant = QComboBox()
         self.product_variant.setEnabled(False)
         self.produit = QLineEdit()
+        self.produit.setCompleter(QCompleter(self.get_products()))
         line_widgets.addWidget(self.produit)
         line_widgets.addWidget(self.product_variant)
         line_widgets.addWidget(self.quantity)
@@ -163,8 +170,18 @@ class OutputLine():
         self.product_variant.currentIndexChanged.connect(self.select_quantity)
         self.ready_to_submit = False
 
+    def get_products(self):
+        records = self.parent.model.get_(['product'], 'reserve', distinct=True)
+        result = []
+        for record in records:
+            result.append(record['product'])
+        return result
+
     def select_variant(self):
+        self.product_variant.setEnabled(False)
+        self.product_variant.clear()
         stock = self.parent.model.get_product_datas(self.produit.text())
+        print("stock:",stock)
         if len(stock) >= 1:
             self.indexes = {}
             for i, line in enumerate(stock):
@@ -172,12 +189,14 @@ class OutputLine():
                 self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
             self.product_variant.setEnabled(True)
         elif self.produit.text() != "":
-            QMessageBox.warning(self.parent, "Erreur", "Le produit n'est pas dans la réserve")
+            QMessageBox.warning(self.parent, "Erreur",\
+            "Le produit n'est pas dans la réserve")
 
     def select_quantity(self, index):
-        self.quantity.setMaximum(self.indexes[index][1])
-        self.quantity.setEnabled(True)
-        self.ready_to_submit = True
+        if index != -1:
+            self.quantity.setMaximum(self.indexes[index][1])
+            self.quantity.setEnabled(True)
+            self.ready_to_submit = True
 
     def submit_datas(self):
         if self.ready_to_submit:
@@ -189,9 +208,9 @@ class OutputLine():
             self.parent.model.add_output(datas)
             return True
         else:
-            QMessageBox.warning(self.parent, "Erreur", "Veuillez compléter la sortie avant d'en ajouter une nouvelle.")
+            QMessageBox.warning(self.parent, "Erreur",\
+            "Veuillez compléter la sortie avant d'en ajouter une nouvelle.")
             return False
-            
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):

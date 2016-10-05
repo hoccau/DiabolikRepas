@@ -86,22 +86,19 @@ class Model(QSqlQueryModel):
         req = "SELECT reserve.id, quantity, prix, fournisseurs.nom\
         FROM reserve INNER JOIN fournisseurs on fournisseurs.id = reserve.Fournisseur_id\
         WHERE product = '"+product+"'"
-        self.query.exec_(req)
-        if req == False:
-           print(req, self.query.lastError().databaseText())
-        else: 
-            result = []
-            while self.query.next():
-                line = [self.query.value(x) for x in range(4)]
-                result.append(line)
-            return result
+        self.exec_(req)
+        result = []
+        while self.query.next():
+            line = [self.query.value(x) for x in range(4)]
+            result.append(line)
+        return result
 
     def get_quantity(self, product_id):
         self.exec_("SELECT quantity FROM reserve WHERE id = "+str(product_id))
         while self.query.next():
             return self.query.value(0)
 
-    def get_(self, values=[], table=None, condition=None):
+    def get_(self, values=[], table=None, condition=None, distinct=False):
         sql_values = ",".join(values)
         if condition == None:
             condition = ""
@@ -109,7 +106,11 @@ class Model(QSqlQueryModel):
             if type(condition[2]) == str:
                 condition[2] = "'"+condition[2]+"'"
             condition = " WHERE "+str(condition[0])+condition[1]+condition[2]
-        self.exec_("SELECT "+sql_values+" FROM "+table + condition)
+        if distinct:
+            distinct = "DISTINCT"
+        else:
+            distinct = ""
+        self.exec_("SELECT "+distinct+' '+sql_values+" FROM "+table + condition)
         records = []
         while self.query.next():
             dic = {}
@@ -129,6 +130,16 @@ class Model(QSqlQueryModel):
             dic['type'] = self.query.value(2)
             res.append(dic)
         return res
+
+    def get_repas_by_id(self, id_):
+        self.exec_("SELECT date, type FROM repas\
+        INNER JOIN type_repas ON type_repas.id = repas.type_id \
+        WHERE repas.id = "+str(id_))
+        datas = {}
+        while self.query.next():
+            datas['date'] = self.query.value(0)
+            datas['type'] = self.query.value(1)
+            return datas
 
     def get_price_by_repas(self, repas_id):
         self.exec_("SELECT prix, outputs.quantity FROM reserve\
