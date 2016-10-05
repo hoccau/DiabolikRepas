@@ -102,20 +102,59 @@ class Model(QSqlQueryModel):
             return self.query.value(0)
 
     def get_(self, values=[], table=None, condition=None):
-        values = ",".join(values)
+        sql_values = ",".join(values)
         if condition == None:
             condition = ""
         else:
             if type(condition[2]) == str:
                 condition[2] = "'"+condition[2]+"'"
             condition = " WHERE "+str(condition[0])+condition[1]+condition[2]
-        q = "SELECT "+values+" FROM "+table + condition
-        print(q)
-        req = self.query.exec_(q)
-        if req == False:
-           print(q, self.query.lastError().databaseText())
-        else: 
-            return self.query2dic()
+        self.exec_("SELECT "+sql_values+" FROM "+table + condition)
+        records = []
+        while self.query.next():
+            dic = {}
+            for i, value in enumerate(values):
+                dic[value] = self.query.value(i) 
+            records.append(dic)
+        return records
+
+    def get_all_repas(self):
+        self.exec_("SELECT repas.id, date,type FROM repas\
+        INNER JOIN type_repas ON type_repas.id = repas.type_id")
+        res = []
+        while self.query.next():
+            dic = {}
+            dic['id'] = self.query.value(0)
+            dic['date'] = self.query.value(1)
+            dic['type'] = self.query.value(2)
+            res.append(dic)
+        return res
+
+    def get_price_by_repas(self, repas_id):
+        self.exec_("SELECT prix, outputs.quantity FROM reserve\
+        INNER JOIN outputs ON outputs.product_id = reserve.id\
+        WHERE outputs.repas_id = "+str(repas_id))
+        price = 0
+        while self.query.next():
+            price += self.query.value(0) * self.query.value(1)
+        return price
+
+    def get_price_by_day(self, date):
+        self.exec_("SELECT prix, outputs.quantity FROM reserve\
+        INNER JOIN outputs ON outputs.product_id = reserve.id\
+        INNER JOIN repas ON repas.id = outputs.repas_id\
+        WHERE repas.date = '"+str(date)+"'")
+        price = 0
+        while self.query.next():
+            price += self.query.value(0) * self.query.value(1)
+        return price
+
+    def get_dates_repas(self):
+        self.exec_("SELECT DISTINCT date FROM repas")
+        dates = []
+        while self.query.next():
+            dates.append(self.query.value(0))
+        return dates
 
     def set_(self, dic={}, table=None):
         q = "INSERT INTO "+table+"("+",".join(dic.keys())+")  VALUES('"
@@ -141,8 +180,8 @@ class Model(QSqlQueryModel):
         +','.join([str(x) for x in list(datas.values())])+')'
         self.exec_(req)
         new_quantity = self.get_quantity(datas['product_id']) - datas['quantity']
-        req = "UPDATE reserve SET quantity = "+str(new_quantity)\
-        +" WHERE id = "+str(datas['product_id'])
+        self.exec_("UPDATE reserve SET quantity = "+str(new_quantity)\
+        +" WHERE id = "+str(datas['product_id']))
     
     def exec_(self, request):
         print(request)

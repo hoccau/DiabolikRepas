@@ -126,12 +126,17 @@ class RepasForm(Form):
     
     def refresh_type(self):
         self.type.clear()
-        for type_, id_ in list(self.model.get_(['type','id'], 'type_repas').items()):
-            self.type.addItem(type_)
+        for record in self.model.get_(['type'], 'type_repas'):
+            self.type.addItem(record['type'])
 
     def submit_datas(self):
+        type_id = self.model.get_(
+            ['id'],
+            'type_repas',
+            ['type','=',self.type.currentText()]
+            )[0]['id']
         datas = {
-            'type_id':str(self.model.get_(['type', 'id'], 'type_repas')[self.type.currentText()]),
+            'type_id':str(type_id),
             'date':self.date.selectedDate().toString('yyyy-MM-dd')
             }
         submited = self.model.set_(datas, 'repas')
@@ -227,9 +232,42 @@ class RapportDialog(QDialog):
         self.parent = parent
         self.setMinimumSize(500, 500)
         
-        grid = QGridLayout(self)
+        self.grid = QGridLayout(self)
+        self.repas = QComboBox()
+        self.fill_repas()
+        self.date = QComboBox()
+        self.fill_date()
+        self.price_by_repas = QLabel("")
+        self.price_by_day = QLabel("")
+        self.grid.addWidget(self.repas, 0, 0)
+        self.grid.addWidget(self.price_by_repas, 0, 1)
+        self.grid.addWidget(self.date, 1,0)
+        self.grid.addWidget(self.price_by_day, 1,1)
+        self.repas.currentIndexChanged.connect(self.display_price_by_repas)
+        self.date.currentTextChanged.connect(self.display_price_by_day)
 
         self.exec_()
+
+    def fill_repas(self):
+        all_repas = self.parent.model.get_all_repas()
+        self.all_repas_dic = {}
+        for i, repas in enumerate(all_repas):
+            self.all_repas_dic[i] = repas
+            self.repas.addItem(repas['type']+" du "+repas['date'])
+
+    def fill_date(self):
+        all_dates = self.parent.model.get_dates_repas()
+        for date in all_dates:
+            self.date.addItem(date)
+
+    def display_price_by_repas(self, index):
+        repas_id = self.all_repas_dic[index]['id']
+        price = self.parent.model.get_price_by_repas(repas_id)
+        self.price_by_repas.setText(str(price))
+
+    def display_price_by_day(self, day):
+        price = self.parent.model.get_price_by_day(day)
+        self.price_by_day.setText(str(price))
 
     def create_chart(self, dic):
         series = QPieSeries()
