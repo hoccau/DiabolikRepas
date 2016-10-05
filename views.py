@@ -230,19 +230,23 @@ class RapportDialog(QDialog):
     def __init__(self, parent):
         super(RapportDialog, self).__init__(parent)
         self.parent = parent
-        self.setMinimumSize(500, 500)
+        self.setMinimumSize(600, 100)
+        self.grid_index = 0
         
         self.grid = QGridLayout(self)
+        for i in range(2):
+            self.grid.setColumnMinimumWidth(i, 300)
         self.repas = QComboBox()
+        self.price_by_repas = QLabel("")
         self.fill_repas()
+        box_repas = self.create_box('Prix par repas', [self.repas, self.price_by_repas])
+
         self.date = QComboBox()
         self.fill_date()
-        self.price_by_repas = QLabel("")
         self.price_by_day = QLabel("")
-        self.grid.addWidget(self.repas, 0, 0)
-        self.grid.addWidget(self.price_by_repas, 0, 1)
-        self.grid.addWidget(self.date, 1,0)
-        self.grid.addWidget(self.price_by_day, 1,1)
+        box_day = self.create_box('Prix par journée', [self.date, self.price_by_day])
+        self.grid.addWidget(box_repas, 0, 0)
+        self.grid.addWidget(box_day, 0, 1)
         self.repas.currentIndexChanged.connect(self.display_price_by_repas)
         self.date.currentTextChanged.connect(self.display_price_by_day)
 
@@ -263,11 +267,11 @@ class RapportDialog(QDialog):
     def display_price_by_repas(self, index):
         repas_id = self.all_repas_dic[index]['id']
         price = self.parent.model.get_price_by_repas(repas_id)
-        self.price_by_repas.setText(str(price))
+        self.price_by_repas.setText(str(price) + " €")
 
     def display_price_by_day(self, day):
         price = self.parent.model.get_price_by_day(day)
-        self.price_by_day.setText(str(price))
+        self.price_by_day.setText(str(price) + " €")
 
     def create_chart(self, dic):
         series = QPieSeries()
@@ -279,12 +283,12 @@ class RapportDialog(QDialog):
         chartView = QChartView(chart)
         return chartView
         
-    def create_text(self, dic, titre):
-        layout = QFormLayout()
-        box1 = QGroupBox(titre, parent=self)
-        for k, v in list(dic.items()):
-            layout.addRow(k+":", QLabel(str(v)+"€"))
-        layout.addRow("Total:", QLabel(str(self.parent.model.get_total())+"€"))
-        box1.setLayout(layout)
-        return box1
+    def create_box(self, titre, widgets):
+        layout = QGridLayout()
+        box = QGroupBox(titre, parent=self)
+        for i, widget in enumerate(widgets):
+            layout.addWidget(widget, self.grid_index, i)
+        self.grid_index += 1
+        box.setLayout(layout)
+        return box
 
