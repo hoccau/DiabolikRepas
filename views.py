@@ -159,12 +159,7 @@ class OutputLine():
         self.ready_to_submit = False
 
     def select_variant(self):
-        #quantity = self.parent.model.get_(
-        #    values=['quantity'],
-        #    table='reserve',
-        #    condition=["product", "=", self.produit.text()])
-        #print("quantity in stock:", quantity)
-        stock = self.parent.model.get_quantity(self.produit.text())
+        stock = self.parent.model.get_product_datas(self.produit.text())
         if len(stock) >= 1:
             self.indexes = {}
             for i, line in enumerate(stock):

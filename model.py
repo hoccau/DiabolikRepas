@@ -82,7 +82,7 @@ class Model(QSqlQueryModel):
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
         return self.query2dic()
 
-    def get_quantity(self, product):
+    def get_product_datas(self, product):
         req = "SELECT reserve.id, quantity, prix, fournisseurs.nom\
         FROM reserve INNER JOIN fournisseurs on fournisseurs.id = reserve.Fournisseur_id\
         WHERE product = '"+product+"'"
@@ -95,6 +95,11 @@ class Model(QSqlQueryModel):
                 line = [self.query.value(x) for x in range(4)]
                 result.append(line)
             return result
+
+    def get_quantity(self, product_id):
+        self.exec_("SELECT quantity FROM reserve WHERE id = "+str(product_id))
+        while self.query.next():
+            return self.query.value(0)
 
     def get_(self, values=[], table=None, condition=None):
         values = ",".join(values)
@@ -135,6 +140,9 @@ class Model(QSqlQueryModel):
         +','.join(datas.keys())+") VALUES("\
         +','.join([str(x) for x in list(datas.values())])+')'
         self.exec_(req)
+        new_quantity = self.get_quantity(datas['product_id']) - datas['quantity']
+        req = "UPDATE reserve SET quantity = "+str(new_quantity)\
+        +" WHERE id = "+str(datas['product_id'])
     
     def exec_(self, request):
         print(request)
