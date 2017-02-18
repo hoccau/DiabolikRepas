@@ -18,8 +18,8 @@ class Model(QSqlQueryModel):
         directeur_prenom varchar(20)\
         )")
         self.query.exec_("INSERT INTO infos(\
-        centre, directeur_nom, directeur_prenom) VALUES (\
-        NULL, NULL, NULL)")
+        centre, directeur_nom, nombre_enfants, place, startdate, enddate) VALUES (\
+        NULL, NULL, NULL, NULL, NULL, NULL)")
         self.query.exec_("CREATE TABLE fournisseurs(\
         id integer PRIMARY KEY,\
         NOM varchar(20)\

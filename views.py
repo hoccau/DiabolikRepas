@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtCore import QRegExp, QDate
+from PyQt5.QtGui import QRegExpValidator, QIntValidator
 from PyQt5.QtChart import *
 
 class Form(QDialog):
@@ -227,24 +227,38 @@ class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
         super(InfosCentreDialog, self).__init__(parent)
 
-        self.setWindowTitle("Centre")
+        self.setWindowTitle("Informations du centre")
         model = parent.model.qt_table_infos
         mapper = QDataWidgetMapper(self)
         mapper.setModel(model)
 
         self.centre = QLineEdit()
         self.directeur_nom = QLineEdit()
-        self.directeur_prenom = QLineEdit()
+        self.nbr_children = QLineEdit()
+        validator = QIntValidator()
+        validator.setBottom(0)
+        self.nbr_children.setValidator(validator)
+        self.place = QLineEdit()
+        self.startdate = QDateEdit()
+        self.startdate.setDate(QDate.currentDate())
+        self.enddate = QDateEdit()
+        self.enddate.setDate(QDate.currentDate())
 
         mapper.addMapping(self.centre, model.fieldIndex("centre"))
         mapper.addMapping(self.directeur_nom, model.fieldIndex("directeur_nom"))
-        mapper.addMapping(self.directeur_prenom, model.fieldIndex("directeur_prenom"))
+        mapper.addMapping(self.nbr_children, model.fieldIndex("nombre_enfants"))
+        mapper.addMapping(self.place, model.fieldIndex("place"))
+        mapper.addMapping(self.startdate, model.fieldIndex("startdate"))
+        mapper.addMapping(self.enddate, model.fieldIndex("enddate"))
         
         layout = QFormLayout(self)
         
         layout.addRow("Nom du centre:", self.centre)
+        layout.addRow("Lieu:", self.place)
         layout.addRow("Nom du directeur:", self.directeur_nom)
-        layout.addRow("Prénom du directeur:", self.directeur_prenom)
+        layout.addRow("Nombre d'enfants:", self.nbr_children)
+        layout.addRow("Début:", self.startdate)
+        layout.addRow("Fin:", self.enddate)
         
         buttons = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
