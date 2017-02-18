@@ -64,9 +64,21 @@ class ProductForm(Form):
         self.add_field("Prix (€):", self.price)
         self.add_field("quantité:", self.quantity)
         self.grid.addWidget(self.unit, self.field_index, 2)
+        self.total = QLabel("")
+        self.add_field("Prix total:", self.total)
         self.refresh_unit()
+
+        self.price.editingFinished.connect(self.refresh_total)
+        self.quantity.editingFinished.connect(self.refresh_total)
         
         self.initUI()
+
+    def refresh_total(self):
+        if self.quantity.text() and self.price.text():
+            price = float(self.price.text())
+            quantity = float(self.quantity.text())
+            total = round(price * quantity, 2)
+            self.total.setText(str(total))
 
     def clear_all(self):
         self.quantity.clear()
