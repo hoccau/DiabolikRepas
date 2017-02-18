@@ -42,6 +42,7 @@ class ProductForm(Form):
     def __init__(self, parent=None):
         super(ProductForm, self).__init__(parent)
 
+        self.setWindowTitle("Denrées")
         self.fournisseurs = []
 
         comp = QCompleter(self.fournisseurs)
@@ -66,6 +67,11 @@ class ProductForm(Form):
         
         self.initUI()
 
+    def clear_all(self):
+        self.quantity.clear()
+        self.product.clear()
+        self.price.clear()
+
     def submit_datas(self):
         if self.fournisseur.currentText() == "":
             QMessageBox.warning(self, "Erreur", "Il faut entrer un nom de fournisseur")
@@ -86,6 +92,7 @@ class ProductForm(Form):
             record["quantity"] = self.quantity.text()
             self.model.set_line(record)
             self.model.update_table_model()
+            self.clear_all()
 
     def refresh_fournisseurs(self):
         self.fournisseur.clear()
@@ -95,6 +102,8 @@ class ProductForm(Form):
 class OutputForm(Form):
     def __init__(self, parent=None, repas_id=None):
         super(OutputForm, self).__init__(parent)
+
+        self.setWindowTitle('Sortie de denrées')
         repas = parent.model.get_repas_by_id(repas_id)
         self.setWindowTitle(repas['type']+" du "+repas['date'])
         self.repas_id = repas_id
@@ -122,6 +131,7 @@ class RepasForm(Form):
     def __init__(self, parent=None):
         super(RepasForm, self).__init__(parent)
         
+        self.setWindowTitle("Repas")
         self.type = QComboBox()
         self.refresh_type()
         self.date = QCalendarWidget()
@@ -206,6 +216,7 @@ class OutputLine():
             'quantity':self.quantity.value()
             }
             self.parent.model.add_output(datas)
+            self.parent.model.update_table_model()
             return True
         else:
             QMessageBox.warning(self.parent, "Erreur",\
@@ -216,6 +227,7 @@ class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
         super(InfosCentreDialog, self).__init__(parent)
 
+        self.setWindowTitle("Centre")
         model = parent.model.qt_table_infos
         mapper = QDataWidgetMapper(self)
         mapper.setModel(model)
