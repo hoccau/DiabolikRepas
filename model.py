@@ -34,6 +34,8 @@ class Model(QSqlQueryModel):
         Prix real NOT NULL,\
         start_quantity integer NOT NULL,\
         quantity NOT NULL,\
+        unit_id NOT NULL,\
+        FOREIGN KEY (unit_id) REFERENCES units(id)\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")
         self.exec_("CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM)")
@@ -116,9 +118,7 @@ class Model(QSqlQueryModel):
         if condition == None:
             condition = ""
         else:
-            if type(condition[2]) == str:
-                condition[2] = "'"+condition[2]+"'"
-            condition = " WHERE "+str(condition[0])+condition[1]+condition[2]
+            condition = " WHERE "+str(condition)
         if distinct:
             distinct = "DISTINCT"
         else:
@@ -214,7 +214,7 @@ class Model(QSqlQueryModel):
             print(self.query.lastError().databaseText())
 
     def set_line(self, datas):
-        query = "INSERT INTO reserve (Fournisseur_id,  Date, Product, Prix, start_quantity, quantity)"
+        query = "INSERT INTO reserve (Fournisseur_id,  Date, Product, Prix, start_quantity, quantity, unit_id)"
         query += " VALUES "
         query += "("\
         +str(datas["fournisseur_id"])+",'"\
@@ -222,7 +222,8 @@ class Model(QSqlQueryModel):
         +datas["product"]+"',"\
         +datas["price"]+","\
         +datas["quantity"]+','\
-        +datas["quantity"]\
+        +datas["quantity"]+','\
+        +str(datas["unit_id"])\
         +")"
         self.exec_(query)
 

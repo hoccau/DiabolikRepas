@@ -103,11 +103,17 @@ class ProductForm(Form):
             record = {}
             #below : can be improved for faster ?
             f_id = self.model.get_fournisseurs()[self.fournisseur.currentText()]
+            unit_id = self.model.get_(
+                ['id'],
+                'units',
+                condition='unit = ' + "'" + self.unit.currentText() + "'"
+                )[0]['id']
             record["fournisseur_id"] = f_id
             record["date"] = self.date.selectedDate().toString('yyyy-MM-dd')
             record["product"] = self.product.text().lower()
             record["price"] = self.price.text()
             record["quantity"] = self.quantity.text()
+            record["unit_id"] = unit_id
             self.model.set_line(record)
             self.model.update_table_model()
             self.clear_all()
