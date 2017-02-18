@@ -4,6 +4,8 @@
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, QSqlRelation, QSqlTableModel
 from PyQt5.QtCore import Qt
 
+DEBUG_SQL = True
+
 class Model(QSqlQueryModel):
     def __init__(self, parent=None):
         super(Model, self).__init__(parent)
@@ -12,19 +14,19 @@ class Model(QSqlQueryModel):
 
     def create_db(self, db_name):
         self.connect_db(db_name)
-        self.query.exec_("CREATE TABLE infos(\
+        self.exec_("CREATE TABLE infos(\
         centre varchar(20),\
         directeur_nom varchar(20),\
         directeur_prenom varchar(20)\
         )")
-        self.query.exec_("INSERT INTO infos(\
+        self.exec_("INSERT INTO infos(\
         centre, directeur_nom, nombre_enfants, place, startdate, enddate) VALUES (\
         NULL, NULL, NULL, NULL, NULL, NULL)")
-        self.query.exec_("CREATE TABLE fournisseurs(\
+        self.exec_("CREATE TABLE fournisseurs(\
         id integer PRIMARY KEY,\
         NOM varchar(20)\
         )")
-        req = self.query.exec_("CREATE TABLE reserve(\
+        req = self.exec_("CREATE TABLE reserve(\
         id integer PRIMARY KEY,\
         Fournisseur_id integer NOT NULL,\
         Date varchar(10),\
@@ -34,23 +36,28 @@ class Model(QSqlQueryModel):
         quantity NOT NULL,\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")
-        self.query.exec_("CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM)")
-
-        req = self.query.exec_("CREATE TABLE repas(\
+        self.exec_("CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM)")
+        self.exec_("CREATE TABLE units(\
+        id integer PRIMARY KEY,\
+        unit varchar(20) NOT NULL\
+        )")
+        self.exec_("INSERT INTO units(unit) VALUES\
+        ('unités'), ('Kilogrammes'), ('Litres')")
+        self.exec_("CREATE TABLE repas(\
         id integer PRIMARY KEY,\
         date varchar(10) NOT NULL,\
         type_id integer NOT NULL,\
         FOREIGN KEY (type_id) REFERENCES type_repas(id)\
         )")
-        req = self.query.exec_("CREATE TABLE type_repas(\
+        self.exec_("CREATE TABLE type_repas(\
         id integer PRIMARY KEY,\
         type varchar(20)\
         )")
         repas_types = ['petit déjeuner','déjeuner','gouter','souper','cinquième','autre']
         for repas_type in repas_types:
-            req = self.query.exec_("INSERT INTO type_repas(type) VALUES ('"\
+            req = self.exec_("INSERT INTO type_repas(type) VALUES ('"\
             +repas_type+"')")
-        req = self.query.exec_("CREATE TABLE outputs(\
+        self.exec_("CREATE TABLE outputs(\
         id integer PRIMARY KEY,\
         quantity integer,\
         repas_id integer,\
@@ -58,8 +65,14 @@ class Model(QSqlQueryModel):
         FOREIGN KEY (repas_id) REFERENCES repas(id)\
         FOREIGN KEY (product_id) REFERENCES reserve(id)\
         )")
-        if req == False:
-            print(self.query.lastError().databaseText())
+        
+    def exec_(self, request):
+        req = self.query.exec_(request)
+        if DEBUG_SQL:
+            print(req,":",request)
+            if req == False:
+                print(self.query.lastError().databaseText())
+        return req
 
     def connect_db(self, db_name):
         self.db.setDatabaseName(db_name)

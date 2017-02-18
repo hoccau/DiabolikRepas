@@ -47,16 +47,15 @@ class ProductForm(Form):
 
         comp = QCompleter(self.fournisseurs)
         
-        self.fournisseur = QComboBox() #Choisir plutôt dans une liste de fournisseurs
+        self.fournisseur = QComboBox()
         self.refresh_fournisseurs()
         self.fournisseur.setCompleter(comp)
         self.product = QLineEdit()
         self.price = QLineEdit()
-        #self.price.decimals = 2
-        #self.price.setInputMask('00.00€')
         regexp = QRegExp('\d[\d\,\.]+')
         self.price.setValidator(QRegExpValidator(regexp))
         self.quantity = QLineEdit()
+        self.unit = QComboBox()
         self.date = QCalendarWidget()
 
         self.add_field("Fournisseur:", self.fournisseur)
@@ -64,6 +63,8 @@ class ProductForm(Form):
         self.add_field("Désignation", self.product)
         self.add_field("Prix (€):", self.price)
         self.add_field("quantité:", self.quantity)
+        self.grid.addWidget(self.unit, self.field_index, 2)
+        self.refresh_unit()
         
         self.initUI()
 
@@ -71,6 +72,11 @@ class ProductForm(Form):
         self.quantity.clear()
         self.product.clear()
         self.price.clear()
+
+    def refresh_unit(self):
+        self.unit.clear()
+        for unit in self.model.get_(['unit'], 'units'):
+            self.unit.addItem(unit['unit'])
 
     def submit_datas(self):
         if self.fournisseur.currentText() == "":
@@ -121,8 +127,6 @@ class OutputForm(Form):
             self.outputs.append(output)
 
     def submit_datas(self):
-        #repas_id = self.model.get_last_id(table='repas')
-        #datas = {'repas_id':repas_id, 'product_id':'', 'quantity':0}
         submit = self.outputs[-1].submit_datas()
         if submit:
             self.close()
