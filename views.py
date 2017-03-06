@@ -237,6 +237,8 @@ class OutputLine():
             'product_id':product_id,
             'quantity':self.quantity.value()
             }
+        if self.produit.text() in self.parent.availables_products:
+            self.parent.availables_products.remove(self.produit.text())
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
