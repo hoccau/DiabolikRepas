@@ -200,13 +200,16 @@ class OutputLine():
         self.quantity.setEnabled(False)
         self.product_variant = QComboBox()
         self.product_variant.setEnabled(False)
-        self.produit = QLineEdit()
-        self.produit.setCompleter(QCompleter(self.parent.availables_products))
+        self.produit = QComboBox()
+        for product in self.parent.availables_products:
+            self.produit.addItem(product)
+        self.produit.setEditable(True)
+
         line_widgets.addWidget(self.produit)
         line_widgets.addWidget(self.product_variant)
         line_widgets.addWidget(self.quantity)
         self.parent.add_layout("Sortie:", line_widgets)
-        self.produit.editingFinished.connect(self.select_variant)
+        self.produit.currentIndexChanged.connect(self.select_variant)
         self.product_variant.currentIndexChanged.connect(self.select_quantity)
         self.quantity.valueChanged.connect(self.set_datas)
         self.datas = False
@@ -214,7 +217,7 @@ class OutputLine():
     def select_variant(self):
         self.product_variant.setEnabled(False)
         self.product_variant.clear()
-        stock = self.parent.model.get_product_datas(self.produit.text())
+        stock = self.parent.model.get_product_datas(self.produit.currentText())
         print("stock:",stock)
         if len(stock) >= 1:
             self.indexes = {}
@@ -237,8 +240,8 @@ class OutputLine():
             'product_id':product_id,
             'quantity':self.quantity.value()
             }
-        if self.produit.text() in self.parent.availables_products:
-            self.parent.availables_products.remove(self.produit.text())
+        if self.produit.currentText() in self.parent.availables_products:
+            self.parent.availables_products.remove(self.produit.currentText())
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
