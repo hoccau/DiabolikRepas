@@ -170,7 +170,7 @@ class RepasForm(Form):
         type_id = self.model.get_(
             ['id'],
             'type_repas',
-            ['type','=',self.type.currentText()]
+            'type = \''+self.type.currentText()+'\''
             )[0]['id']
         datas = {
             'type_id':str(type_id),
