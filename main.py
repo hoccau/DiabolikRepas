@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Diabolik Compta
-Logiciel de comptabilité léger pour centre de vacances
+Diabolik Repas
+Logiciel d'économat léger pour centre de vacances
 """
 
 from PyQt5 import QtSql

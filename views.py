@@ -123,62 +123,70 @@ class ProductForm(Form):
         for fournisseur, id_ in list(self.model.get_fournisseurs().items()):
             self.fournisseur.addItem(fournisseur)
 
-class OutputForm(Form):
-    def __init__(self, parent=None, repas_id=None):
-        super(OutputForm, self).__init__(parent)
-
-        self.setWindowTitle('Sortie de denrées')
-        repas = parent.model.get_repas_by_id(repas_id)
-        self.setWindowTitle(repas['type']+" du "+repas['date'])
-        self.repas_id = repas_id
-        self.addOutputButton = QPushButton("Ajouter une sortie")
-        self.outputs = []
-        self.outputs.append(OutputLine(self))
-        self.grid.addWidget(self.addOutputButton, 100, 0)
-        self.addOutputButton.clicked.connect(self.add_output)
-        self.initUI()
-    
-    def add_output(self):
-        submit = self.outputs[-1].submit_datas()
-        if submit:
-            output = OutputLine(self)
-            self.outputs.append(output)
-
-    def submit_datas(self):
-        submit = self.outputs[-1].submit_datas()
-        if submit:
-            self.close()
-
 class RepasForm(Form):
     def __init__(self, parent=None):
         super(RepasForm, self).__init__(parent)
-        
-        self.setWindowTitle("Repas")
+
+        print('self.model.get_last_id', self.model.get_last_id('repas'))
+        if self.model.get_last_id('repas'):
+            self.id = self.model.get_last_id('repas') + 1
+        else:
+            self.id = 1
+        self.availables_products = self.get_products()
+
+        self.setWindowTitle("Repas #"+str(self.id))
         self.type = QComboBox()
         self.refresh_type()
         self.date = QCalendarWidget()
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
+        self.outputs = []
+        self.outputs.append(OutputLine(self))
+        self.add_output_button = QPushButton("Ajouter une sortie")
+        self.grid.addWidget(self.add_output_button, 100, 0)
+        self.add_output_button.clicked.connect(self.add_output)
         self.initUI()
     
+    def get_products(self):
+        records = self.parent.model.get_(['product'], 'reserve', distinct=True)
+        result = []
+        for record in records:
+            result.append(record['product'])
+        return result
+    
+    def add_output(self):
+        if self.outputs[-1].datas:
+            output = OutputLine(self)
+            self.outputs.append(output)
+        else:
+            QMessageBox.warning(self.parent, "Erreur",\
+            "Veuillez compléter la sortie de denrées.")
+
     def refresh_type(self):
         self.type.clear()
         for record in self.model.get_(['type'], 'type_repas'):
             self.type.addItem(record['type'])
 
+    def verif_datas(self):
+        pass
+
     def submit_datas(self):
+        for output in self.outputs:
+            if output.datas:
+                self.model.add_output(output.datas)
         type_id = self.model.get_(
             ['id'],
             'type_repas',
             'type = \''+self.type.currentText()+'\''
             )[0]['id']
         datas = {
+            'id':str(self.id),
             'type_id':str(type_id),
             'date':self.date.selectedDate().toString('yyyy-MM-dd')
             }
         submited = self.model.set_(datas, 'repas')
         if submited:
-            self.parent.add_outputs(self.model.get_last_id('repas'))
+            self.parent.model.update_table_model()
             self.close()
         else:
             QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
@@ -192,22 +200,15 @@ class OutputLine():
         self.product_variant = QComboBox()
         self.product_variant.setEnabled(False)
         self.produit = QLineEdit()
-        self.produit.setCompleter(QCompleter(self.get_products()))
+        self.produit.setCompleter(QCompleter(self.parent.availables_products))
         line_widgets.addWidget(self.produit)
         line_widgets.addWidget(self.product_variant)
         line_widgets.addWidget(self.quantity)
         self.parent.add_layout("Sortie:", line_widgets)
-        #self.quantity.valueChanged.connect(self.verif_stock)
         self.produit.editingFinished.connect(self.select_variant)
         self.product_variant.currentIndexChanged.connect(self.select_quantity)
-        self.ready_to_submit = False
-
-    def get_products(self):
-        records = self.parent.model.get_(['product'], 'reserve', distinct=True)
-        result = []
-        for record in records:
-            result.append(record['product'])
-        return result
+        self.quantity.valueChanged.connect(self.set_datas)
+        self.datas = False
 
     def select_variant(self):
         self.product_variant.setEnabled(False)
@@ -228,22 +229,13 @@ class OutputLine():
         if index != -1:
             self.quantity.setMaximum(self.indexes[index][1])
             self.quantity.setEnabled(True)
-            self.ready_to_submit = True
 
-    def submit_datas(self):
-        if self.ready_to_submit:
-            product_id = self.indexes[self.product_variant.currentIndex()][0]
-            datas = {'repas_id':self.parent.repas_id,
+    def set_datas(self):
+        product_id = self.indexes[self.product_variant.currentIndex()][0]
+        self.datas = {'repas_id':self.parent.id,
             'product_id':product_id,
             'quantity':self.quantity.value()
             }
-            self.parent.model.add_output(datas)
-            self.parent.model.update_table_model()
-            return True
-        else:
-            QMessageBox.warning(self.parent, "Erreur",\
-            "Veuillez compléter la sortie avant d'en ajouter une nouvelle.")
-            return False
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):

@@ -199,9 +199,14 @@ class Model(QSqlQueryModel):
             return req
 
     def add_output(self, datas):
-        req = "INSERT INTO outputs ("\
-        +','.join(datas.keys())+") VALUES("\
-        +','.join([str(x) for x in list(datas.values())])+')'
+        req = "INSERT INTO outputs ('quantity', 'repas_id', 'product_id')\
+        VALUES ("+\
+        ','.join([
+            str(datas['quantity']),
+            str(datas['repas_id']),
+            str(datas['product_id'])
+            ])\
+        + ")"
         self.exec_(req)
         new_quantity = self.get_quantity(datas['product_id']) - datas['quantity']
         self.exec_("UPDATE reserve SET quantity = "+str(new_quantity)\
@@ -263,7 +268,7 @@ class Model(QSqlQueryModel):
             return " ", " ", " "
 
     def get_last_id(self, table):
-        req = "SELECT DISTINCT last_insert_rowid() FROM "+table
+        req = "SELECT id FROM "+table+" ORDER BY id DESC LIMIT 1"
         self.exec_(req)
         while self.query.next():
             return self.query.value(0)
