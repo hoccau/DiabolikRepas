@@ -32,9 +32,9 @@ class Model(QSqlQueryModel):
         Date varchar(10),\
         Product varchar(20),\
         Prix real NOT NULL,\
-        start_quantity integer NOT NULL,\
-        quantity NOT NULL,\
-        unit_id NOT NULL,\
+        start_quantity real NOT NULL,\
+        quantity real NOT NULL,\
+        unit_id integer NOT NULL,\
         FOREIGN KEY (unit_id) REFERENCES units(id)\
         FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)\
         )")

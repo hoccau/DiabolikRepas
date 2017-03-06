@@ -195,7 +195,8 @@ class OutputLine():
     def __init__(self, parent):
         line_widgets = QHBoxLayout()
         self.parent = parent
-        self.quantity = QSpinBox()
+
+        self.quantity = QDoubleSpinBox()
         self.quantity.setEnabled(False)
         self.product_variant = QComboBox()
         self.product_variant.setEnabled(False)
