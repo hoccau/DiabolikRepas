@@ -133,6 +133,7 @@ class RepasForm(Form):
         else:
             self.id = 1
         self.availables_products = self.get_products()
+        self.already_used_products_ids = []
 
         self.setWindowTitle("Repas #"+str(self.id))
         self.type = QComboBox()
@@ -140,8 +141,15 @@ class RepasForm(Form):
         self.date = QCalendarWidget()
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
+
+        #outputs 
+        output_box = QGroupBox('', self)
+        self.outputs_layout = QVBoxLayout()
         self.outputs = []
-        self.outputs.append(OutputLine(self))
+        output = OutputLine(self)
+        self.outputs.append(output)
+        output_box.setLayout(self.outputs_layout)
+        self.add_field("sorties", output_box)
         self.add_output_button = QPushButton("Ajouter une sortie")
         self.grid.addWidget(self.add_output_button, 100, 0)
         self.add_output_button.clicked.connect(self.add_output)
@@ -153,14 +161,22 @@ class RepasForm(Form):
         for record in records:
             result.append(record['product'])
         return result
+
+    def get_all_used_products_ids(self):
+        result = []
+        for output in self.outputs:
+            if output.datas:
+                result.append(output.datas['product_id'])
+        return result
     
     def add_output(self):
-        if self.outputs[-1].datas:
-            output = OutputLine(self)
-            self.outputs.append(output)
-        else:
-            QMessageBox.warning(self.parent, "Erreur",\
-            "Veuillez compléter la sortie de denrées.")
+        if len(self.outputs) > 0:
+            if not self.outputs[-1].datas:
+                QMessageBox.warning(self.parent, "Erreur",\
+                    "Veuillez compléter la sortie de denrées.")
+                return False
+        output = OutputLine(self)
+        self.outputs.append(output)
 
     def refresh_type(self):
         self.type.clear()
@@ -193,55 +209,75 @@ class RepasForm(Form):
 
 class OutputLine():
     def __init__(self, parent):
-        line_widgets = QHBoxLayout()
         self.parent = parent
-
-        self.quantity = QDoubleSpinBox()
-        self.quantity.setEnabled(False)
-        self.product_variant = QComboBox()
-        self.product_variant.setEnabled(False)
+        self.line_widgets = QHBoxLayout()
+        self.parent.outputs_layout.addLayout(self.line_widgets)
         self.produit = QComboBox()
         for product in self.parent.availables_products:
             self.produit.addItem(product)
         self.produit.setEditable(True)
+        self.product_variant = QComboBox()
+        self.product_variant.setEnabled(False)
+        self.quantity = QDoubleSpinBox()
+        self.quantity.setEnabled(False)
+        self.suppr_button = QPushButton('Suppr')
 
-        line_widgets.addWidget(self.produit)
-        line_widgets.addWidget(self.product_variant)
-        line_widgets.addWidget(self.quantity)
-        self.parent.add_layout("Sortie:", line_widgets)
-        self.produit.currentIndexChanged.connect(self.select_variant)
-        self.product_variant.currentIndexChanged.connect(self.select_quantity)
+        self.line_widgets.addWidget(self.produit)
+        self.line_widgets.addWidget(self.product_variant)
+        self.line_widgets.addWidget(self.quantity)
+        self.line_widgets.addWidget(self.suppr_button)
+        self.produit.currentIndexChanged.connect(self.select_product_name)
+        self.product_variant.currentIndexChanged.connect(self.select_variant)
         self.quantity.valueChanged.connect(self.set_datas)
+        self.suppr_button.clicked.connect(self.clear_layout)
         self.datas = False
 
-    def select_variant(self):
-        self.product_variant.setEnabled(False)
+    def select_product_name(self):
+        self.product_variant.setEnabled(False) #by default
         self.product_variant.clear()
+        self.datas = False
         stock = self.parent.model.get_product_datas(self.produit.currentText())
-        print("stock:",stock)
+        print("stock:", stock)
         if len(stock) >= 1:
-            self.indexes = {}
+            #struct: {combo_box_index:[id,quantity,prix,fournisseur]}
+            self.variants_indexes = {}
+            stock = [x for x in stock\
+                if x[0] not in self.parent.get_all_used_products_ids()]
+            print('filtered stock:', stock)
             for i, line in enumerate(stock):
-                self.indexes[i] = line
-                self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
-            self.product_variant.setEnabled(True)
+                if line[0] not in self.parent.get_all_used_products_ids():
+                    self.variants_indexes[i] = line
+                    self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
+            if len(self.variants_indexes) >= 1:
+                print("product_variant enabled")
+                self.product_variant.setEnabled(True)
         elif self.produit.text() != "":
             QMessageBox.warning(self.parent, "Erreur",\
             "Le produit n'est pas dans la réserve")
 
-    def select_quantity(self, index):
+    def select_variant(self, index):
         if index != -1:
-            self.quantity.setMaximum(self.indexes[index][1])
+            self.quantity.setMaximum(self.variants_indexes[index][1])
             self.quantity.setEnabled(True)
 
     def set_datas(self):
-        product_id = self.indexes[self.product_variant.currentIndex()][0]
+        product_id = self.variants_indexes[self.product_variant.currentIndex()][0]
         self.datas = {'repas_id':self.parent.id,
             'product_id':product_id,
             'quantity':self.quantity.value()
             }
-        if self.produit.currentText() in self.parent.availables_products:
-            self.parent.availables_products.remove(self.produit.currentText())
+        #self.parent.already_used_products_ids.append(product_id)
+
+    def clear_layout(self):
+        while self.line_widgets.count():
+            item = self.line_widgets.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+            else:
+                self.clearLayout(item.layout())
+        self.parent.outputs.remove(self)
+        self.parent.adjustSize()
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
