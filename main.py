@@ -52,11 +52,19 @@ class MainWindow(QMainWindow):
         
         self.model = Model(self)
         self.retrieve_db()
+        
+        self.tabs = QTabWidget()
+        self._add_table_model(self.model.qt_table_reserve, 'reserve')
+        self._add_table_model(self.model.qt_table_repas, 'repas')
+        self._add_table_model(self.model.qt_table_outputs, 'sorties')
 
-        self.mainView = QTableView(self)
-        self.mainView.setModel(self.model.qt_table_reserve)
-        self.mainView.setItemDelegate(QSqlRelationalDelegate())
-        self.setCentralWidget(self.mainView)
+        self.setCentralWidget(self.tabs)
+
+    def _add_table_model(self, model, name, size=None):
+        table = QTableView(self)
+        table.setModel(model)
+        table.setItemDelegate(QSqlRelationalDelegate())
+        self.tabs.addTab(table, name)
 
     def add_action(self, name, function_name, shortcut=None):
         action = QAction(name, self)

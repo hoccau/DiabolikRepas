@@ -115,7 +115,7 @@ class ProductForm(Form):
             record["quantity"] = self.quantity.text()
             record["unit_id"] = unit_id
             self.model.set_line(record)
-            self.model.update_table_model()
+            self.model.update_reserve_model()
             self.clear_all()
 
     def refresh_fournisseurs(self):
@@ -202,7 +202,7 @@ class RepasForm(Form):
             }
         submited = self.model.set_(datas, 'repas')
         if submited:
-            self.parent.model.update_table_model()
+            self.parent.model.update_reserve_model()
             self.close()
         else:
             QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
