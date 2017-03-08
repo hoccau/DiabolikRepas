@@ -216,6 +216,8 @@ class OutputLine():
         for product in self.parent.availables_products:
             self.produit.addItem(product)
         self.produit.setEditable(True)
+        self.produit.clearEditText()
+        self.produit.setCurrentIndex(-1)
         self.product_variant = QComboBox()
         self.product_variant.setEnabled(False)
         self.quantity = QDoubleSpinBox()
@@ -237,21 +239,28 @@ class OutputLine():
         self.product_variant.clear()
         self.datas = False
         stock = self.parent.model.get_product_datas(self.produit.currentText())
-        print("stock:", stock)
         if len(stock) >= 1:
             #struct: {combo_box_index:[id,quantity,prix,fournisseur]}
             self.variants_indexes = {}
-            stock = [x for x in stock\
+            stock = [x for x in stock #filter already used\
                 if x[0] not in self.parent.get_all_used_products_ids()]
-            print('filtered stock:', stock)
+            if len(stock) == 0:
+                QMessageBox.warning(self.parent, "Erreur",\
+                "Ce produit est déjà utilisé")
+                return False
+            else:
+                stock = [x for x in stock if x[1] > 0] # filter 0 quantity
+                if len(stock) == 0:
+                    QMessageBox.warning(self.parent, "Erreur",\
+                    "Ce produit est épuisé.")
+                    return False
             for i, line in enumerate(stock):
-                if line[0] not in self.parent.get_all_used_products_ids():
-                    self.variants_indexes[i] = line
-                    self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
+                self.variants_indexes[i] = line
+                self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
             if len(self.variants_indexes) >= 1:
                 print("product_variant enabled")
                 self.product_variant.setEnabled(True)
-        elif self.produit.text() != "":
+        elif self.produit.currentText() != "":
             QMessageBox.warning(self.parent, "Erreur",\
             "Le produit n'est pas dans la réserve")
 
