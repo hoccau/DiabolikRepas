@@ -49,6 +49,7 @@ class Model(QSqlQueryModel):
         id integer PRIMARY KEY,\
         date varchar(10) NOT NULL,\
         type_id integer NOT NULL,\
+        comment TEXT,\
         FOREIGN KEY (type_id) REFERENCES type_repas(id)\
         )")
         self.exec_("CREATE TABLE type_repas(\

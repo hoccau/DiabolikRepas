@@ -139,8 +139,11 @@ class RepasForm(Form):
         self.type = QComboBox()
         self.refresh_type()
         self.date = QCalendarWidget()
+        self.comment = QTextEdit()
+        self.comment.setFixedHeight(50)
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
+        self.add_field("Commentaire:", self.comment)
 
         #outputs 
         output_box = QGroupBox('', self)
@@ -198,11 +201,14 @@ class RepasForm(Form):
         datas = {
             'id':str(self.id),
             'type_id':str(type_id),
-            'date':self.date.selectedDate().toString('yyyy-MM-dd')
+            'date':self.date.selectedDate().toString('yyyy-MM-dd'),
+            'comment':self.comment.toPlainText()
             }
         submited = self.model.set_(datas, 'repas')
         if submited:
             self.parent.model.update_reserve_model()
+            self.parent.model.qt_table_repas.select()
+            self.parent.model.qt_table_outputs.select()
             self.close()
         else:
             QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
