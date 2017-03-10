@@ -17,7 +17,10 @@ class Model(QSqlQueryModel):
         self.exec_("CREATE TABLE infos(\
         centre varchar(20),\
         directeur_nom varchar(20),\
-        directeur_prenom varchar(20)\
+        nombre_enfants int,\
+        place varchar(20),\
+        startdate varchar(10),\
+        enddate varchar(10)\
         )")
         self.exec_("INSERT INTO infos(\
         centre, directeur_nom, nombre_enfants, place, startdate, enddate) VALUES (\
@@ -292,7 +295,7 @@ class Model(QSqlQueryModel):
                 return self.query.value(0), self.query.value(1), self.value(2)
         else:
             return " ", " ", " "
-
+    
     def get_last_id(self, table):
         req = "SELECT id FROM "+table+" ORDER BY id DESC LIMIT 1"
         self.exec_(req)
