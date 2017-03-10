@@ -48,6 +48,7 @@ class ProductForm(Form):
         comp = QCompleter(self.fournisseurs)
         
         self.fournisseur = QComboBox()
+        add_fournisseur = QPushButton('Ajouter')
         self.refresh_fournisseurs()
         self.fournisseur.setCompleter(comp)
         self.product = QLineEdit()
@@ -59,6 +60,7 @@ class ProductForm(Form):
         self.date = QCalendarWidget()
 
         self.add_field("Fournisseur:", self.fournisseur)
+        self.grid.addWidget(add_fournisseur, self.field_index, 2)
         self.add_field("Date:", self.date)
         self.add_field("Désignation", self.product)
         self.add_field("Prix (€):", self.price)
@@ -70,8 +72,14 @@ class ProductForm(Form):
 
         self.price.editingFinished.connect(self.refresh_total)
         self.quantity.editingFinished.connect(self.refresh_total)
+        add_fournisseur.clicked.connect(self.add_fournisseur)
         
         self.initUI()
+    
+    def add_fournisseur(self):
+        f = self.parent.add_fournisseur()
+        if f:
+            self.refresh_fournisseurs()
 
     def refresh_total(self):
         if self.quantity.text() and self.price.text():

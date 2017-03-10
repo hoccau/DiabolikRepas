@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
         openAction = self.add_action('&Ouvrir', self.open_db, 'Ctrl+O')
         delRowAction = self.add_action('&Supprimer la ligne', self.remove_current_row)
         addFormAction = self.add_action('&Denrées', self.addDatas)
-        addFournisseurAction = self.add_action('&Fournisseur', self.addFournisseur)
+        addFournisseurAction = self.add_action('&Fournisseur', self.add_fournisseur)
         addRepasAction = self.add_action('Repas', self.add_repas)
         editRepasAction = self.add_action('Repas', self.edit_repas)
         setInfosAction = self.add_action('Editer les infos du centre', self.set_infos)
@@ -163,7 +163,7 @@ class MainWindow(QMainWindow):
     def add_outputs(self, repas_id=None):
         self.output_view = OutputForm(self, repas_id)
 
-    def addFournisseur(self):
+    def add_fournisseur(self):
         name, ok = QInputDialog.getText(self, 'Ajouter un fournisseur',
             'Nom du fournisseur:')
         if ok and name != "":
