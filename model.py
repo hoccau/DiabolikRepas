@@ -200,14 +200,15 @@ class Model(QSqlQueryModel):
         return dates
 
     def set_(self, dic={}, table=None):
-        q = "INSERT INTO "+table+"("+",".join(dic.keys())+")  VALUES('"
-        q += "','".join(dic.values())+"')"
-        req = self.query.exec_(q)
-        if req == False:
-            print(q, self.query.lastError().databaseText())
-        else:
-            print(q, "success!")
-        return req
+        self.query.prepare(
+            "INSERT INTO "+table+"("+",".join(dic.keys())+")\
+            VALUES ("\
+            +','.join([':'+x for x in list(dic.keys()) ])+")"
+            )
+        for k, v in dic.items():
+            self.query.bindValue(':'+k, v)
+        q = self.query.exec_()
+        return q
 
     def update(self, datas={}, table='', qfilter_key=None, qfilter_value=None):
         l = []
