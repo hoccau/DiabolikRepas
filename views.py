@@ -124,18 +124,12 @@ class ProductForm(Form):
             self.fournisseur.addItem(fournisseur)
 
 class RepasForm(Form):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, id_=None):
         super(RepasForm, self).__init__(parent)
 
-        print('self.model.get_last_id', self.model.get_last_id('repas'))
-        if self.model.get_last_id('repas'):
-            self.id = self.model.get_last_id('repas') + 1
-        else:
-            self.id = 1
         self.availables_products = self.get_products()
         self.already_used_products_ids = []
 
-        self.setWindowTitle("Repas #"+str(self.id))
         self.type = QComboBox()
         self.refresh_type()
         self.date = QCalendarWidget()
@@ -149,14 +143,34 @@ class RepasForm(Form):
         output_box = QGroupBox('', self)
         self.outputs_layout = QVBoxLayout()
         self.outputs = []
-        output = OutputLine(self)
-        self.outputs.append(output)
         output_box.setLayout(self.outputs_layout)
         self.add_field("sorties", output_box)
         self.add_output_button = QPushButton("Ajouter une sortie")
         self.grid.addWidget(self.add_output_button, 100, 0)
         self.add_output_button.clicked.connect(self.add_output)
         self.initUI()
+
+        if not id_:
+            if self.model.get_last_id('repas'):
+                self.id = self.model.get_last_id('repas') + 1
+            else:
+                self.id = 1
+            output = OutputLine(self)
+            self.outputs.append(output)
+        else:
+            self.id = id_
+            self.populate(id_)
+        
+        self.setWindowTitle("Repas #"+str(self.id))
+
+    def populate(self, id_):
+        repas = self.model.get_repas_by_id(id_)
+        self.type.setCurrentText(repas['type'])
+        self.date.setSelectedDate(QDate.fromString(repas['date'],'yyyy-MM-dd'))
+        self.comment.setPlainText(repas['comment'])
+        for output in repas['outputs']:
+            output_line = OutputLine(self, output)
+            self.outputs.append(output_line)
     
     def get_products(self):
         records = self.parent.model.get_(['product'], 'reserve', distinct=True)
@@ -214,7 +228,7 @@ class RepasForm(Form):
             QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
 
 class OutputLine():
-    def __init__(self, parent):
+    def __init__(self, parent, datas=None):
         self.parent = parent
         self.line_widgets = QHBoxLayout()
         self.parent.outputs_layout.addLayout(self.line_widgets)
@@ -240,6 +254,22 @@ class OutputLine():
         self.suppr_button.clicked.connect(self.clear_layout)
         self.datas = False
 
+        if datas:
+            self.populate(datas)
+
+    def populate(self, datas):
+        self.produit.setCurrentText(datas['product_name'])
+        self.select_product_name()
+        for k, v in self.variants_indexes.items():
+            if v[0] == datas['product_id']:
+                variant_index = k
+                break
+        variant = self.variants_indexes[variant_index]
+        self.product_variant.setCurrentText(
+           self.variant_combo_name(variant[2], variant[3])
+           )
+        self.quantity.setValue(datas['quantity'])
+
     def select_product_name(self):
         self.product_variant.setEnabled(False) #by default
         self.product_variant.clear()
@@ -262,13 +292,18 @@ class OutputLine():
                     return False
             for i, line in enumerate(stock):
                 self.variants_indexes[i] = line
-                self.product_variant.addItem(str(line[2])+"€ à "+ line[3])
+                self.product_variant.addItem(
+                    self.variant_combo_name(line[2], line[3])
+                    )
             if len(self.variants_indexes) >= 1:
                 print("product_variant enabled")
                 self.product_variant.setEnabled(True)
         elif self.produit.currentText() != "":
             QMessageBox.warning(self.parent, "Erreur",\
             "Le produit n'est pas dans la réserve")
+
+    def variant_combo_name(self, price, supplier):
+        return str(price)+"€ à "+ supplier
 
     def select_variant(self, index):
         if index != -1:

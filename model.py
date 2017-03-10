@@ -152,14 +152,26 @@ class Model(QSqlQueryModel):
         return res
 
     def get_repas_by_id(self, id_):
-        self.exec_("SELECT date, type FROM repas\
+        """ return a dict with repas which contain a list of dicts with outputs """
+        self.exec_("SELECT date, type, comment FROM repas\
         INNER JOIN type_repas ON type_repas.id = repas.type_id \
         WHERE repas.id = "+str(id_))
         datas = {}
         while self.query.next():
             datas['date'] = self.query.value(0)
             datas['type'] = self.query.value(1)
-            return datas
+            datas['comment'] = self.query.value(2)
+        self.exec_("SELECT outputs.id, outputs.quantity, reserve.product, product_id\
+        FROM outputs INNER JOIN reserve WHERE repas_id = "+str(id_))
+        datas['outputs'] = []
+        while self.query.next():
+            datas['outputs'].append({
+                'id': self.query.value(0),
+                'quantity': self.query.value(1),
+                'product_name': self.query.value(2),
+                'product_id': self.query.value(3)
+                })
+        return datas
 
     def get_price_by_repas(self, repas_id):
         self.exec_("SELECT prix, outputs.quantity FROM reserve\

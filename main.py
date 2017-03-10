@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
         addFormAction = self.add_action('&Denrées', self.addDatas)
         addFournisseurAction = self.add_action('&Fournisseur', self.addFournisseur)
         addRepasAction = self.add_action('Repas', self.add_repas)
+        editRepasAction = self.add_action('Repas', self.edit_repas)
         setInfosAction = self.add_action('Editer les infos du centre', self.set_infos)
         ViewRapportAction = self.add_action('Rapport', self.viewRapport)
 
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow):
         edit_menu = menubar.addMenu('&Édition')
         edit_menu.addAction(delRowAction)
         edit_menu.addAction(setInfosAction)
+        edit_menu.addAction(editRepasAction)
         view_menu = menubar.addMenu('&Vue')
         view_menu.addAction(ViewRapportAction)
         addMenu = menubar.addMenu('&Ajouter')
@@ -54,6 +56,7 @@ class MainWindow(QMainWindow):
         self.retrieve_db()
         
         self.tabs = QTabWidget()
+        self.tables = []
         self._add_table_model(self.model.qt_table_reserve, 'reserve')
         self._add_table_model(self.model.qt_table_repas, 'repas')
         self._add_table_model(self.model.qt_table_outputs, 'sorties')
@@ -64,6 +67,7 @@ class MainWindow(QMainWindow):
         table = QTableView(self)
         table.setModel(model)
         table.setItemDelegate(QSqlRelationalDelegate())
+        self.tables.append(table)
         self.tabs.addTab(table, name)
 
     def add_action(self, name, function_name, shortcut=None):
@@ -141,6 +145,20 @@ class MainWindow(QMainWindow):
     
     def add_repas(self):
         self.repas_window = RepasForm(self)
+
+    def edit_repas(self):
+        current_table =  self.tabs.currentWidget().model().tableName()
+        if current_table == 'repas':
+            select = self.tabs.currentWidget().selectionModel()
+            row = select.currentIndex().row()
+            if row != -1:
+                id_ = self.tabs.currentWidget().model().record(row).value(0)
+                self.repas_window = RepasForm(self, id_)
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Erreur", "Veuillez sélectionner un repas dans le tableau."
+                    )
 
     def add_outputs(self, repas_id=None):
         self.output_view = OutputForm(self, repas_id)
