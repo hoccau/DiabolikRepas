@@ -155,10 +155,12 @@ class RepasForm(Form):
                 self.id = self.model.get_last_id('repas') + 1
             else:
                 self.id = 1
+            self.new_record = True
             output = OutputLine(self)
             self.outputs.append(output)
         else:
             self.id = id_
+            self.new_record = False
             self.populate(id_)
         
         self.setWindowTitle("Repas #"+str(self.id))
@@ -204,9 +206,6 @@ class RepasForm(Form):
         pass
 
     def submit_datas(self):
-        for output in self.outputs:
-            if output.datas:
-                self.model.add_output(output.datas)
         type_id = self.model.get_(
             ['id'],
             'type_repas',
@@ -218,7 +217,17 @@ class RepasForm(Form):
             'date':self.date.selectedDate().toString('yyyy-MM-dd'),
             'comment':self.comment.toPlainText()
             }
-        submited = self.model.set_(datas, 'repas')
+        if self.new_record:
+            for output in self.outputs:
+                if output.datas:
+                    self.model.add_output(output.datas)
+            submited = self.model.set_(datas, 'repas')
+        else:
+            self.model.delete('outputs', 'repas_id', str(self.id))
+            for output in self.outputs:
+                if output.datas:
+                    self.model.add_output(output.datas)
+            submited = self.model.update(datas, 'repas', 'id', str(self.id))
         if submited:
             self.parent.model.update_reserve_model()
             self.parent.model.qt_table_repas.select()

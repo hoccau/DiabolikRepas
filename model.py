@@ -209,6 +209,18 @@ class Model(QSqlQueryModel):
             print(q, "success!")
         return req
 
+    def update(self, datas={}, table='', qfilter_key=None, qfilter_value=None):
+        l = []
+        for k, v in datas.items():
+            l += [str(k) + "='" + str(v)+"'"]
+        success = self.exec_("UPDATE "+table+" SET "+', '.join(l)+\
+        ' WHERE '+qfilter_key+" = '"+qfilter_value+"'")
+        print('update succuss', success)
+        return success
+    
+    def delete(self, table, qfilter_key, qfilter_value):
+        self.exec_('DELETE FROM '+table+' WHERE '+qfilter_key+' = '+"'"+qfilter_value+"'")
+
     def add_fournisseur(self, name):
         req = self.query.exec_("insert into fournisseurs (nom) values('"+name+"')")
         if req == False:
@@ -231,12 +243,6 @@ class Model(QSqlQueryModel):
         self.exec_("UPDATE reserve SET quantity = "+str(new_quantity)\
         +" WHERE id = "+str(datas['product_id']))
     
-    def exec_(self, request):
-        print(request)
-        req = self.query.exec_(request)
-        if not req:
-            print(self.query.lastError().databaseText())
-
     def set_line(self, datas):
         query = "INSERT INTO reserve (Fournisseur_id,  Date, Product, Prix, start_quantity, quantity, unit_id)"
         query += " VALUES "
