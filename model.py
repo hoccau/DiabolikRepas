@@ -72,8 +72,11 @@ class Model(QSqlQueryModel):
         FOREIGN KEY (product_id) REFERENCES reserve(id)\
         )")
         
-    def exec_(self, request):
-        req = self.query.exec_(request)
+    def exec_(self, request=None):
+        if request:
+            req = self.query.exec_(request)
+        else:
+            req = self.query.exec_()
         if DEBUG_SQL:
             print(req,":",request)
             if req == False:
@@ -226,7 +229,9 @@ class Model(QSqlQueryModel):
         self.exec_('DELETE FROM '+table+' WHERE '+qfilter_key+' = '+"'"+qfilter_value+"'")
 
     def add_fournisseur(self, name):
-        req = self.query.exec_("insert into fournisseurs (nom) values('"+name+"')")
+        p = self.query.prepare("INSERT INTO fournisseurs (nom) VALUES(:nom)")
+        self.query.bindValue(':nom', name)
+        req = self.exec_()
         if req == False:
             print(self.query.lastError().databaseText())
             return self.query.lastError().databaseText()
