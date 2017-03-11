@@ -56,10 +56,13 @@ class MainWindow(QMainWindow):
         self.retrieve_db()
         
         self.tabs = QTabWidget()
-        self.tables = []
-        self._add_table_model(self.model.qt_table_reserve, 'reserve')
-        self._add_table_model(self.model.qt_table_repas, 'repas')
-        self._add_table_model(self.model.qt_table_outputs, 'sorties')
+        self.tables = {
+            'reserve': self._add_table_model(self.model.qt_table_reserve, 'reserve'),
+            'repas': self._add_table_model(self.model.qt_table_repas, 'repas'),
+            'sorties': self._add_table_model(self.model.qt_table_outputs, 'sorties')
+            }
+        #Repas table must be selected by row for editing
+        self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.setCentralWidget(self.tabs)
 
@@ -67,8 +70,9 @@ class MainWindow(QMainWindow):
         table = QTableView(self)
         table.setModel(model)
         table.setItemDelegate(QSqlRelationalDelegate())
-        self.tables.append(table)
+        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tabs.addTab(table, name)
+        return table
 
     def add_action(self, name, function_name, shortcut=None):
         action = QAction(name, self)
