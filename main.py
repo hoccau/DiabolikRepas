@@ -163,6 +163,11 @@ class MainWindow(QMainWindow):
                     self,
                     "Erreur", "Veuillez sélectionner un repas dans le tableau."
                     )
+        else:
+            QMessageBox.warning(
+                self,
+                "Erreur", 'Veuillez sélectionner un repas dans l\'onglet "repas".'
+            )
 
     def add_outputs(self, repas_id=None):
         self.output_view = OutputForm(self, repas_id)

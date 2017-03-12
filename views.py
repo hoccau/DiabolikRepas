@@ -63,15 +63,18 @@ class ProductForm(Form):
         self.grid.addWidget(add_fournisseur, self.field_index, 2)
         self.add_field("Date:", self.date)
         self.add_field("Désignation", self.product)
-        self.add_field("Prix (€):", self.price)
         self.add_field("quantité:", self.quantity)
         self.grid.addWidget(self.unit, self.field_index, 2)
+        self.unit_label = QLabel("par pièce")
+        self.add_field("Prix (€):", self.price)
+        self.grid.addWidget(self.unit_label, self.field_index, 2)
         self.total = QLabel("")
         self.add_field("Prix total:", self.total)
         self.refresh_unit()
 
         self.price.editingFinished.connect(self.refresh_total)
         self.quantity.editingFinished.connect(self.refresh_total)
+        self.unit.currentIndexChanged.connect(self.refresh_unit_label)
         add_fournisseur.clicked.connect(self.add_fournisseur)
         
         self.initUI()
@@ -87,6 +90,15 @@ class ProductForm(Form):
             quantity = float(self.quantity.text())
             total = round(price * quantity, 2)
             self.total.setText(str(total))
+
+    def refresh_unit_label(self):
+        matching = {
+           'unités':'par pièce',
+           'Kilogrammes':'le kilo',
+           'Litres':'le litre'
+           }
+        unit = matching[self.unit.currentText()]
+        self.unit_label.setText(unit)
 
     def clear_all(self):
         self.quantity.clear()

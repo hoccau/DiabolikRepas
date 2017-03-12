@@ -167,15 +167,19 @@ class Model(QSqlQueryModel):
             datas['date'] = self.query.value(0)
             datas['type'] = self.query.value(1)
             datas['comment'] = self.query.value(2)
-        self.exec_("SELECT outputs.id, outputs.quantity, reserve.product, product_id\
-        FROM outputs INNER JOIN reserve WHERE repas_id = "+str(id_))
+        self.exec_(
+            "SELECT outputs.id, outputs.quantity, outputs.product_id, reserve.Product\
+            FROM outputs\
+            INNER JOIN reserve ON outputs.product_id = reserve.id\
+            WHERE outputs.repas_id = "+str(id_)
+                )
         datas['outputs'] = []
         while self.query.next():
             datas['outputs'].append({
                 'id': self.query.value(0),
                 'quantity': self.query.value(1),
-                'product_name': self.query.value(2),
-                'product_id': self.query.value(3)
+                'product_id': self.query.value(2),
+                'product_name': self.query.value(3)
                 })
         return datas
 
