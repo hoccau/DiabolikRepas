@@ -135,7 +135,7 @@ class ProductForm(Form):
             record["quantity"] = self.quantity.text()
             record["unit_id"] = unit_id
             self.model.add_product(record)
-            self.model.update_reserve_model()
+            self.model.qt_table_reserve.select()
             self.clear_all()
 
     def refresh_fournisseurs(self):
@@ -243,7 +243,7 @@ class RepasForm(Form):
                     self.model.add_output(output.datas)
             submited = self.model.update(datas, 'repas', 'id', str(self.id))
         if submited:
-            self.parent.model.update_reserve_model()
+            self.parent.model.qt_table_reserve.select()
             self.parent.model.qt_table_repas.select()
             self.parent.model.qt_table_outputs.select()
             self.close()

@@ -97,6 +97,7 @@ class Model(QSqlQueryModel):
         )")
         
     def exec_(self, request=None):
+        """ Execute a request and return True if no error occur """
         if request:
             req = self.query.exec_(request)
         else:
@@ -111,36 +112,10 @@ class Model(QSqlQueryModel):
         self.db.setDatabaseName(db_name)
         self.db.open()
         self.query = QSqlQuery()
-        self.qt_table_reserve = QSqlRelationalTableModel(self, self.db)
-        self.update_reserve_model()
+        self.qt_table_reserve = ReserveModel(self, self.db)
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_repas = RepasModel(self, self.db)
-        #self.qt_table_outputs = OutputsModel(self, self.db)
-        self.qt_table_outputs = QSqlQueryModel()
-        self.qt_table_outputs.setQuery("SELECT\
-        outputs.id, products.name, outputs.quantity, repas.date, repas.id AS repas_id\
-        FROM outputs\
-        INNER JOIN repas ON outputs.repas_id = repas.id\
-        INNER JOIN reserve ON outputs.stock_id = reserve.id\
-        INNER JOIN products ON reserve.product_id = products.id\
-        ")
-        self.qt_table_outputs.setHeaderData(0, Qt.Horizontal, "Name")
-        self.qt_table_outputs.setHeaderData(1, Qt.Horizontal, "quantité")
-
-    def update_reserve_model(self):
-        self.qt_table_reserve.setTable('reserve')
-        rel1 = QSqlRelation("fournisseurs","id","NOM")
-        rel2 = QSqlRelation("units","id","unit")
-        rel3 = QSqlRelation("products","id","name")
-        self.qt_table_reserve.setRelation(1, rel1)
-        self.qt_table_reserve.setRelation(3, rel3)
-        self.qt_table_reserve.setRelation(7, rel2)
-        self.qt_table_reserve.select()
-        self.qt_table_reserve.setHeaderData(0, Qt.Horizontal, "Identification")
-        self.qt_table_reserve.setHeaderData(1, Qt.Horizontal, "Fournisseur")
-        self.qt_table_reserve.setHeaderData(3, Qt.Horizontal, "Produit")
-        self.qt_table_reserve.setHeaderData(5, Qt.Horizontal, "Quantité\nde départ")
-        self.qt_table_reserve.setHeaderData(6, Qt.Horizontal, "Quantité\n actuelle")
+        self.qt_table_outputs = OutputsModel()
 
     def get_fournisseurs(self):
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
@@ -384,6 +359,24 @@ class InfosModel(QSqlTableModel):
         self.setTable("infos")
         self.select()
 
+class ReserveModel(QSqlRelationalTableModel):
+    def __init__(self, parent, db):
+        super(ReserveModel, self).__init__(parent, db)
+
+        self.setTable('reserve')
+        rel1 = QSqlRelation("fournisseurs","id","NOM")
+        rel2 = QSqlRelation("units","id","unit")
+        rel3 = QSqlRelation("products","id","name")
+        self.setRelation(1, rel1)
+        self.setRelation(3, rel3)
+        self.setRelation(7, rel2)
+        self.select()
+        self.setHeaderData(0, Qt.Horizontal, "Identification")
+        self.setHeaderData(1, Qt.Horizontal, "Fournisseur")
+        self.setHeaderData(3, Qt.Horizontal, "Produit")
+        self.setHeaderData(5, Qt.Horizontal, "Quantité\nde départ")
+        self.setHeaderData(6, Qt.Horizontal, "Quantité\n actuelle")
+
 class RepasModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
         super(RepasModel, self).__init__(parent, db)
@@ -395,15 +388,18 @@ class RepasModel(QSqlRelationalTableModel):
         self.setHeaderData(0, Qt.Horizontal, "Identification")
         self.setHeaderData(2, Qt.Horizontal, "Type")
 
-class OutputsModel(QSqlRelationalTableModel):
-    def __init__(self, parent, db):
-        super(OutputsModel, self).__init__(parent, db)
-
-        self.setTable("outputs")
-        self.setRelation(2, QSqlRelation("repas","id","date"))
-        self.setRelation(3, QSqlRelation("reserve","id","product_id"))
+class OutputsModel(QSqlQueryModel):
+    def __init__(self):
+        super(OutputsModel, self).__init__()
         self.select()
-        self.setHeaderData(0, Qt.Horizontal, "Identification")
-        self.setHeaderData(1, Qt.Horizontal, "Quantité")
-        self.setHeaderData(2, Qt.Horizontal, "date")
-        self.setHeaderData(3, Qt.Horizontal, "stock_id")
+    
+    def select(self):
+        self.setQuery("SELECT\
+        outputs.id, products.name, outputs.quantity, repas.date, repas.id AS repas_id\
+        FROM outputs\
+        INNER JOIN repas ON outputs.repas_id = repas.id\
+        INNER JOIN reserve ON outputs.stock_id = reserve.id\
+        INNER JOIN products ON reserve.product_id = products.id\
+        ")
+        self.setHeaderData(0, Qt.Horizontal, "Name")
+        self.setHeaderData(1, Qt.Horizontal, "quantité")
