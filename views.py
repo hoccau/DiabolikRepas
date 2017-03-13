@@ -134,7 +134,7 @@ class ProductForm(Form):
             record["price"] = self.price.text()
             record["quantity"] = self.quantity.text()
             record["unit_id"] = unit_id
-            self.model.set_line(record)
+            self.model.add_product(record)
             self.model.update_reserve_model()
             self.clear_all()
 
@@ -147,7 +147,8 @@ class RepasForm(Form):
     def __init__(self, parent=None, id_=None):
         super(RepasForm, self).__init__(parent)
 
-        self.availables_products = self.get_products()
+        model = parent.model
+        self.availables_products = self.model.get_all_products_names()
         self.already_used_products_ids = []
 
         self.type = QComboBox()
@@ -194,13 +195,6 @@ class RepasForm(Form):
             output_line = OutputLine(self, output)
             self.outputs.append(output_line)
     
-    def get_products(self):
-        records = self.parent.model.get_(['product'], 'reserve', distinct=True)
-        result = []
-        for record in records:
-            result.append(record['product'])
-        return result
-
     def get_all_used_products_ids(self):
         result = []
         for output in self.outputs:

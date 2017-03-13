@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
             'repas': self._add_table_model(self.model.qt_table_repas, 'repas'),
             'sorties': self._add_table_model(self.model.qt_table_outputs, 'sorties')
             }
+        
         #Repas table must be selected by row for editing
         self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
 
