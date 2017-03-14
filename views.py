@@ -416,8 +416,8 @@ class RapportDialog(QDialog):
         box_repas = self.create_box('Prix par repas', [self.repas, self.price_by_repas])
 
         self.date = QComboBox()
-        self.fill_date()
         self.price_by_day = QLabel("")
+        self.fill_date()
         box_day = self.create_box('Prix par journée', [self.date, self.price_by_day])
         self.grid.addWidget(box_repas, 0, 0)
         self.grid.addWidget(box_day, 0, 1)
@@ -432,20 +432,22 @@ class RapportDialog(QDialog):
         for i, repas in enumerate(all_repas):
             self.all_repas_dic[i] = repas
             self.repas.addItem(repas['type']+" du "+repas['date'])
+        self.display_price_by_repas(0)
 
     def fill_date(self):
         all_dates = self.parent.model.get_dates_repas()
         for date in all_dates:
             self.date.addItem(date)
+        self.display_price_by_day(all_dates[0])
 
     def display_price_by_repas(self, index):
         repas_id = self.all_repas_dic[index]['id']
         price = self.parent.model.get_price_by_repas(repas_id)
-        self.price_by_repas.setText(str(price) + " €")
+        self.price_by_repas.setText(str(round(price, 2)) + " €")
 
     def display_price_by_day(self, day):
         price = self.parent.model.get_price_by_day(day)
-        self.price_by_day.setText(str(price) + " €")
+        self.price_by_day.setText(str(round(price, 2)) + " €")
 
     def create_chart(self, dic):
         series = QPieSeries()
