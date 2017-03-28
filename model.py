@@ -265,24 +265,6 @@ class Model(QSqlQueryModel):
             list_.append(self.query.value(0))
         return list_
 
-    def set_infos(self, directeur_nom=None, directeur_prenom=None, centre=None):
-        q = "UPDATE infos SET \
-        directeur_nom = '"+directeur_nom+"',\
-        directeur_prenom = '" +directeur_prenom+"',\
-        centre = '"+centre+"'"
-        req = self.query.exec_(q)
-        print("set-infos", q, req)
-
-    def get_infos(self):
-        q= "SELECT directeur_nom, directeur_prenom, centre FROM infos"
-        req = self.query.exec_(q)
-        if self.query.isValid():
-            while self.query.next():
-                print(self.query.value(0), self.query.value(1), self.query.value(2))
-                return self.query.value(0), self.query.value(1), self.value(2)
-        else:
-            return " ", " ", " "
-    
 class InfosModel(QSqlTableModel):
     def __init__(self, parent, db):
         super(InfosModel, self).__init__(parent, db)

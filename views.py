@@ -357,16 +357,19 @@ class InfosCentreDialog(QDialog):
         super(InfosCentreDialog, self).__init__(parent)
 
         self.setWindowTitle("Informations du centre")
+        self.parent = parent
         model = parent.model.qt_table_infos
         mapper = QDataWidgetMapper(self)
         mapper.setModel(model)
 
         self.centre = QLineEdit()
         self.directeur_nom = QLineEdit()
-        self.nbr_children = QLineEdit()
-        validator = QIntValidator()
-        validator.setBottom(0)
-        self.nbr_children.setValidator(validator)
+        self.nbr_children_6 = QSpinBox()
+        self.nbr_children_6_12 = QSpinBox()
+        self.nbr_children_12 = QSpinBox()
+        self.nbr_children_6.setMinimum(0)
+        self.nbr_children_6_12.setMinimum(0)
+        self.nbr_children_12.setMinimum(0)
         self.place = QLineEdit()
         self.startdate = QDateEdit()
         self.startdate.setDate(QDate.currentDate())
@@ -375,7 +378,9 @@ class InfosCentreDialog(QDialog):
 
         mapper.addMapping(self.centre, model.fieldIndex("centre"))
         mapper.addMapping(self.directeur_nom, model.fieldIndex("directeur_nom"))
-        mapper.addMapping(self.nbr_children, model.fieldIndex("nombre_enfants"))
+        mapper.addMapping(self.nbr_children_6, model.fieldIndex("nombre_enfants_6"))
+        mapper.addMapping(self.nbr_children_6_12, model.fieldIndex("nombre_enfants_6_12"))
+        mapper.addMapping(self.nbr_children_12, model.fieldIndex("nombre_enfants_12"))
         mapper.addMapping(self.place, model.fieldIndex("place"))
         mapper.addMapping(self.startdate, model.fieldIndex("startdate"))
         mapper.addMapping(self.enddate, model.fieldIndex("enddate"))
@@ -385,7 +390,9 @@ class InfosCentreDialog(QDialog):
         layout.addRow("Nom du centre:", self.centre)
         layout.addRow("Lieu:", self.place)
         layout.addRow("Nom du directeur:", self.directeur_nom)
-        layout.addRow("Nombre d'enfants:", self.nbr_children)
+        layout.addRow("Enfants de moins de 6 ans:", self.nbr_children_6)
+        layout.addRow("Enfants entre 6 et 12 ans:", self.nbr_children_6_12)
+        layout.addRow("Enfants de plus de 12 ans:", self.nbr_children_12)
         layout.addRow("Début:", self.startdate)
         layout.addRow("Fin:", self.enddate)
         
@@ -393,7 +400,7 @@ class InfosCentreDialog(QDialog):
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
             self)
         buttons.accepted.connect(mapper.submit)
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.debug_me)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         
@@ -467,4 +474,121 @@ class RapportDialog(QDialog):
         self.grid_index += 1
         box.setLayout(layout)
         return box
+
+class Previsionnel(QDialog):
+    def __init__(self, parent):
+        super(Previsionnel, self).__init__(parent)
+
+        date_box = QGroupBox('Date', parent=self)
+        matin_box = QGroupBox('Petit déjeuner', parent=self)
+        midi_box = QGroupBox('Déjeuner', parent=self)
+        gouter_box = QGroupBox('Goûter', parent=self)
+        souper_box = QGroupBox('Souper', parent=self)
+        cinquieme_box = QGroupBox('5ième', parent=self)
+
+class IngredientPrevisionnel():
+    def __init__(self):
+        self.quantity = QDoubleSpinBox()
+
+class RepasPrevisionnelForm(Form):
+    def __init__(self, parent=None, id_=None):
+        super(RepasPrevisionnelForm, self).__init__(parent)
+
+        model = parent.model
+
+        self.type = QComboBox()
+        self.refresh_type()
+        self.date = QCalendarWidget()
+        self.comment = QTextEdit()
+        self.comment.setFixedHeight(50)
+        self.add_field("Type:", self.type)
+        self.add_field("Date:", self.date)
+        self.add_field("Commentaire:", self.comment)
+
+        #ingredients 
+        ingredients_box = QGroupBox('', self)
+        self.ingredients_layout = QVBoxLayout()
+        self.ingredients = []
+        ingredients_box.setLayout(self.ingredients_layout)
+        self.add_field("Ingredients", ingredients_box)
+        self.add_output_button = QPushButton("Ajouter un ingrédient")
+        self.grid.addWidget(self.add_ingredient_button, 100, 0)
+        self.add_ingredient_button.clicked.connect(self.add_ingredient)
+        self.initUI()
+
+        if not id_:
+            if self.model.get_last_id('prev_repas'):
+                self.id = self.model.get_last_id('prev_repas') + 1
+            else:
+                self.id = 1
+            self.new_record = True
+            ingredient = Ingredient(self)
+            self.ingredients.append(ingredient)
+        else:
+            self.id = id_
+            self.new_record = False
+            self.populate(id_)
+        
+        self.setWindowTitle("Repas Prévisionnel#"+str(self.id))
+
+    def populate(self, id_):
+        repas = self.model.get_repas_by_id(id_)
+        self.type.setCurrentText(repas['type'])
+        self.date.setSelectedDate(QDate.fromString(repas['date'],'yyyy-MM-dd'))
+        self.comment.setPlainText(repas['comment'])
+        for output in repas['outputs']:
+            output_line = OutputLine(self, output)
+            self.outputs.append(output_line)
+    
+    def get_all_used_products_ids(self):
+        result = []
+        for output in self.outputs:
+            if output.datas:
+                result.append(output.datas['product_id'])
+        return result
+    
+    def add_output(self):
+        if len(self.outputs) > 0:
+            if not self.outputs[-1].datas:
+                QMessageBox.warning(self.parent, "Erreur",\
+                    "Veuillez compléter la sortie de denrées.")
+                return False
+        output = OutputLine(self)
+        self.outputs.append(output)
+
+    def refresh_type(self):
+        self.type.clear()
+        for record in self.model.get_(['type'], 'type_repas'):
+            self.type.addItem(record['type'])
+
+    def submit_datas(self):
+        type_id = self.model.get_(
+            ['id'],
+            'type_repas',
+            'type = \''+self.type.currentText()+'\''
+            )[0]['id']
+        datas = {
+            'id':str(self.id),
+            'type_id':str(type_id),
+            'date':self.date.selectedDate().toString('yyyy-MM-dd'),
+            'comment':self.comment.toPlainText()
+            }
+        if self.new_record:
+            for output in self.outputs:
+                if output.datas:
+                    self.model.add_output(output.datas)
+            submited = self.model.set_(datas, 'repas')
+        else:
+            self.model.delete('outputs', 'repas_id', str(self.id))
+            for output in self.outputs:
+                if output.datas:
+                    self.model.add_output(output.datas)
+            submited = self.model.update(datas, 'repas', 'id', str(self.id))
+        if submited:
+            self.parent.model.qt_table_reserve.select()
+            self.parent.model.qt_table_repas.select()
+            self.parent.model.qt_table_outputs.select()
+            self.close()
+        else:
+            QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
 
