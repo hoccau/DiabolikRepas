@@ -53,15 +53,31 @@ type_id integer NOT NULL,
 FOREIGN KEY (type_id) REFERENCES type_repas(id)
 );
 
-CREATE TABLE ingredient_prev(
+CREATE TABLE ingredients_prev(
 id integer PRIMARY KEY,
 product_id integer NOT NULL,
-repas_prev_id integer NOT NULL,
+dishes_prev_id integer NOT NULL,
 quantity real NOT NULL,
 unit_id integer NOT NULL,
 FOREIGN KEY (unit_id) REFERENCES units(id)
 FOREIGN KEY (product_id) REFERENCES products(id)
+FOREIGN KEY (dishes_prev_id) REFERENCES dishes_prev(id)
+);
+
+CREATE TABLE dishes_types(
+id integer PRIMARY KEY,
+type varchar(30)
+);
+INSERT INTO dishes_types(type) VALUES
+('entrée'), ('plat'), ('dessert'), ('autre');
+
+CREATE TABLE dishes_prev(
+id integer PRIMARY KEY,
+name varchar(50),
+repas_prev_id integer NOT NULL,
+type_id integer,
 FOREIGN KEY (repas_prev_id) REFERENCES repas_prev(id)
+FOREIGN KEY (type_id) REFERENCES dishes_types(id)
 );
 
 CREATE TABLE repas(

@@ -400,7 +400,7 @@ class InfosCentreDialog(QDialog):
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
             self)
         buttons.accepted.connect(mapper.submit)
-        buttons.accepted.connect(self.debug_me)
+        buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         
