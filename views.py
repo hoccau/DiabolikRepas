@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QRegExp, QDate, Qt
+from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel
 from PyQt5.QtGui import QRegExpValidator, QStandardItem
 from PyQt5.QtChart import *
 from PyQt5.QtSql import QSqlRelationalDelegate
@@ -44,15 +44,15 @@ class ProductForm(Form):
         super(ProductForm, self).__init__(parent)
 
         self.setWindowTitle("Denrées")
-        self.fournisseurs = []
+        self.all_products_names = parent.model.get_all_products_names()
 
-        comp = QCompleter(self.fournisseurs)
-        
         self.fournisseur = QComboBox()
         add_fournisseur = QPushButton('Ajouter')
         self.refresh_fournisseurs()
-        self.fournisseur.setCompleter(comp)
         self.product = QLineEdit()
+        self.product_completer = QCompleter(self.all_products_names)
+        self.product.setCompleter(self.product_completer)
+
         self.price = QLineEdit()
         regexp = QRegExp('\d[\d\,\.]+')
         self.price.setValidator(QRegExpValidator(regexp))
@@ -73,13 +73,28 @@ class ProductForm(Form):
         self.add_field("Prix total:", self.total)
         self.refresh_unit()
 
+        self.product.editingFinished.connect(self.verif_product)
         self.price.editingFinished.connect(self.refresh_total)
         self.quantity.editingFinished.connect(self.refresh_total)
         self.unit.currentIndexChanged.connect(self.refresh_unit_label)
         add_fournisseur.clicked.connect(self.add_fournisseur)
         
         self.initUI()
-    
+
+    def verif_product(self):
+        if self.product.text not in self.all_products_names:
+            reponse = QMessageBox.question(
+                    None, 'Produit inexistant',
+                    "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No)
+            if reponse == QMessageBox.No:
+                self.product.clear()
+            if reponse == QMessageBox.Yes:
+                self.model.add_product(self.product.text())
+                self.all_products_names = self.parent.model.get_all_products_names()
+                self.product_completer.setModel(QStringListModel(self.all_products_names))
+
     def add_fournisseur(self):
         f = self.parent.add_fournisseur()
         if f:
@@ -135,7 +150,7 @@ class ProductForm(Form):
             record["price"] = self.price.text()
             record["quantity"] = self.quantity.text()
             record["unit_id"] = unit_id
-            self.model.add_product(record)
+            self.model.add_reserve(record)
             self.model.qt_table_reserve.select()
             self.clear_all()
 

@@ -208,7 +208,10 @@ class Model(QSqlQueryModel):
         self.exec_("UPDATE reserve SET quantity = "+str(new_quantity)\
         +" WHERE id = "+str(datas['product_id']))
 
-    def add_product(self, datas):
+    def add_product(self, product):
+        self.exec_("INSERT INTO products (name) VALUES ('"+product+"')")
+
+    def add_reserve(self, datas):
         # if the product name is not in products table, we add it. 
         product_id = self.get_product_id_by_name(datas["product"])
         if not product_id:
