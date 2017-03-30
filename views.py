@@ -591,10 +591,10 @@ class Previsionnel(QDialog):
     def del_plat(self):
         reponse = QMessageBox.question(
                 None, 'Sûr(e) ?', "Vous allez détruire définitivement ce plat"\
-                + "ainsi que tous les ingrédients associés. Êtes-vous sûr(e) ?",
+                + " ainsi que tous les ingrédients associés. Êtes-vous sûr(e) ?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
-        if reponse:
+        if reponse == QMessageBox.Yes:
             self.plats_model.del_row(id=self.current_plat_id)
 
     def del_ingredient(self):
@@ -603,7 +603,7 @@ class Previsionnel(QDialog):
                 + " Êtes-vous sûr(e) ?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
-        if reponse:
+        if reponse == QMessageBox.Yes:
             self.ingredients_model.del_row(id=None)
 
 class PlatPrevisionnel(QWidget):
@@ -636,7 +636,6 @@ class IngredientPrevisionnel(QWidget):
     """ not finished/used... """
     def __init__(self, parent):
         super(IngredientPrevisionnel, self).__init__(parent)
-        print(parent)
         self.model = parent.model
         self.box = QGroupBox('Ingredient', self)
 
