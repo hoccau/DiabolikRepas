@@ -309,10 +309,15 @@ class RepasModel(QSqlRelationalTableModel):
         self.setHeaderData(0, Qt.Horizontal, "Identification")
         self.setHeaderData(2, Qt.Horizontal, "Type")
 
-class RepasPrevModel(QSqlRelationalTableModel):
+class AbstractPrevisionnelModel(QSqlRelationalTableModel):
+    def __init__(self, parent, db):
+        super(AbstractPrevisionnelModel, self).__init__(parent, db)
+        self.parent = parent
+        self.setEditStrategy(QSqlTableModel.OnFieldChange)
+
+class RepasPrevModel(AbstractPrevisionnelModel):
     def __init__(self, parent, db):
         super(RepasPrevModel, self).__init__(parent, db)
-        self.parent = parent
 
         self.setTable("repas_prev")
         f_rel = QSqlRelation("type_repas","id","type")
@@ -333,10 +338,10 @@ class RepasPrevModel(QSqlRelationalTableModel):
         self.select()
         self.parent.plat_prev_model.select()
 
-class PlatPrevModel(QSqlRelationalTableModel):
+class PlatPrevModel(AbstractPrevisionnelModel):
     def __init__(self, parent, db):
         super(PlatPrevModel, self).__init__(parent, db)
-        self.parent = parent
+        
         self.setTable("dishes_prev")
         rel2 = QSqlRelation("repas_prev","id","name")
         rel3 = QSqlRelation("dishes_types","id","type")
@@ -358,11 +363,9 @@ class PlatPrevModel(QSqlRelationalTableModel):
         self.select()
         self.parent.ingredient_prev_model.select()
 
-class IngredientPrevModel(QSqlRelationalTableModel):
+class IngredientPrevModel(AbstractPrevisionnelModel):
     def __init__(self, parent, db):
         super(IngredientPrevModel, self).__init__(parent, db)
-
-        self.parent = parent
 
         self.setTable('ingredients_prev')
         rel1 = QSqlRelation("products","id","name")

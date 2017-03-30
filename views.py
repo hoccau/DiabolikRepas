@@ -531,9 +531,10 @@ class Previsionnel(QDialog):
         self.del_repas_button.clicked.connect(self.del_repas)
         self.del_plat_button.clicked.connect(self.del_plat)
         self.del_ingredient_button.clicked.connect(self.del_ingredient)
-
+        
+        self.setMinimumSize(377, 684)
         self.exec_()
-    
+
     def _create_view(self, box_name, buttons):
         """ Return a QTableView (with good relationnal delegate) and a box containing it """
         view = QTableView()
