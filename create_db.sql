@@ -1,3 +1,5 @@
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE infos(
 centre varchar(20),
 directeur_nom varchar(20),
@@ -61,7 +63,7 @@ quantity real NOT NULL,
 unit_id integer NOT NULL,
 FOREIGN KEY (unit_id) REFERENCES units(id)
 FOREIGN KEY (product_id) REFERENCES products(id)
-FOREIGN KEY (dishes_prev_id) REFERENCES dishes_prev(id)
+FOREIGN KEY (dishes_prev_id) REFERENCES dishes_prev(id) ON DELETE CASCADE
 );
 
 CREATE TABLE dishes_types(
@@ -76,7 +78,7 @@ id integer PRIMARY KEY,
 name varchar(50),
 repas_prev_id integer NOT NULL,
 type_id integer,
-FOREIGN KEY (repas_prev_id) REFERENCES repas_prev(id)
+FOREIGN KEY (repas_prev_id) REFERENCES repas_prev(id) ON DELETE CASCADE
 FOREIGN KEY (type_id) REFERENCES dishes_types(id)
 );
 
@@ -86,7 +88,7 @@ date varchar(10) NOT NULL,
 type_id integer NOT NULL,
 repas_prev_id integer,
 comment TEXT,
-FOREIGN KEY (type_id) REFERENCES type_repas(id)
+FOREIGN KEY (type_id) REFERENCES type_repas(id) 
 FOREIGN KEY (repas_prev_id) REFERENCES repas_prev(id)
 );
 

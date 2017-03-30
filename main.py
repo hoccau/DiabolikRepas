@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         editRepasAction = self.add_action('Repas', self.edit_repas)
         setInfosAction = self.add_action('Editer les infos du centre', self.set_infos)
         ViewRapportAction = self.add_action('Rapport', self.viewRapport)
+        editRepasPrevAction = self.add_action('Previsionnel', self.add_previsionnel)
 
         fileMenu = menubar.addMenu('&Fichier')
         fileMenu.addAction(openAction)
@@ -41,6 +42,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(delRowAction)
         edit_menu.addAction(setInfosAction)
         edit_menu.addAction(editRepasAction)
+        edit_menu.addAction(editRepasPrevAction)
         view_menu = menubar.addMenu('&Vue')
         view_menu.addAction(ViewRapportAction)
         addMenu = menubar.addMenu('&Ajouter')
@@ -150,6 +152,9 @@ class MainWindow(QMainWindow):
     
     def add_repas(self):
         self.repas_window = RepasForm(self)
+
+    def add_previsionnel(self):
+        self.prev_window = Previsionnel(self)
 
     def edit_repas(self):
         current_table =  self.tabs.currentWidget().model().tableName()

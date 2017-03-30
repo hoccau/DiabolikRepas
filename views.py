@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QRegExp, QDate
-from PyQt5.QtGui import QRegExpValidator, QIntValidator
+from PyQt5.QtCore import QRegExp, QDate, Qt
+from PyQt5.QtGui import QRegExpValidator, QStandardItem
 from PyQt5.QtChart import *
+from PyQt5.QtSql import QSqlRelationalDelegate
 
 class Form(QDialog):
     """Abstract class"""
@@ -479,116 +480,184 @@ class Previsionnel(QDialog):
     def __init__(self, parent):
         super(Previsionnel, self).__init__(parent)
 
-        date_box = QGroupBox('Date', parent=self)
-        matin_box = QGroupBox('Petit déjeuner', parent=self)
-        midi_box = QGroupBox('Déjeuner', parent=self)
-        gouter_box = QGroupBox('Goûter', parent=self)
-        souper_box = QGroupBox('Souper', parent=self)
-        cinquieme_box = QGroupBox('5ième', parent=self)
+        self.calendar = QCalendarWidget()
+        self.layout = QVBoxLayout()
 
-class IngredientPrevisionnel():
-    def __init__(self):
-        self.quantity = QDoubleSpinBox()
+        self.add_repas_button = QPushButton('+')
+        self.add_plat_button = QPushButton('+')
+        self.add_ingredient_button = QPushButton('+')
 
-class RepasPrevisionnelForm(Form):
-    def __init__(self, parent=None, id_=None):
-        super(RepasPrevisionnelForm, self).__init__(parent)
-
-        model = parent.model
-
-        self.type = QComboBox()
-        self.refresh_type()
-        self.date = QCalendarWidget()
-        self.comment = QTextEdit()
-        self.comment.setFixedHeight(50)
-        self.add_field("Type:", self.type)
-        self.add_field("Date:", self.date)
-        self.add_field("Commentaire:", self.comment)
-
-        #ingredients 
-        ingredients_box = QGroupBox('', self)
-        self.ingredients_layout = QVBoxLayout()
-        self.ingredients = []
-        ingredients_box.setLayout(self.ingredients_layout)
-        self.add_field("Ingredients", ingredients_box)
-        self.add_output_button = QPushButton("Ajouter un ingrédient")
-        self.grid.addWidget(self.add_ingredient_button, 100, 0)
-        self.add_ingredient_button.clicked.connect(self.add_ingredient)
-        self.initUI()
-
-        if not id_:
-            if self.model.get_last_id('prev_repas'):
-                self.id = self.model.get_last_id('prev_repas') + 1
-            else:
-                self.id = 1
-            self.new_record = True
-            ingredient = Ingredient(self)
-            self.ingredients.append(ingredient)
-        else:
-            self.id = id_
-            self.new_record = False
-            self.populate(id_)
+        self.del_repas_button = QPushButton('-')
+        self.del_plat_button = QPushButton('-')
+        self.del_ingredient_button = QPushButton('-')
         
-        self.setWindowTitle("Repas Prévisionnel#"+str(self.id))
+        self.repas_prev_view, self.repas_box = self._create_view(
+                'Repas', [self.add_repas_button, self.del_repas_button])
+        self.plats_prev_view, self.plats_box = self._create_view(
+                'Plats', [self.add_plat_button, self.del_plat_button])
+        self.ingredients_prev_view, self.ingredients_box = self._create_view(
+                'Ingredients', [self.add_ingredient_button, self.del_ingredient_button])
 
-    def populate(self, id_):
-        repas = self.model.get_repas_by_id(id_)
-        self.type.setCurrentText(repas['type'])
-        self.date.setSelectedDate(QDate.fromString(repas['date'],'yyyy-MM-dd'))
-        self.comment.setPlainText(repas['comment'])
-        for output in repas['outputs']:
-            output_line = OutputLine(self, output)
-            self.outputs.append(output_line)
+        self.layout.addWidget(self.calendar)
+        self.layout.addWidget(self.repas_box)
+        self.layout.addWidget(self.plats_box)
+        self.layout.addWidget(self.ingredients_box)
+        self.setLayout(self.layout)
+        
+        self.repas_model = parent.model.repas_prev_model
+        self.plats_model = parent.model.plat_prev_model
+        self.ingredients_model = parent.model.ingredient_prev_model
+        
+        self.calendar.selectionChanged.connect(self.select_repas)
+        self.repas_prev_view.clicked.connect(self.select_plat)
+        self.plats_prev_view.clicked.connect(self.select_ingredient)
+        
+        self.repas_prev_view.setModel(self.repas_model)
+        self.repas_prev_view.setColumnHidden(0, True) # hide id
+        self.repas_prev_view.setColumnHidden(2, True) # hide date
+
+        self.plats_prev_view.setModel(self.plats_model)
+        self.plats_prev_view.setColumnHidden(0, True)  #hide id
+        self.plats_prev_view.setColumnHidden(2, True)  #hide repas_prev
+
+        self.ingredients_prev_view.setModel(self.ingredients_model)
+        self.ingredients_prev_view.setColumnHidden(0, True) #hide id
+        self.ingredients_prev_view.setColumnHidden(2, True) #hide dish parent
+        self.select_repas()
+        
+        self.add_repas_button.clicked.connect(self.add_repas)
+        self.add_plat_button.clicked.connect(self.add_plat)
+        self.add_ingredient_button.clicked.connect(self.add_ingredient)
+        self.del_repas_button.clicked.connect(self.del_repas)
+        self.del_plat_button.clicked.connect(self.del_plat)
+        self.del_ingredient_button.clicked.connect(self.del_ingredient)
+
+        self.exec_()
     
-    def get_all_used_products_ids(self):
-        result = []
-        for output in self.outputs:
-            if output.datas:
-                result.append(output.datas['product_id'])
-        return result
+    def _create_view(self, box_name, buttons):
+        """ Return a QTableView (with good relationnal delegate) and a box containing it """
+        view = QTableView()
+        view.setItemDelegate(QSqlRelationalDelegate(view))
+        groupbox = QGroupBox(box_name, parent=self)
+        layout = QVBoxLayout()
+        layout.addWidget(view)
+        button_layout = QHBoxLayout()
+        for button in buttons:
+            button_layout.addWidget(button)
+        layout.addLayout(button_layout)
+        groupbox.setLayout(layout)
+        return view, groupbox
+
+    def select_repas(self):
+        self.date = self.calendar.selectedDate()
+        self.repas_model.setFilter("date = '"+self.date.toString('yyyy-MM-dd')+"'")
+        self.repas_box.setTitle('Les repas du '+self.date.toString('dddd d MMM yyyy'))
+        self.select_plat()
+
+    def select_plat(self):
+        row = self.repas_prev_view.selectionModel().currentIndex().row()
+        id_ = self.repas_prev_view.model().record(row).value(0)
+        self.current_repas_id = id_
+        self.plats_model.setFilter("repas_prev_id = "+str(id_))
+        self.plats_box.setTitle('Les plats du repas sélectionné')
+        self.select_ingredient()
+
+    def select_ingredient(self):
+        row = self.plats_prev_view.selectionModel().currentIndex().row()
+        id_ = self.plats_prev_view.model().record(row).value(0)
+        self.current_plat_id = id_
+        self.ingredients_box.setTitle('Les ingrédients du plat sélectionné')
+        self.ingredients_model.setFilter(
+                "dishes_prev_id = "+str(id_))
+
+    def add_repas(self):
+        self.repas_model.add_row(date=self.date.toString('yyyy-MM-dd'))
     
-    def add_output(self):
-        if len(self.outputs) > 0:
-            if not self.outputs[-1].datas:
-                QMessageBox.warning(self.parent, "Erreur",\
-                    "Veuillez compléter la sortie de denrées.")
-                return False
-        output = OutputLine(self)
-        self.outputs.append(output)
+    def add_plat(self):
+        self.plats_model.add_row(repas_id=self.current_repas_id)
+
+    def add_ingredient(self):
+        self.ingredients_model.add_row(plat_id=self.current_plat_id)
+
+    def del_repas(self):
+        reponse = QMessageBox.question(
+                None, 'Sûr(e) ?', "Vous allez détruire définitivement ce repas"\
+                + "ainsi que tous les plats et ingrédients associés. Êtes-vous sûr(e) ?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+        if reponse == QMessageBox.Yes:
+            self.repas_model.del_row(id=self.current_repas_id)
+    
+    def del_plat(self):
+        reponse = QMessageBox.question(
+                None, 'Sûr(e) ?', "Vous allez détruire définitivement ce plat"\
+                + "ainsi que tous les ingrédients associés. Êtes-vous sûr(e) ?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+        if reponse:
+            self.plats_model.del_row(id=self.current_plat_id)
+
+    def del_ingredient(self):
+        reponse = QMessageBox.question(
+                None, 'Sûr(e) ?', "Vous allez détruire définitivement cet ingrédient."\
+                + " Êtes-vous sûr(e) ?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+        if reponse:
+            self.ingredients_model.del_row(id=None)
+
+class PlatPrevisionnel(QWidget):
+    """ not finished/used... """
+    def __init__(self, parent):
+        super(PlatPrevisionnel, self).__init__(parent)
+        self.model = parent.model.plat_prev_model
+        self.box = QGroupBox('Plat', self)
+
+        self.ingredients = []
+        self.type = QComboBox()
+        self.name = QLineEdit()
+        
+        vbox = QVBoxLayout(self)
+        vbox.addWidget(self.type)
+        vbox.addWidget(self.name)
+
+        self.box.setLayout(vbox)
+        layout = QBoxLayout()
+        layout.addWidget(self.box)
+        self.setLayout(layout)
+
+    def add_ingredient(self):
+        self.ingredients.append(IngredientPrevisionnel(self))
 
     def refresh_type(self):
-        self.type.clear()
-        for record in self.model.get_(['type'], 'type_repas'):
-            self.type.addItem(record['type'])
+        pass
 
-    def submit_datas(self):
-        type_id = self.model.get_(
-            ['id'],
-            'type_repas',
-            'type = \''+self.type.currentText()+'\''
-            )[0]['id']
-        datas = {
-            'id':str(self.id),
-            'type_id':str(type_id),
-            'date':self.date.selectedDate().toString('yyyy-MM-dd'),
-            'comment':self.comment.toPlainText()
-            }
-        if self.new_record:
-            for output in self.outputs:
-                if output.datas:
-                    self.model.add_output(output.datas)
-            submited = self.model.set_(datas, 'repas')
-        else:
-            self.model.delete('outputs', 'repas_id', str(self.id))
-            for output in self.outputs:
-                if output.datas:
-                    self.model.add_output(output.datas)
-            submited = self.model.update(datas, 'repas', 'id', str(self.id))
-        if submited:
-            self.parent.model.qt_table_reserve.select()
-            self.parent.model.qt_table_repas.select()
-            self.parent.model.qt_table_outputs.select()
-            self.close()
-        else:
-            QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
+class IngredientPrevisionnel(QWidget):
+    """ not finished/used... """
+    def __init__(self, parent):
+        super(IngredientPrevisionnel, self).__init__(parent)
+        print(parent)
+        self.model = parent.model
+        self.box = QGroupBox('Ingredient', self)
 
+        self.name = QComboBox()
+        self.quantity = QDoubleSpinBox()
+        self.unit = QComboBox()
+        
+        self.name.setModel(self.model.rel_name)
+        self.name.setModelColumn(self.model.rel_type.fieldIndex('name'))
+        
+        vbox = QVBoxLayout(self)
+        vbox.addWidget(self.quantity)
+        vbox.addWidget(self.unit)
+
+        self.box.setLayout(vbox)
+        layout = QVBoxLayout()
+        layout.addWidget(self.box)
+        self.setLayout(layout)
+
+        mapper = QDataWidgetMapper(self)
+        mapper.setModel(self.model)
+        mapper.addMapping(self.name, self.model.fieldIndex("product_id"))
+        mapper.addMapping(self.quantity, self.model.fieldIndex("quantity"))
+        mapper.addMapping(self.unit, self.model.fieldIndex("unit"))
