@@ -67,6 +67,12 @@ class Model(QSqlQueryModel):
         (SELECT id FROM products WHERE name = '"+str(product)+"')")
         return self._query_to_lists(4)
 
+    def get_products_names_in_reserve(self):
+        self.exec_(
+            "SELECT products.name FROM reserve\
+            INNER JOIN products ON products.id = reserve.product_id")
+        return self._query_to_list()
+
     def get_all_products_names(self):
         """ return all products names in a list """
         self.exec_("SELECT name FROM products")
@@ -217,8 +223,13 @@ class Model(QSqlQueryModel):
         self.exec_("UPDATE reserve SET quantity = "+str(new_quantity)\
         +" WHERE id = "+str(datas['product_id']))
 
-    def add_product(self, product):
-        self.exec_("INSERT INTO products (name) VALUES ('"+product+"')")
+    def add_product(self, product, unit_id):
+        self.query.prepare(
+            "INSERT INTO products (name, unit_id) VALUES (:name, :unit_id)")
+        self.query.bindValue(':name', product)
+        self.query.bindValue(':unit_id', unit_id)
+        res = self.exec_()
+        return res, self.query.lastError().databaseText()
 
     def add_reserve(self, datas):
         # if the product name is not in products table, we add it. 

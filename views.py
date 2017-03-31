@@ -39,9 +39,47 @@ class Form(QDialog):
         self.quitButton.clicked.connect(self.reject)
         self.show()
 
-class ProductForm(Form):
+class ProductForm(QDialog):
     def __init__(self, parent=None):
         super(ProductForm, self).__init__(parent)
+        self.model = parent.model
+        self.name = QLineEdit()
+        self.units = QComboBox()
+        self.units.addItems(['unités','Kilogrammes', 'Litres'])
+        self.ok_button = QPushButton('OK')
+        self.cancel_button = QPushButton('Annuler')
+
+        layout = QFormLayout()
+        layout.addRow('Nom du produit', self.name)
+        layout.addRow('Unité de mesure', self.units)
+        g_layout = QVBoxLayout()
+        g_layout.addLayout(layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        g_layout.addLayout(button_layout)
+        self.setLayout(g_layout)
+        
+        self.ok_button.clicked.connect(self.record)
+        self.cancel_button.clicked.connect(self.reject)
+        self.exec_()
+    def record(self):
+        if self.name != '':
+            res, err = self.model.add_product(
+                self.name.text(), self.units.currentIndex() + 1)
+            if res:
+                self.accept()
+            if not res:
+                if err == 'UNIQUE constraint failed: products.name':
+                    QMessageBox.warning(
+                            self, "Erreur", "Ce produit existe déjà")
+                else:
+                    QMessageBox.warning(
+                            self, "Erreur", "Le produit n'a pas pu être enregistré")
+
+class InputForm(Form):
+    def __init__(self, parent=None):
+        super(InputForm, self).__init__(parent)
 
         self.setWindowTitle("Denrées")
         self.all_products_names = parent.model.get_all_products_names()
@@ -303,6 +341,7 @@ class OutputLine():
         self.line_widgets.addWidget(self.product_variant)
         self.line_widgets.addWidget(self.quantity)
         self.line_widgets.addWidget(self.suppr_button)
+
         self.produit.currentIndexChanged.connect(self.select_product_name)
         self.product_variant.currentIndexChanged.connect(self.select_variant)
         self.quantity.valueChanged.connect(self.set_datas)
@@ -325,44 +364,9 @@ class OutputLine():
            )
         self.quantity.setValue(datas['quantity'])
 
-    def select_product_name(self):
-        self.product_variant.setEnabled(False) #by default
-        self.product_variant.clear()
-        self.datas = False
-        stock = self.parent.model.get_product_datas(self.produit.currentText())
-        if len(stock) >= 1:
-            #struct: {combo_box_index:[id,quantity,prix,fournisseur]}
-            self.variants_indexes = {}
-            stock = [x for x in stock #filter already used\
-                if x[0] not in self.parent.get_all_used_products_ids()]
-            if len(stock) == 0:
-                QMessageBox.warning(self.parent, "Erreur",\
-                "Ce produit est déjà utilisé")
-                return False
-            else:
-                stock = [x for x in stock if x[1] > 0] # filter 0 quantity
-                if len(stock) == 0:
-                    QMessageBox.warning(self.parent, "Erreur",\
-                    "Ce produit est épuisé.")
-                    return False
-            for i, line in enumerate(stock):
-                self.variants_indexes[i] = line
-                self.product_variant.addItem(
-                    self.variant_combo_name(line[2], line[3])
-                    )
-            if len(self.variants_indexes) >= 1:
-                print("product_variant enabled")
-                self.product_variant.setEnabled(True)
-        elif self.produit.currentText() != "":
-            QMessageBox.warning(self.parent, "Erreur",\
-            "Le produit n'est pas dans la réserve")
-
-    def variant_combo_name(self, price, supplier):
-        return str(price)+"€ à "+ supplier
-
     def select_variant(self, index):
         if index != -1:
-            self.quantity.setMaximum(self.variants_indexes[index][1])
+            self.quantity.setMaximum()
             self.quantity.setEnabled(True)
 
     def set_datas(self):

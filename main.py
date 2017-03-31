@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
         addFormAction = self.add_action('&Denrées', self.addDatas)
         addFournisseurAction = self.add_action('&Fournisseur', self.add_fournisseur)
         addRepasAction = self.add_action('Repas', self.add_repas)
+        addProductAction = self.add_action('Produit', self.add_product)
         editRepasAction = self.add_action('Repas', self.edit_repas)
         setInfosAction = self.add_action('Editer les infos du centre', self.set_infos)
         ViewRapportAction = self.add_action('Rapport', self.viewRapport)
@@ -47,6 +48,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(ViewRapportAction)
         addMenu = menubar.addMenu('&Ajouter')
         addMenu.addAction(addFormAction)
+        addMenu.addAction(addProductAction)
         addMenu.addAction(addFournisseurAction)
         addMenu.addAction(addRepasAction)
 
@@ -149,7 +151,10 @@ class MainWindow(QMainWindow):
         InfosCentreDialog(self)
 
     def addDatas(self):
-        self.form = ProductForm(self)
+        self.form = InputForm(self)
+
+    def add_product(self):
+        self.product_form = ProductForm(self)
     
     def add_repas(self):
         self.repas_window = RepasForm(self)

@@ -107,8 +107,10 @@ class Repas():
                 
                     product_id = self._get_product_id(ingr)
                     if not product_id:
-                        self.query.prepare('INSERT INTO products(name) VALUES (:name)')
+                        self.query.prepare(
+                            'INSERT INTO products(name, unit_id) VALUES (:name, :unit_id)')
                         self.query.bindValue(':name', ingr)
+                        self.query.bindValue(':unit_id', unit_id)
                         self.query.exec_()
                         product_id = self._get_product_id(ingr)
                     self.query.prepare('INSERT INTO ingredients_prev\
@@ -117,7 +119,6 @@ class Repas():
                     self.query.bindValue(':product_id', product_id)
                     self.query.bindValue(':dishes_prev_id', plat_id)
                     self.query.bindValue(':quantity', total_quantity)
-                    self.query.bindValue(':unit_id', unit_id)
                     self.query.exec_()
 
     def _get_product_id(self, name):
