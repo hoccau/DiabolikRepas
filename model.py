@@ -77,6 +77,14 @@ class Model(QSqlQueryModel):
         while self.query.next():
             return self.query.value(0)
 
+    def get_reserve_by_products(self, product_name):
+        self.exec_(
+            "SELECT reserve.id, reserve.quantity FROM reserve\
+	    INNER JOIN products ON products.id = reserve.product_id\
+	    WHERE products.name = '"+product_name+"'\
+	    AND reserve.quantity > 0")
+        return self._query_to_lists(2)
+
     def get_(self, values=[], table=None, condition=None, distinct=False):
         sql_values = ",".join(values)
         if condition == None:
@@ -195,6 +203,7 @@ class Model(QSqlQueryModel):
             return req
 
     def add_output(self, datas):
+        print('outputs datas', datas)
         req = "INSERT INTO outputs ('quantity', 'repas_id', 'stock_id')\
         VALUES ("+\
         ','.join([
@@ -244,6 +253,20 @@ class Model(QSqlQueryModel):
         ' WHERE '+qfilter_key+" = '"+qfilter_value+"'")
         print('update succuss', success)
         return success
+
+    def auto_fill_query(self, date, type_):
+        self.exec_(
+                "SELECT products.name,\
+                ingredients_prev.quantity,\
+                units.unit FROM ingredients_prev\
+                INNER JOIN units on units.id = ingredients_prev.unit_id\
+                INNER JOIN products ON products.id = ingredients_prev.product_id\
+                INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
+                INNER JOIN repas_prev on repas_prev.id = dishes_prev.repas_prev_id\
+                WHERE repas_prev.date = '"+date+"'\
+                AND repas_prev.type_id = \
+                (SELECT id from type_repas WHERE type_repas.type = '"+type_+"')")
+        return self._query_to_lists(3)
     
     def delete(self, table, qfilter_key, qfilter_value):
         self.exec_('DELETE FROM '+table+' WHERE '+qfilter_key+' = '+"'"+qfilter_value+"'")
@@ -417,9 +440,6 @@ class PrevisionnelModel(QStandardItemModel):
     """ Not used yes. Maybe for creating read-only views like QColumnView """
     def __init__(self):
         super(PrevisionnelModel, self).__init__()
-        #self.setColumnCount(5)
-        self.root = self.invisibleRootItem()
-
         query_all = QSqlQuery(
             "SELECT repas_prev.name as repas, repas_prev.date, dishes_prev.name as plat, products.name as ingredient, ingredients_prev.quantity, units.unit FROM repas_prev\
             INNER JOIN dishes_prev ON dishes_prev.repas_prev_id = repas_prev.id\
@@ -427,38 +447,48 @@ class PrevisionnelModel(QStandardItemModel):
             INNER JOIN products ON ingredients_prev.product_id = products.id\
             INNER JOIN units ON ingredients_prev.unit_id = units.id\
             WHERE repas_prev.date = '2017-04-01'")
+        self.query_for_day('2017-31-03')
 
     def query_for_day(self, date):
+        self.clear()
+        self.setColumnCount(2)
+        self.root = self.invisibleRootItem()
         query = QSqlQuery(
             "SELECT repas_prev.id, repas_prev.name, type_repas.type FROM repas_prev\
             INNER JOIN type_repas ON type_repas.id = repas_prev.type_id\
             WHERE repas_prev.date = '"+date+"'")
         repas_items = {}
         while query.next():
-            repas_items[query.value(0)] = [
-                QStandardItem(query.value(1)),
-                QStandardItem(query.value(2))]
+            repas_items[query.value(0)] =\
+                QStandardItem(query.value(1)+' ('+query.value(2)+')')
         for repas_id, repas_item in repas_items.items():
             self.root.appendRow(repas_item) # ......
-            query = QSqlQuery("SELECT id, name as plat FROM dishes_prev\
-            WHERE repas_prev_id = "+str(repas_id))
+            query = QSqlQuery(
+                "SELECT dishes_prev.id, name as plat, dishes_types.type\
+                FROM dishes_prev\
+                INNER JOIN dishes_types ON dishes_prev.type_id = dishes_types.id\
+                WHERE repas_prev_id = "+str(repas_id))
             plats_items = {}
             while query.next():
-                plats_items[query.value(0)] = QStandardItem(query.value(1))
+                plats_items[query.value(0)] =\
+                        QStandardItem(query.value(1)+' ('+query.value(2)+')')
             for plat_id, plat_item in plats_items.items():
-                repas_items[repas_id][0].appendRow(plat_item)
+                repas_items[repas_id].appendRow(plat_item)
                 query = QSqlQuery(
                     "SELECT ingredients_prev.id,\
                     products.name as ingredient,\
-                    ingredients_prev.quantity\
+                    ingredients_prev.quantity,\
+                    units.unit\
                     FROM ingredients_prev\
                     INNER JOIN products ON products.id = ingredients_prev.product_id\
+                    INNER JOIN units ON units.id = ingredients_prev.unit_id\
                     WHERE dishes_prev_id = "+str(plat_id))
+                print(query.lastError().text())
                 ingredients_items = {}
                 while query.next():
-                    ingredients_items[query.value(0)] = [
-                        QStandardItem(query.value(1)),
-                        QStandardItem(query.value(2))]
+                    ingredients_items[query.value(0)] =\
+                        QStandardItem(query.value(1)\
+                        +' ('+str(round(query.value(2),2))+' '+query.value(3)+')')
                 for ingr_id, ingr_item in ingredients_items.items():
                     plats_items[plat_id].appendRow(ingr_item)
         

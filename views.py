@@ -82,7 +82,8 @@ class ProductForm(Form):
         self.initUI()
 
     def verif_product(self):
-        if self.product.text not in self.all_products_names:
+        if self.product.text() not in self.all_products_names and\
+                self.product.text() != '':
             reponse = QMessageBox.question(
                     None, 'Produit inexistant',
                     "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
@@ -160,6 +161,7 @@ class ProductForm(Form):
             self.fournisseur.addItem(fournisseur)
 
 class RepasForm(Form):
+    """ Form to add or modify a effective repas (with product outputs) """
     def __init__(self, parent=None, id_=None):
         super(RepasForm, self).__init__(parent)
 
@@ -170,10 +172,12 @@ class RepasForm(Form):
         self.type = QComboBox()
         self.refresh_type()
         self.date = QCalendarWidget()
+        self.auto_fill_button = QPushButton('Importer le prévisionnel')
         self.comment = QTextEdit()
         self.comment.setFixedHeight(50)
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
+        self.add_field('', self.auto_fill_button)
         self.add_field("Commentaire:", self.comment)
 
         #outputs 
@@ -184,7 +188,9 @@ class RepasForm(Form):
         self.add_field("sorties", output_box)
         self.add_output_button = QPushButton("Ajouter une sortie")
         self.grid.addWidget(self.add_output_button, 100, 0)
+
         self.add_output_button.clicked.connect(self.add_output)
+        self.auto_fill_button.clicked.connect(self.auto_fill)
         self.initUI()
 
         if not id_:
@@ -201,6 +207,15 @@ class RepasForm(Form):
             self.populate(id_)
         
         self.setWindowTitle("Repas #"+str(self.id))
+
+    def auto_fill(self):
+        date = self.date.selectedDate()
+        type_ = self.type.currentText()
+        ingrs = self.model.auto_fill_query(date.toString('yyyy-MM-dd'), type_)
+        print(ingrs)
+        for prev_ingr in ingrs:
+            reserve = self.model.get_reserve_by_products(prev_ingr[0])
+            total = 0
 
     def populate(self, id_):
         repas = self.model.get_repas_by_id(id_)
@@ -248,10 +263,11 @@ class RepasForm(Form):
             'comment':self.comment.toPlainText()
             }
         if self.new_record:
-            for output in self.outputs:
-                if output.datas:
-                    self.model.add_output(output.datas)
             submited = self.model.set_(datas, 'repas')
+            if submited:
+                for output in self.outputs:
+                    if output.datas:
+                        self.model.add_output(output.datas)
         else:
             self.model.delete('outputs', 'repas_id', str(self.id))
             for output in self.outputs:
@@ -676,3 +692,25 @@ class IngredientPrevisionnel(QWidget):
         mapper.addMapping(self.name, self.model.fieldIndex("product_id"))
         mapper.addMapping(self.quantity, self.model.fieldIndex("quantity"))
         mapper.addMapping(self.unit, self.model.fieldIndex("unit"))
+
+class PrevisionnelColumnView(QGroupBox):
+    def __init__(self, parent):
+        super(PrevisionnelColumnView, self).__init__(parent)
+
+        self.model = parent.model.previsionnel_model
+        self.calendar = QCalendarWidget()
+        self.column_view = QColumnView()
+        self.column_view.setModel(self.model)
+        self.column_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.calendar)
+        layout.addWidget(self.column_view)
+        self.setLayout(layout)
+
+        self.calendar.selectionChanged.connect(self.select_repas)
+        self.select_repas()
+    
+    def select_repas(self):
+        self.date = self.calendar.selectedDate()
+        self.model.query_for_day(self.date.toString('yyyy-MM-dd'))

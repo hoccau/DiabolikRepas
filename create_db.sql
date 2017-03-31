@@ -22,21 +22,26 @@ CREATE UNIQUE INDEX idx_NOM ON fournisseurs (NOM);
 
 CREATE TABLE products(
 id integer PRIMARY KEY,
-name VARCHAR(20) NOT NULL
+name VARCHAR(20) NOT NULL,
+unit_id integer NOT NULL,
+FOREIGN KEY (unit_id) REFERENCES units(id)
 );
 CREATE UNIQUE INDEX idx_name ON products (name);
 
-CREATE TABLE reserve(
+CREATE TABLE inputs(
 id integer PRIMARY KEY,
 Fournisseur_id integer NOT NULL,
 Date varchar(10),
 product_id INTEGER NOT NULL,
 Prix real NOT NULL,
-start_quantity real NOT NULL,
 quantity real NOT NULL,
-unit_id integer NOT NULL,
-FOREIGN KEY (unit_id) REFERENCES units(id)
 FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)
+FOREIGN KEY (product_id) REFERENCES products(id)
+);
+CREATE TABLE reserve(
+id integer PRIMARY KEY,
+product_id INTEGER NOT NULL,
+quantity real NOT NULL,
 FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
