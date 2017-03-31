@@ -40,10 +40,11 @@ class Form(QDialog):
         self.show()
 
 class ProductForm(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, name=""):
         super(ProductForm, self).__init__(parent)
         self.model = parent.model
         self.name = QLineEdit()
+        self.name.setText(name)
         self.units = QComboBox()
         self.units.addItems(['unités','Kilogrammes', 'Litres'])
         self.ok_button = QPushButton('OK')
@@ -95,13 +96,13 @@ class InputForm(Form):
         regexp = QRegExp('\d[\d\,\.]+')
         self.price.setValidator(QRegExpValidator(regexp))
         self.quantity = QLineEdit()
-        self.unit = QComboBox()
+        self.unit = QLabel()
         self.date = QCalendarWidget()
 
         self.add_field("Fournisseur:", self.fournisseur)
         self.grid.addWidget(add_fournisseur, self.field_index, 2)
         self.add_field("Date:", self.date)
-        self.add_field("Désignation", self.product)
+        self.add_field("Produit", self.product)
         self.add_field("quantité:", self.quantity)
         self.grid.addWidget(self.unit, self.field_index, 2)
         self.unit_label = QLabel("par pièce")
@@ -109,12 +110,10 @@ class InputForm(Form):
         self.grid.addWidget(self.unit_label, self.field_index, 2)
         self.total = QLabel("")
         self.add_field("Prix total:", self.total)
-        self.refresh_unit()
 
         self.product.editingFinished.connect(self.verif_product)
         self.price.editingFinished.connect(self.refresh_total)
-        self.quantity.editingFinished.connect(self.refresh_total)
-        self.unit.currentIndexChanged.connect(self.refresh_unit_label)
+        self.quantity.textChanged.connect(self.refresh_total)
         add_fournisseur.clicked.connect(self.add_fournisseur)
         
         self.initUI()
@@ -129,10 +128,16 @@ class InputForm(Form):
                     QMessageBox.No)
             if reponse == QMessageBox.No:
                 self.product.clear()
+                return False
             if reponse == QMessageBox.Yes:
-                self.model.add_product(self.product.text())
+                ProductForm(self, self.product.text())
                 self.all_products_names = self.parent.model.get_all_products_names()
                 self.product_completer.setModel(QStringListModel(self.all_products_names))
+        unit = self.model.get_product_unit(self.product.text())
+        self.product_id = self.model.get_product_id_by_name(self.product.text())
+        self.refresh_unit_label(unit)
+        self.unit.setText(unit)
+        return True
 
     def add_fournisseur(self):
         f = self.parent.add_fournisseur()
@@ -146,24 +151,19 @@ class InputForm(Form):
             total = round(price * quantity, 2)
             self.total.setText(str(total))
 
-    def refresh_unit_label(self):
+    def refresh_unit_label(self, unit):
         matching = {
            'unités':'par pièce',
            'Kilogrammes':'le kilo',
            'Litres':'le litre'
            }
-        unit = matching[self.unit.currentText()]
+        unit = matching[unit]
         self.unit_label.setText(unit)
 
     def clear_all(self):
         self.quantity.clear()
         self.product.clear()
         self.price.clear()
-
-    def refresh_unit(self):
-        self.unit.clear()
-        for unit in self.model.get_(['unit'], 'units'):
-            self.unit.addItem(unit['unit'])
 
     def submit_datas(self):
         if self.fournisseur.currentText() == "":
@@ -178,19 +178,12 @@ class InputForm(Form):
             record = {}
             #below : can be improved for faster ?
             f_id = self.model.get_fournisseurs()[self.fournisseur.currentText()]
-            unit_id = self.model.get_(
-                ['id'],
-                'units',
-                condition='unit = ' + "'" + self.unit.currentText() + "'"
-                )[0]['id']
             record["fournisseur_id"] = f_id
             record["date"] = self.date.selectedDate().toString('yyyy-MM-dd')
-            record["product"] = self.product.text().lower()
-            record["price"] = self.price.text()
+            record["product_id"] = self.product_id
+            record["prix"] = self.price.text()
             record["quantity"] = self.quantity.text()
-            record["unit_id"] = unit_id
-            self.model.add_reserve(record)
-            self.model.qt_table_reserve.select()
+            self.model.add_input(record)
             self.clear_all()
 
     def refresh_fournisseurs(self):
@@ -342,7 +335,7 @@ class OutputLine():
         self.line_widgets.addWidget(self.quantity)
         self.line_widgets.addWidget(self.suppr_button)
 
-        self.produit.currentIndexChanged.connect(self.select_product_name)
+        #self.produit.currentIndexChanged.connect(self.select_product_name)
         self.product_variant.currentIndexChanged.connect(self.select_variant)
         self.quantity.valueChanged.connect(self.set_datas)
         self.suppr_button.clicked.connect(self.clear_layout)

@@ -46,7 +46,7 @@ class Model(QSqlQueryModel):
 
     def _create_models(self):
         self.query = QSqlQuery()
-        self.qt_table_reserve = ReserveModel(self, self.db)
+        self.qt_table_reserve = ReserveModel()
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_repas = RepasModel(self, self.db)
         self.qt_table_outputs = OutputsModel()
@@ -60,36 +60,21 @@ class Model(QSqlQueryModel):
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
         return self._query_to_dic()
 
-    def get_product_datas(self, product):
-        self.exec_("SELECT reserve.id, quantity, prix, fournisseurs.nom\
-        FROM reserve INNER JOIN fournisseurs on fournisseurs.id = reserve.Fournisseur_id\
-        WHERE product_id = \
-        (SELECT id FROM products WHERE name = '"+str(product)+"')")
-        return self._query_to_lists(4)
-
-    def get_products_names_in_reserve(self):
-        self.exec_(
-            "SELECT products.name FROM reserve\
-            INNER JOIN products ON products.id = reserve.product_id")
-        return self._query_to_list()
-
     def get_all_products_names(self):
         """ return all products names in a list """
         self.exec_("SELECT name FROM products")
         return self._query_to_list()
 
     def get_quantity(self, product_id):
-        self.exec_("SELECT quantity FROM reserve WHERE id = "+str(product_id))
+        self.exec_(
+            "SELECT sum(inputs.quantity) - total(outputs.quantity) as quantity\
+            FROM inputs\
+            INNER JOIN products ON inputs.product_id = products.id\
+            LEFT JOIN outputs ON outputs.product_id = products.id\
+            WHERE products.id = "+str(product_id)+"\
+            GROUP BY products.id")
         while self.query.next():
             return self.query.value(0)
-
-    def get_reserve_by_products(self, product_name):
-        self.exec_(
-            "SELECT reserve.id, reserve.quantity FROM reserve\
-	    INNER JOIN products ON products.id = reserve.product_id\
-	    WHERE products.name = '"+product_name+"'\
-	    AND reserve.quantity > 0")
-        return self._query_to_lists(2)
 
     def get_(self, values=[], table=None, condition=None, distinct=False):
         sql_values = ",".join(values)
@@ -133,10 +118,9 @@ class Model(QSqlQueryModel):
             datas['type'] = self.query.value(1)
             datas['comment'] = self.query.value(2)
         self.exec_(
-            "SELECT outputs.id, outputs.quantity, outputs.stock_id, products.name\
+            "SELECT outputs.id, outputs.quantity, outputs.product_id, products.name\
             FROM outputs\
-            INNER JOIN reserve ON outputs.stock_id = reserve.id\
-            INNER JOIN products ON reserve.product_id = products.id\
+            INNER JOIN products ON outputs.product_id = products.id\
             WHERE outputs.repas_id = "+str(id_)
                 )
         datas['outputs'] = []
@@ -149,14 +133,14 @@ class Model(QSqlQueryModel):
                 })
         return datas
 
+    def get_avg_price(self, product_id):
+        self.exec_("SELECT AVG(prix) FROM inputs WHERE product_id = "+str(product_id))
+        if self.query.first():
+            return self.query.value(0)
+
     def get_price_by_repas(self, repas_id):
-        self.exec_("SELECT prix, outputs.quantity FROM reserve\
-        INNER JOIN outputs ON outputs.stock_id = reserve.id\
-        WHERE outputs.repas_id = "+str(repas_id))
-        price = 0
-        while self.query.next():
-            price += self.query.value(0) * self.query.value(1)
-        return price
+        #TODO: this function is now a little bit more complicated
+        pass
 
     def get_price_by_day(self, date):
         self.exec_("SELECT prix, outputs.quantity FROM reserve\
@@ -176,9 +160,16 @@ class Model(QSqlQueryModel):
         self.exec_("SELECT id FROM products WHERE name = '"+name+"'")
         while self.query.next():
             return self.query.value(0)
+
+    def get_product_unit(self, product_name):
+        self.exec_("SELECT units.unit FROM products\
+            INNER JOIN units ON units.id = products.unit_id\
+            WHERE products.name = '"+product_name+"'")
+        if self.query.first():
+            return self.query.value(0)
     
     def get_total(self):
-        self.query.exec_("SELECT sum(prix) FROM reserve")
+        self.exec_("SELECT SUM(quantity * prix) FROM inputs")
         while self.query.next():
             return self.query.value(0)
 
@@ -220,8 +211,6 @@ class Model(QSqlQueryModel):
         + ")"
         self.exec_(req)
         new_quantity = self.get_quantity(datas['product_id']) - datas['quantity']
-        self.exec_("UPDATE reserve SET quantity = "+str(new_quantity)\
-        +" WHERE id = "+str(datas['product_id']))
 
     def add_product(self, product, unit_id):
         self.query.prepare(
@@ -231,24 +220,13 @@ class Model(QSqlQueryModel):
         res = self.exec_()
         return res, self.query.lastError().databaseText()
 
-    def add_reserve(self, datas):
-        # if the product name is not in products table, we add it. 
-        product_id = self.get_product_id_by_name(datas["product"])
-        if not product_id:
-            self.exec_("INSERT INTO products (name) VALUES ('"+datas["product"]+"')")
-            product_id = self.get_product_id_by_name(datas['product'])
-        # add it in reserve
-        query = "INSERT INTO reserve (Fournisseur_id,  Date, product_id, Prix, start_quantity, quantity, unit_id)"
-        query += " VALUES("\
-        +str(datas["fournisseur_id"])+",'"\
-        +str(datas["date"])+"',"\
-        +str(product_id)+","\
-        +str(datas["price"])+","\
-        +str(datas["quantity"])+','\
-        +str(datas["quantity"])+','\
-        +str(datas["unit_id"])\
-        +")"
-        self.exec_(query)
+    def add_input(self, datas={}):
+        self.query.prepare(
+            "INSERT INTO inputs (fournisseur_id, date, product_id, prix, quantity)\
+            VALUES (:fournisseur_id, :date, :product_id, :prix, :quantity)")
+        for k, v in datas.items():
+            self.query.bindValue(':'+k, v)
+        self.exec_()
 
     def add_repas(self, datas):
         req = self.query.exec_("INSERT INTO repas(date, type) VALUES("\
@@ -317,23 +295,18 @@ class InfosModel(QSqlTableModel):
         self.setTable("infos")
         self.select()
 
-class ReserveModel(QSqlRelationalTableModel):
-    def __init__(self, parent, db):
-        super(ReserveModel, self).__init__(parent, db)
-
-        self.setTable('reserve')
-        rel1 = QSqlRelation("fournisseurs","id","NOM")
-        rel2 = QSqlRelation("units","id","unit")
-        rel3 = QSqlRelation("products","id","name")
-        self.setRelation(1, rel1)
-        self.setRelation(3, rel3)
-        self.setRelation(7, rel2)
-        self.select()
-        self.setHeaderData(0, Qt.Horizontal, "Identification")
-        self.setHeaderData(1, Qt.Horizontal, "Fournisseur")
-        self.setHeaderData(3, Qt.Horizontal, "Produit")
-        self.setHeaderData(5, Qt.Horizontal, "Quantité\nde départ")
-        self.setHeaderData(6, Qt.Horizontal, "Quantité\n actuelle")
+class ReserveModel(QSqlQueryModel):
+    def __init__(self):
+        super(ReserveModel, self).__init__()
+        self.setQuery(
+            "SELECT products.name,\
+            sum(inputs.quantity) - total(outputs.quantity) as quantity,\
+            sum(inputs.quantity * inputs.prix) as prix_total ,\
+            AVG(inputs.Prix) AS prix_moyen\
+            FROM inputs\
+            INNER JOIN products ON inputs.product_id = products.id\
+            LEFT JOIN outputs ON outputs.product_id = products.id\
+            GROUP BY products.id")
 
 class RepasModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
@@ -441,8 +414,7 @@ class OutputsModel(QSqlQueryModel):
         outputs.id, products.name, outputs.quantity, repas.date, repas.id AS repas_id\
         FROM outputs\
         INNER JOIN repas ON outputs.repas_id = repas.id\
-        INNER JOIN reserve ON outputs.stock_id = reserve.id\
-        INNER JOIN products ON reserve.product_id = products.id\
+        INNER JOIN products ON outputs.product_id = products.id\
         ")
         self.setHeaderData(0, Qt.Horizontal, "Name")
         self.setHeaderData(1, Qt.Horizontal, "quantité")

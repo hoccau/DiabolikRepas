@@ -38,12 +38,6 @@ quantity real NOT NULL,
 FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)
 FOREIGN KEY (product_id) REFERENCES products(id)
 );
-CREATE TABLE reserve(
-id integer PRIMARY KEY,
-product_id INTEGER NOT NULL,
-quantity real NOT NULL,
-FOREIGN KEY (product_id) REFERENCES products(id)
-);
 
 CREATE TABLE units(
 id integer PRIMARY KEY,
@@ -65,8 +59,6 @@ id integer PRIMARY KEY,
 product_id integer NOT NULL,
 dishes_prev_id integer NOT NULL,
 quantity real NOT NULL,
-unit_id integer NOT NULL,
-FOREIGN KEY (unit_id) REFERENCES units(id)
 FOREIGN KEY (product_id) REFERENCES products(id)
 FOREIGN KEY (dishes_prev_id) REFERENCES dishes_prev(id) ON DELETE CASCADE
 );
@@ -112,9 +104,9 @@ CREATE TABLE outputs(
 id integer PRIMARY KEY,
 quantity integer,
 repas_id integer,
-stock_id integer,
+product_id integer,
 FOREIGN KEY (repas_id) REFERENCES repas(id)
-FOREIGN KEY (stock_id) REFERENCES reserve(id)
+FOREIGN KEY (product_id) REFERENCES product(id)
 );
 
 CREATE TABLE dishes(
