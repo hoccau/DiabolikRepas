@@ -31,9 +31,9 @@ class Model(QSqlQueryModel):
         else:
             req = self.query.exec_()
         if DEBUG_SQL:
-            print(req,":",request)
+            print(req, ':', self.query.lastQuery())
             if req == False:
-                print(self.query.lastError().databaseText())
+                print('SQL ERROR:', self.query.lastError().text())
         return req
 
     def connect_db(self, db_name):
@@ -139,18 +139,20 @@ class Model(QSqlQueryModel):
             return self.query.value(0)
 
     def get_price_by_repas(self, repas_id):
-        #TODO: this function is now a little bit more complicated
-        pass
+        self.exec_(
+            "SELECT\
+            outputs.quantity * AVG(inputs.prix) as prix_total\
+            FROM outputs\
+            INNER JOIN products ON products.id = outputs.product_id\
+            INNER JOIN inputs ON inputs.product_id = products.id\
+            WHERE outputs.repas_id = "+str(repas_id)+"\
+            GROUP BY products.id")
+        return sum(self._query_to_list())
 
     def get_price_by_day(self, date):
-        self.exec_("SELECT prix, outputs.quantity FROM reserve\
-        INNER JOIN outputs ON outputs.stock_id = reserve.id\
-        INNER JOIN repas ON repas.id = outputs.repas_id\
-        WHERE repas.date = '"+str(date)+"'")
-        price = 0
-        while self.query.next():
-            price += self.query.value(0) * self.query.value(1)
-        return price
+        self.exec_("SELECT id FROM repas WHERE date = '"+date+"'")
+        repas_ids = self._query_to_list()
+        return sum([self.get_price_by_repas(id_) for id_ in repas_ids])
 
     def get_dates_repas(self):
         self.exec_("SELECT DISTINCT date FROM repas")
@@ -178,7 +180,8 @@ class Model(QSqlQueryModel):
         while self.query.next():
             return self.query.value(0)
 
-    def set_(self, dic={}, table=None):
+    def set_(self, dic, table):
+        print(dic)
         self.query.prepare(
             "INSERT INTO "+table+"("+",".join(dic.keys())+")\
             VALUES ("\
@@ -186,7 +189,7 @@ class Model(QSqlQueryModel):
             )
         for k, v in dic.items():
             self.query.bindValue(':'+k, v)
-        q = self.query.exec_()
+        q = self.exec_()
         return q
 
     def add_fournisseur(self, name):
@@ -201,16 +204,9 @@ class Model(QSqlQueryModel):
 
     def add_output(self, datas):
         print('outputs datas', datas)
-        req = "INSERT INTO outputs ('quantity', 'repas_id', 'stock_id')\
-        VALUES ("+\
-        ','.join([
-            str(datas['quantity']),
-            str(datas['repas_id']),
-            str(datas['product_id'])
-            ])\
-        + ")"
-        self.exec_(req)
-        new_quantity = self.get_quantity(datas['product_id']) - datas['quantity']
+        self.query.prepare("INSERT INTO outputs(quantity, repas_id, product_id)"\
+            +" VALUES("+str(datas['quantity'])+', '+str(datas['repas_id'])+', '+\
+            str(datas['product_id'])+")")
 
     def add_product(self, product, unit_id):
         self.query.prepare(
@@ -229,10 +225,10 @@ class Model(QSqlQueryModel):
         self.exec_()
 
     def add_repas(self, datas):
-        req = self.query.exec_("INSERT INTO repas(date, type) VALUES("\
-        +datas['date']+","+datas['type']+')')
-        if req == False:
-            print(self.query.lastError().databaseText())
+        req = self.exec_("INSERT INTO repas(date, type_id, comment) VALUES("\
+            +"'"+datas['date']+"'"+', '+datas['type_id']+', '\
+            +"'"+datas['comment']+"')")
+        return req
 
     def update(self, datas={}, table='', qfilter_key=None, qfilter_value=None):
         l = []
@@ -298,6 +294,9 @@ class InfosModel(QSqlTableModel):
 class ReserveModel(QSqlQueryModel):
     def __init__(self):
         super(ReserveModel, self).__init__()
+        self.select()
+
+    def select(self):
         self.setQuery(
             "SELECT products.name,\
             sum(inputs.quantity) - total(outputs.quantity) as quantity,\

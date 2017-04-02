@@ -106,7 +106,7 @@ quantity integer,
 repas_id integer,
 product_id integer,
 FOREIGN KEY (repas_id) REFERENCES repas(id)
-FOREIGN KEY (product_id) REFERENCES product(id)
+FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
 CREATE TABLE dishes(

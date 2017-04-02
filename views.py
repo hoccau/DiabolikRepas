@@ -133,11 +133,12 @@ class InputForm(Form):
                 ProductForm(self, self.product.text())
                 self.all_products_names = self.parent.model.get_all_products_names()
                 self.product_completer.setModel(QStringListModel(self.all_products_names))
-        unit = self.model.get_product_unit(self.product.text())
-        self.product_id = self.model.get_product_id_by_name(self.product.text())
-        self.refresh_unit_label(unit)
-        self.unit.setText(unit)
-        return True
+        if self.product.text() != '':
+            unit = self.model.get_product_unit(self.product.text())
+            self.product_id = self.model.get_product_id_by_name(self.product.text())
+            self.refresh_unit_label(unit)
+            self.unit.setText(unit)
+            return True
 
     def add_fournisseur(self):
         f = self.parent.add_fournisseur()
@@ -298,7 +299,7 @@ class RepasForm(Form):
             if submited:
                 for output in self.outputs:
                     if output.datas:
-                        self.model.add_output(output.datas)
+                        self.model.set_(output.datas, 'outputs')
         else:
             self.model.delete('outputs', 'repas_id', str(self.id))
             for output in self.outputs:
@@ -324,19 +325,19 @@ class OutputLine():
         self.produit.setEditable(True)
         self.produit.clearEditText()
         self.produit.setCurrentIndex(-1)
-        self.product_variant = QComboBox()
-        self.product_variant.setEnabled(False)
+        completer = QCompleter(self.parent.availables_products)
+        self.produit.setCompleter(completer)
         self.quantity = QDoubleSpinBox()
         self.quantity.setEnabled(False)
+        self.unit_label = QLabel('')
         self.suppr_button = QPushButton('Suppr')
 
         self.line_widgets.addWidget(self.produit)
-        self.line_widgets.addWidget(self.product_variant)
         self.line_widgets.addWidget(self.quantity)
+        self.line_widgets.addWidget(self.unit_label)
         self.line_widgets.addWidget(self.suppr_button)
 
-        #self.produit.currentIndexChanged.connect(self.select_product_name)
-        self.product_variant.currentIndexChanged.connect(self.select_variant)
+        self.produit.currentIndexChanged.connect(self.select_product)
         self.quantity.valueChanged.connect(self.set_datas)
         self.suppr_button.clicked.connect(self.clear_layout)
         self.datas = False
@@ -357,18 +358,35 @@ class OutputLine():
            )
         self.quantity.setValue(datas['quantity'])
 
-    def select_variant(self, index):
-        if index != -1:
-            self.quantity.setMaximum()
+    def select_product(self):
+        self.product_id = self.parent.model.get_product_id_by_name(
+            self.produit.currentText())
+        quantity = self.parent.model.get_quantity(self.product_id)
+        unit = self.parent.model.get_product_unit(self.produit.currentText())
+        if quantity:
+            self.quantity.setMaximum(quantity)
             self.quantity.setEnabled(True)
+            self.unit_label.setText(self.short_unit_label(unit))
+        else:
+            self.quantity.setEnabled(False)
+            self.datas = False
+            QMessageBox.warning(
+                self.parent, "Rupture de stock", "Le produit n'est pas dans la reserve")
+
+    def short_unit_label(self, unit):
+        matching = {
+           'unités':'pièces',
+           'Kilogrammes':'kilos',
+           'Litres':'litres'
+           }
+        return matching[unit]
 
     def set_datas(self):
-        product_id = self.variants_indexes[self.product_variant.currentIndex()][0]
-        self.datas = {'repas_id':self.parent.id,
-            'product_id':product_id,
-            'quantity':self.quantity.value()
-            }
-        #self.parent.already_used_products_ids.append(product_id)
+        """ If Output has datas, parent will agree to commit. """
+        self.datas = {
+            'product_id':self.product_id,
+            'quantity':self.quantity.value(),
+            'repas_id':self.parent.id }
 
     def clear_layout(self):
         while self.line_widgets.count():
@@ -448,17 +466,17 @@ class RapportDialog(QDialog):
             self.grid.setColumnMinimumWidth(i, 300)
         self.repas = QComboBox()
         self.price_by_repas = QLabel("")
-        self.fill_repas()
         box_repas = self.create_box('Prix par repas', [self.repas, self.price_by_repas])
 
         self.date = QComboBox()
         self.price_by_day = QLabel("")
-        self.fill_date()
         box_day = self.create_box('Prix par journée', [self.date, self.price_by_day])
         self.grid.addWidget(box_repas, 0, 0)
         self.grid.addWidget(box_day, 0, 1)
         self.repas.currentIndexChanged.connect(self.display_price_by_repas)
         self.date.currentTextChanged.connect(self.display_price_by_day)
+        self.fill_repas()
+        self.fill_date()
 
         self.exec_()
 
