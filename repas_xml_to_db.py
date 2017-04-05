@@ -88,15 +88,14 @@ class Repas():
                 for i in range(ingrs.length()):
                     quantities = []
                     ingr = ingrs.at(i).toElement().attribute('nom')
-                    print('ingr', ingr)
+                    ingr = ingr.lower()
                     q = ingrs.at(i).firstChildElement('quantité')
                     unit = q.toElement().attribute('unit')
-                    print('unit:', unit)
+                    print('ingr', ingr, ' unit:', unit)
                     quantities.append(q.firstChildElement('age-6'))
                     quantities.append(q.firstChildElement('age6-12'))
                     quantities.append(q.firstChildElement('age12'))
                     quantities = [float(el.text()) for el in quantities]
-                    print('aft:',quantities)
                     if unit in ['gr','ml']:
                         quantities = [i / 1000. for i in quantities]
                         if unit == 'gr':
@@ -124,8 +123,11 @@ class Repas():
                     self.query.bindValue(':product_id', product_id)
                     self.query.bindValue(':dishes_prev_id', plat_id)
                     self.query.bindValue(':quantity', total_quantity)
-                    self.query.exec_()
-                    print(self.query.executedQuery(), s, self.query.lastError().text())
+                    s = self.query.exec_()
+                    if not s:
+                        print(
+                            self.query.executedQuery(),
+                            self.query.lastError().text())
 
     def _get_product_id(self, name):
         self.query.prepare("SELECT id FROM products WHERE name = :name")

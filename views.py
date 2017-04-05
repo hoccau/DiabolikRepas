@@ -43,8 +43,13 @@ class ProductForm(QDialog):
     def __init__(self, parent=None, name=""):
         super(ProductForm, self).__init__(parent)
         self.model = parent.model
+
+        self.warning_label = QLabel(
+            "Assurez-vous que le produit que vous allez entrer\n"
+            +"n'existe pas déjà sous un autre nom.")
         self.name = QLineEdit()
         self.name.setText(name)
+        self.name.setToolTip("Avec les accents, en minuscule")
         self.units = QComboBox()
         self.units.addItems(['unités','Kilogrammes', 'Litres'])
         self.ok_button = QPushButton('OK')
@@ -54,6 +59,7 @@ class ProductForm(QDialog):
         layout.addRow('Nom du produit', self.name)
         layout.addRow('Unité de mesure', self.units)
         g_layout = QVBoxLayout()
+        g_layout.addWidget(self.warning_label)
         g_layout.addLayout(layout)
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.ok_button)
@@ -66,8 +72,9 @@ class ProductForm(QDialog):
         self.exec_()
     def record(self):
         if self.name != '':
+            product_name = self.name.text().lower()
             res, err = self.model.add_product(
-                self.name.text(), self.units.currentIndex() + 1)
+                product_name, self.units.currentIndex() + 1)
             if res:
                 self.accept()
             if not res:
