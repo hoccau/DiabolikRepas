@@ -103,9 +103,9 @@ INSERT INTO type_repas(type) VALUES ('autre');
 CREATE TABLE outputs(
 id integer PRIMARY KEY,
 quantity integer,
-repas_id integer,
+repas_id integer NOT NULL,
 product_id integer,
-FOREIGN KEY (repas_id) REFERENCES repas(id)
+FOREIGN KEY (repas_id) REFERENCES repas(id) ON DELETE CASCADE,
 FOREIGN KEY (product_id) REFERENCES products(id)
 );
 

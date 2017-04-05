@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         exitAction = self.add_action('&Quitter', qApp.quit, 'Ctrl+Q')
         openAction = self.add_action('&Ouvrir', self.open_db, 'Ctrl+O')
         delRowAction = self.add_action('&Supprimer la ligne', self.remove_current_row)
-        addFormAction = self.add_action('&Denrées', self.addDatas)
+        addFormAction = self.add_action('&Denrées', self.add_input)
         addFournisseurAction = self.add_action('&Fournisseur', self.add_fournisseur)
         addRepasAction = self.add_action('Repas', self.add_repas)
         addProductAction = self.add_action('Produit', self.add_product)
@@ -91,12 +91,28 @@ class MainWindow(QMainWindow):
         RapportDialog(self)
 
     def remove_current_row(self):
-        row = self.mainView.currentIndex().row()
-        model = self.mainView.currentIndex().model()
-        row_id = model.index(row, 0).data()
-        print("row to remove:", row)
-        self.model.qt_table_reserve.removeRow(row)
-        self.model.update_table_model()
+        current_table =  self.tabs.currentWidget().model().tableName()
+        select = self.tabs.currentWidget().selectionModel()
+        row = select.currentIndex().row()
+        if row != -1:
+            if current_table == 'repas':
+                self.remove_repas(row)
+            else:
+                print(current_table)
+
+    def remove_repas(self, row):
+        reponse = QMessageBox.question(
+            None,
+            'Sûr(e)?',
+            'Vous êtes sur le point de supprimer définitivement un'\
+             +"repas. Êtes-vous sûr(e) ?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+            )
+        if reponse == QMessageBox.Yes:
+            good = self.model.qt_table_repas.removeRow(row)
+            self.model.qt_table_repas.select()
+            self.model.qt_table_outputs.select()
 
     def show_row(self):
         row = self.mainView.currentIndex().row()
@@ -150,7 +166,7 @@ class MainWindow(QMainWindow):
     def set_infos(self):
         InfosCentreDialog(self)
 
-    def addDatas(self):
+    def add_input(self):
         self.form = InputForm(self)
 
     def add_product(self):
@@ -189,9 +205,7 @@ class MainWindow(QMainWindow):
             'Nom du fournisseur:')
         if ok and name != "":
             res = self.model.add_fournisseur(name)
-            if res == True:
-                #self.form.refresh_fournisseurs()
-                #self.model.update_table_model()
+            if res:
                 return True
             elif res == "UNIQUE constraint failed: fournisseurs.NOM":
                 QMessageBox.warning(self, "Erreur", "Ce nom existe déjà.")

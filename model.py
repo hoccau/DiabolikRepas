@@ -314,9 +314,9 @@ class RepasModel(QSqlRelationalTableModel):
         self.setTable("repas")
         f_rel = QSqlRelation("type_repas","id","type")
         self.setRelation(2, f_rel)
-        self.select()
         self.setHeaderData(0, Qt.Horizontal, "Identification")
         self.setHeaderData(2, Qt.Horizontal, "Type")
+        self.select()
 
 class AbstractPrevisionnelModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
@@ -420,7 +420,7 @@ class OutputsModel(QSqlQueryModel):
         self.setHeaderData(1, Qt.Horizontal, "quantité")
 
 class PrevisionnelModel(QStandardItemModel):
-    """ Not used yes. Maybe for creating read-only views like QColumnView """
+    """ Used for QColumnView in tab"""
     def __init__(self):
         super(PrevisionnelModel, self).__init__()
         query_all = QSqlQuery(

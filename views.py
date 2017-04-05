@@ -126,8 +126,8 @@ class InputForm(Form):
         self.initUI()
 
     def verif_product(self):
-        if self.product.text() not in self.all_products_names and\
-                self.product.text() != '':
+        if self.product.text() not in self.all_products_names\
+                and self.product.text() != '':
             reponse = QMessageBox.question(
                     None, 'Produit inexistant',
                     "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
@@ -137,10 +137,11 @@ class InputForm(Form):
                 self.product.clear()
                 return False
             if reponse == QMessageBox.Yes:
-                ProductForm(self, self.product.text())
+                new_product = ProductForm(self, self.product.text())
                 self.all_products_names = self.parent.model.get_all_products_names()
                 self.product_completer.setModel(QStringListModel(self.all_products_names))
         if self.product.text() != '':
+            self.product.setText(new_product.name.text())
             unit = self.model.get_product_unit(self.product.text())
             self.product_id = self.model.get_product_id_by_name(self.product.text())
             self.refresh_unit_label(unit)
@@ -192,6 +193,7 @@ class InputForm(Form):
             record["prix"] = self.price.text()
             record["quantity"] = self.quantity.text()
             self.model.add_input(record)
+            self.model.qt_table_reserve.select()
             self.clear_all()
 
     def refresh_fournisseurs(self):
