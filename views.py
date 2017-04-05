@@ -499,12 +499,14 @@ class RapportDialog(QDialog):
         all_dates = self.parent.model.get_dates_repas()
         for date in all_dates:
             self.date.addItem(date)
-        self.display_price_by_day(all_dates[0])
+        if all_dates:
+            self.display_price_by_day(all_dates[0])
 
     def display_price_by_repas(self, index):
-        repas_id = self.all_repas_dic[index]['id']
-        price = self.parent.model.get_price_by_repas(repas_id)
-        self.price_by_repas.setText(str(round(price, 2)) + " €")
+        if self.all_repas_dic:
+            repas_id = self.all_repas_dic[index]['id']
+            price = self.parent.model.get_price_by_repas(repas_id)
+            self.price_by_repas.setText(str(round(price, 2)) + " €")
 
     def display_price_by_day(self, day):
         price = self.parent.model.get_price_by_day(day)
