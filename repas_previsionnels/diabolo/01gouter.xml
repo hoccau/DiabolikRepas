@@ -1,40 +1,6 @@
 <repas nom="COMPOTE" offset="1" type="gouter">
-<plat nom="COMPOTE">
+<plat nom="COMPOTE" type="autre">
 <ingrédient nom="COMPOTE">
-<quantité unit="pièce">
-<age-6>1</age-6>
-<age6-12>1</age6-12>
-<age12>1</age12>
-</quantité>
-</ingrédient>
-</plat>
-<plat nom="CAROTTE" type="entrée">
-<ingrédient nom="CAROTTE">
-<quantité unit="gr">
-<age-6>80</age-6>
-<age6-12>100</age6-12>
-<age12>100</age12>
-</quantité>
-</ingrédient>
-</plat>
-<plat nom="POISSON PANE HARICOT VERT" type="plat">
-<ingrédient nom="HARICOT VERT">
-<quantité unit="gr">
-<age-6>80</age-6>
-<age6-12>100</age6-12>
-<age12>120</age12>
-</quantité>
-</ingrédient>
-<ingrédient nom="POISSON PANE">
-<quantité unit="pièce">
-<age-6>3</age-6>
-<age6-12>4</age6-12>
-<age12>5</age12>
-</quantité>
-</ingrédient>
-</plat>
-<plat nom="MOUSSE AU CHOCOLAT" type="dessert">
-<ingrédient nom="MOUSSE AU CHOCOLAT">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

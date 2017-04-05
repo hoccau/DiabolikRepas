@@ -33,13 +33,4 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="COOKIES">
-<ingrédient nom="COOKIES">
-<quantité unit="pièce">
-<age-6>2</age-6>
-<age6-12>2</age6-12>
-<age12>2</age12>
-</quantité>
-</ingrédient>
-</plat>
 </repas>

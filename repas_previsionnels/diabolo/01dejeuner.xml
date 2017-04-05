@@ -1,4 +1,4 @@
-<repas nom="Ce midi" offset="1" type="déjeuner">
+<repas nom="Raviolis" offset="1" type="déjeuner">
 <plat nom="macedoine" type="entrée">
 <ingrédient nom="macedoine">
 <quantité unit="gr">

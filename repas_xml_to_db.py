@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*- 
 
 """
-This script parse the repas xml files
+This script parse the "previsionnel repas" xml files to add it in database. 
+database must have a start date and correct number of children to adapt 
+ingredients quantity.
 """
 
 from PyQt5.QtCore import QUrl, QFile, QIODevice, QDate
@@ -40,6 +42,7 @@ class Repas():
     def xml_to_db(self, model=None):
         self.query = model.query
         range_age = self._get_nbr_children()
+        print("Nombre d'enfants par tranche d'ages:", range_age)
         date_start = self._get_date_start()
         if not range_age:
             print('Ages non entrés')
@@ -60,6 +63,8 @@ class Repas():
             self.query.bindValue(':type', repas.attribute('type'))
             s = self.query.exec_()
             print(self.query.executedQuery(), s, self.query.lastError().text())
+
+            #plats
             repas_id = self._get_last_id()
             plats = repas.elementsByTagName('plat')
             for i in range(plats.length()):
@@ -114,12 +119,13 @@ class Repas():
                         self.query.exec_()
                         product_id = self._get_product_id(ingr)
                     self.query.prepare('INSERT INTO ingredients_prev\
-                    (product_id, dishes_prev_id, quantity, unit_id)\
-                    VALUES(:product_id, :dishes_prev_id, :quantity, :unit_id)')
+                    (product_id, dishes_prev_id, quantity)\
+                    VALUES(:product_id, :dishes_prev_id, :quantity)')
                     self.query.bindValue(':product_id', product_id)
                     self.query.bindValue(':dishes_prev_id', plat_id)
                     self.query.bindValue(':quantity', total_quantity)
                     self.query.exec_()
+                    print(self.query.executedQuery(), s, self.query.lastError().text())
 
     def _get_product_id(self, name):
         self.query.prepare("SELECT id FROM products WHERE name = :name")
@@ -161,7 +167,14 @@ class Repas():
 if '__main__' == __name__:
     import sys
     import model
+    import os
     sqlmodel = model.Model()
     sqlmodel.connect_db(sys.argv[2])
-    repas = Repas(sys.argv[1])
-    repas.xml_to_db(model=sqlmodel)
+    if os.path.isdir(sys.argv[1]):
+        repas_files = os.listdir(sys.argv[1])
+        for repas_file in repas_files:
+            repas = Repas(os.path.join(sys.argv[1], repas_file))
+            repas.xml_to_db(model=sqlmodel)
+    else:
+        repas = Repas(sys.argv[1])
+        repas.xml_to_db(model=sqlmodel)

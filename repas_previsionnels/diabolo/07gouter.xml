@@ -1,5 +1,5 @@
 <repas nom="YAOURT A BOIRE" offset="7" type="gouter">
-<plat nom="YAOURT A BOIRE">
+<plat nom="YAOURT A BOIRE" type="autre">
 <ingrédient nom="YAOURT A BOIRE">
 <quantité unit="pièce">
 <age-6>1</age-6>
