@@ -1,0 +1,36 @@
+<repas nom="Quelle fraîcheur dans l'assiète" offset="5" type="souper">
+<plat nom="MELON" type="entrée">
+<ingrédient nom="MELON">
+<quantité unit="pièce">
+<age-6>0.10</age-6>
+<age6-12>0.25</age6-12>
+<age12>0.25</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="GRATIN DE CHOUX FLEUR LARDONS" type="plat">
+<ingrédient nom="LARDONS">
+<quantité unit="gr">
+<age-6>75</age-6>
+<age6-12>100</age6-12>
+<age12>150</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="GRATIN DE CHOUX FLEUR">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>120</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="GLACE" type="dessert">
+<ingrédient nom="GLACE">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

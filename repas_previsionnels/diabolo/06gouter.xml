@@ -1,0 +1,11 @@
+<repas nom="FRUIT" offset="6" type="gouter">
+<plat nom="FRUIT">
+<ingrédient nom="FRUIT">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

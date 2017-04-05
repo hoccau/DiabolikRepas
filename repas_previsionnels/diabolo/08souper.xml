@@ -1,0 +1,36 @@
+<repas nom="En passant par la lorraine..." offset="8" type="souper">
+<plat nom="PAMPLEMOUSSE" type="entrée">
+<ingrédient nom="PAMPLEMOUSSE">
+<quantité unit="pièce">
+<age-6>0.50</age-6>
+<age6-12>0.50</age6-12>
+<age12>0.50</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="QUICHE LORRAINE SALADE" type="plat">
+<ingrédient nom="SALADE">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>120</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="QUICHE LORRAINE">
+<quantité unit="pièce">
+<age-6>0.25</age-6>
+<age6-12>0.50</age6-12>
+<age12>0.75</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="FLAN" type="dessert">
+<ingrédient nom="FLAN">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

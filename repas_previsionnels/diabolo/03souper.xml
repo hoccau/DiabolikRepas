@@ -1,0 +1,36 @@
+<repas nom="Steak" offset="3" type="souper">
+<plat nom="SALADE VERTE" type="entrée">
+<ingrédient nom="SALADE VERTE">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>100</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="STEACK HACHE PETIT POIS" type="plat">
+<ingrédient nom="PETIT POIS">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>120</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="STEACK HACHE">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="YAOURT AUX FRUITS" type="dessert">
+<ingrédient nom="YAOURT AUX FRUITS">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

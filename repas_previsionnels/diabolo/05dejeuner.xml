@@ -1,0 +1,29 @@
+<repas nom="Spécialités de Bologne" offset="5" type="déjeuner">
+<plat nom="TABOULE" type="entrée">
+<ingrédient nom="TABOULE">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>100</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="LASAGNE" type="plat">
+<ingrédient nom="LASAGNE">
+<quantité unit="gr">
+<age-6>200</age-6>
+<age6-12>250</age6-12>
+<age12>300</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="FRUIT" type="dessert">
+<ingrédient nom="FRUIT">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

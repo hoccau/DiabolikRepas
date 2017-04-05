@@ -1,0 +1,36 @@
+<repas nom="L'aromate et la tomate" offset="6" type="souper">
+<plat nom="paté" type="entrée">
+<ingrédient nom="PATE">
+<quantité unit="gr">
+<age-6>50</age-6>
+<age6-12>80</age6-12>
+<age12>100</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="TOMATE FARCIE RIZ" type="plat">
+<ingrédient nom="RIZ">
+<quantité unit="gr">
+<age-6>50</age-6>
+<age6-12>60</age6-12>
+<age12>80</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="TOMATE FARCIE">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="CREME CHOCOLAT" type="dessert">
+<ingrédient nom="CREME CHOCOLAT">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

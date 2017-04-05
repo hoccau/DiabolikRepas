@@ -1,0 +1,43 @@
+<repas nom="Cordon bleu du soir" offset="2" type="souper">
+<plat nom="CELERI CREME" type="entrée">
+<ingrédient nom="CREME">
+<quantité unit="gr">
+<age-6>20</age-6>
+<age6-12>40</age6-12>
+<age12>40</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="CELERI">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>100</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="CORDON BLEU JARDINIERE DE LEGUME" type="plat">
+<ingrédient nom="JARDINIERE DE LEGUME">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>120</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="CORDON BLEU">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="FLAMBI" type="dessert">
+<ingrédient nom="FLAMBI">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

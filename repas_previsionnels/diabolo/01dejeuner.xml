@@ -1,0 +1,43 @@
+<repas nom="Ce midi" offset="1" type="déjeuner">
+<plat nom="macedoine" type="entrée">
+<ingrédient nom="macedoine">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>100</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="mayonnaise">
+<quantité unit="gr">
+<age-6>20</age-6>
+<age6-12>30</age6-12>
+<age12>30</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="RAVIOLI GRUYERE" type="plat">
+<ingrédient nom="RAVIOLI">
+<quantité unit="gr">
+<age-6>200</age-6>
+<age6-12>240</age6-12>
+<age12>300</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="GRUYERE">
+<quantité unit="gr">
+<age-6>20</age-6>
+<age6-12>30</age6-12>
+<age12>40</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="YAOURT AUX FRUITS" type="dessert">
+<ingrédient nom="YAOURT AUX FRUITS">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>

@@ -1,0 +1,36 @@
+<repas nom="Poulet du chef" offset="3" type="déjeuner">
+<plat nom="TOMATE" type="entrée">
+<ingrédient nom="TOMATE">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>100</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="POULET RIZ" type="plat">
+<ingrédient nom="RIZ">
+<quantité unit="gr">
+<age-6>50</age-6>
+<age6-12>60</age6-12>
+<age12>80</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="POULET">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="SALADE DE FRUIT" type="dessert">
+<ingrédient nom="SALADE DE FRUIT">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>110</age12>
+</quantité>
+</ingrédient>
+</plat>
+</repas>
