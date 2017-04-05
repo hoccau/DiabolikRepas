@@ -298,10 +298,10 @@ class ReserveModel(QSqlQueryModel):
 
     def select(self):
         self.setQuery(
-            "SELECT products.name,\
-            sum(inputs.quantity) - total(outputs.quantity) as quantity,\
-            sum(inputs.quantity * inputs.prix) as prix_total ,\
-            AVG(inputs.Prix) AS prix_moyen\
+            "SELECT products.name as produit,\
+            sum(inputs.quantity) - total(outputs.quantity) as quantité,\
+            sum(inputs.quantity * inputs.prix) as 'prix total',\
+            AVG(inputs.Prix) AS 'prix moyen'\
             FROM inputs\
             INNER JOIN products ON inputs.product_id = products.id\
             LEFT JOIN outputs ON outputs.product_id = products.id\
@@ -410,12 +410,13 @@ class OutputsModel(QSqlQueryModel):
     
     def select(self):
         self.setQuery("SELECT\
-        outputs.id, products.name, outputs.quantity, repas.date, repas.id AS repas_id\
+        products.name, outputs.quantity, repas.date, type_repas.type AS 'pour le'\
         FROM outputs\
         INNER JOIN repas ON outputs.repas_id = repas.id\
+        INNER JOIN type_repas ON repas.type_id = type_repas.id\
         INNER JOIN products ON outputs.product_id = products.id\
         ")
-        self.setHeaderData(0, Qt.Horizontal, "Name")
+        self.setHeaderData(0, Qt.Horizontal, "Nom")
         self.setHeaderData(1, Qt.Horizontal, "quantité")
 
 class PrevisionnelModel(QStandardItemModel):

@@ -216,7 +216,7 @@ class RepasForm(Form):
         self.comment.setFixedHeight(50)
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
-        self.add_field('', self.auto_fill_button)
+        #self.add_field('', self.auto_fill_button) # future feature :)
         self.add_field("Commentaire:", self.comment)
 
         #outputs 
@@ -354,16 +354,10 @@ class OutputLine():
 
     def populate(self, datas):
         self.produit.setCurrentText(datas['product_name'])
-        self.select_product_name()
-        for k, v in self.variants_indexes.items():
-            if v[0] == datas['product_id']:
-                variant_index = k
-                break
-        variant = self.variants_indexes[variant_index]
-        self.product_variant.setCurrentText(
-           self.variant_combo_name(variant[2], variant[3])
-           )
+        self.product_id = self.parent.model.get_product_id_by_name(
+            datas['product_name'])
         self.quantity.setValue(datas['quantity'])
+        self.quantity.setEnabled(True)
 
     def select_product(self):
         self.product_id = self.parent.model.get_product_id_by_name(
@@ -389,7 +383,7 @@ class OutputLine():
         return matching[unit]
 
     def set_datas(self):
-        """ If Output has datas, parent will agree to commit. """
+        """ If Output has datas, parent will agree to commit it in db. """
         self.datas = {
             'product_id':self.product_id,
             'quantity':self.quantity.value(),

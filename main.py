@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.tables = {
             'reserve': self._add_table_model(self.model.qt_table_reserve, 'reserve'),
-            'repas': self._add_table_model(self.model.qt_table_repas, 'repas'),
+            'repas': self._add_table_model(self.model.qt_table_repas, 'repas consommés'),
             'sorties': self._add_table_model(self.model.qt_table_outputs, 'sorties')
             }
         self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
