@@ -463,7 +463,7 @@ class PrevisionnelModel(QStandardItemModel):
                     units.unit\
                     FROM ingredients_prev\
                     INNER JOIN products ON products.id = ingredients_prev.product_id\
-                    INNER JOIN units ON units.id = ingredients_prev.unit_id\
+                    INNER JOIN units ON products.unit_id = units.id\
                     WHERE dishes_prev_id = "+str(plat_id))
                 print(query.lastError().text())
                 ingredients_items = {}
