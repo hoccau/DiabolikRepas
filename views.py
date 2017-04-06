@@ -194,6 +194,7 @@ class InputForm(Form):
             record["quantity"] = self.quantity.text()
             self.model.add_input(record)
             self.model.qt_table_reserve.select()
+            self.model.qt_table_inputs.select()
             self.clear_all()
 
     def refresh_fournisseurs(self):

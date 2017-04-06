@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
         # Repas table must be selected by row for editing
         self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
         # Autorize Edit for 'arrivages'
-        self.tables['arrivages'].setEditTriggers(QAbstractItemView.SelectedClicked)
+        self.tables['arrivages'].setEditTriggers(QAbstractItemView.DoubleClicked)
         self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
         self.setCentralWidget(self.tabs)
 
@@ -103,6 +103,8 @@ class MainWindow(QMainWindow):
         if row != -1:
             if current_tab == 1:
                 self.remove_repas(row)
+            elif current_tab == 2:
+                self.remove_input(row)
             else:
                 print(current_tab)
 
@@ -111,7 +113,7 @@ class MainWindow(QMainWindow):
             None,
             'Sûr(e)?',
             'Vous êtes sur le point de supprimer définitivement un'\
-             +"repas. Êtes-vous sûr(e) ?",
+             +" repas. Êtes-vous sûr(e) ?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
             )
@@ -119,6 +121,18 @@ class MainWindow(QMainWindow):
             good = self.model.qt_table_repas.removeRow(row)
             self.model.qt_table_repas.select()
             self.model.qt_table_outputs.select()
+
+    def remove_input(self, row):
+        reponse = QMessageBox.question(
+            None,
+            'Sûr(e)?',
+            'Vous êtes sur le point de supprimer définitivement un'\
+             +" arrivage de denrée. Êtes-vous sûr(e) ?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+            )
+        if reponse == QMessageBox.Yes:
+            good = self.model.qt_table_inputs.removeRow(row)
 
     def show_row(self):
         row = self.mainView.currentIndex().row()
