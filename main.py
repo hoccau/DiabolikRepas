@@ -206,7 +206,6 @@ class MainWindow(QMainWindow):
     def close_db(self):
         self.model.db.close()
         self.enable_db_actions(False)
-        self.tabs.close()
 
     def retrieve_db(self):
         path = self.config.value("lastdbpath")
@@ -286,7 +285,7 @@ class MainWindow(QMainWindow):
     def export_pdf(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
         filename, _format = QFileDialog.getSaveFileName(
-            self, "Exporter le rapport", None, 'PDF(*.pdf)')
+            self, "Exporter la liste des courses", None, 'PDF(*.pdf)')
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'

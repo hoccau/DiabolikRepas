@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    	<xs:element name='repas'>
+   			<xs:complexType>
+				<xs:sequence>
+					<xs:element name = 'plat' type = 'platType' minOccurs = '0'
+                		maxOccurs = 'unbounded' />
+				</xs:sequence>
+   <xs:attribute name = 'nom' type = 'xs:string'/>
+	<xs:attribute name = 'type' type = 'repas_typeType'/>
+	<xs:attribute name = 'offset' type = 'xs:integer'/>
+			</xs:complexType>
+		</xs:element>
+
+	<xs:complexType name="platType">
+      <xs:sequence>
+         <xs:element name = "ingrédient" type = "ingredientType" minOccurs = '1'
+			maxOccurs = 'unbounded' />
+      </xs:sequence>
+   		<xs:attribute name = 'nom' type = 'xs:string'/>
+	<xs:attribute name = 'type' type = 'plat_typeType' use='required'/>
+   </xs:complexType>
+
+	<xs:complexType name='ingredientType'>
+		<xs:sequence>
+			<xs:element name="quantité" type='quantitéType' minOccurs = '1'
+				 maxOccurs = '1'/>
+		</xs:sequence>
+   		   		<xs:attribute name = 'nom' type = 'xs:string'/>
+	</xs:complexType>
+
+	<xs:complexType name="quantitéType">
+		<xs:sequence>
+			 <xs:element name = "age-6" type="xs:decimal"/>
+			 <xs:element name = "age6-12" type="xs:decimal"/>
+			 <xs:element name = "age12" type="xs:decimal"/>
+		</xs:sequence>
+   		<xs:attribute name = 'unit' type = 'unitType'/>
+	</xs:complexType>
+
+	<xs:simpleType name="unitType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value='gr'/>
+			<xs:enumeration value='ml'/>
+			<xs:enumeration value='pièce'/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="plat_typeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value='entrée'/>
+			<xs:enumeration value='plat'/>
+			<xs:enumeration value='dessert'/>
+			<xs:enumeration value='autre'/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="repas_typeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value='petit déjeuner'/>
+			<xs:enumeration value='déjeuner'/>
+			<xs:enumeration value='gouter'/>
+			<xs:enumeration value='souper'/>
+			<xs:enumeration value='cinquième'/>
+			<xs:enumeration value='autre'/>
+		</xs:restriction>
+	</xs:simpleType>
+
+</xs:schema>

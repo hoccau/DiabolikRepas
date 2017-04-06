@@ -750,16 +750,13 @@ class DatesRangeDialog(QDialog):
         layout.addRow('Au', self.date_stop)
 
         self.ok_button = QPushButton('OK')
-        self.cancel_button = QPushButton('Annuler')
         
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
         layout.addRow('', button_layout)
         self.setLayout(layout)
         
         self.ok_button.clicked.connect(self.get_dates)
-        self.cancel_button.clicked.connect(self.reject)
         self.exec_()
 
     def get_dates(self):
