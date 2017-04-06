@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Diabolik Repas")
 
         exitAction = self.add_action('&Quitter', qApp.quit, 'Ctrl+Q')
+        newAction = self.add_action('&Nouveau', self.create_new_db, 'Ctrl+N')
         openAction = self.add_action('&Ouvrir', self.open_db, 'Ctrl+O')
         aboutAction = self.add_action('&à propos', self.about_d)
         
@@ -60,6 +61,7 @@ class MainWindow(QMainWindow):
             'Fermer', self.close_db, 'Ctrl+W')
 
         fileMenu = menubar.addMenu('&Fichier')
+        fileMenu.addAction(newAction)
         fileMenu.addAction(openAction)
         fileMenu.addAction(self.db_actions['close'])
         fileMenu.addAction(self.db_actions['import_previsionnel'])
@@ -178,6 +180,8 @@ class MainWindow(QMainWindow):
             return True
 
     def create_new_db(self):
+        if self.model.db.isOpen():
+            self.close_db()
         db_name = self.input_db_name()
         if db_name:
             user_path = os.path.expanduser('~')
@@ -189,6 +193,7 @@ class MainWindow(QMainWindow):
         if created:
             self.connect_db(path)
             self.set_infos()
+            self.import_all_xml_default()
 
     def open_db(self):
         file_name = QFileDialog.getOpenFileName(
