@@ -50,6 +50,7 @@ class Model(QSqlQueryModel):
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_repas = RepasModel(self, self.db)
         self.qt_table_outputs = OutputsModel()
+        self.qt_table_inputs = InputsModel(self, self.db)
 
         self.previsionnel_model = PrevisionnelModel()
         self.repas_prev_model = RepasPrevModel(self, self.db)
@@ -469,6 +470,21 @@ class OutputsModel(QSqlQueryModel):
         self.setHeaderData(0, Qt.Horizontal, "Nom")
         self.setHeaderData(1, Qt.Horizontal, "quantité")
 
+class InputsModel(QSqlRelationalTableModel):
+    def __init__(self, parent, db):
+        super(InputsModel, self).__init__(parent, db)
+
+        self.setEditStrategy(QSqlRelationalTableModel.OnFieldChange)
+        self.setTable("inputs")
+        fournisseur_rel = QSqlRelation("fournisseurs","id","nom")
+        product_rel = QSqlRelation("products","id","name")
+        self.setRelation(1, fournisseur_rel)
+        self.setRelation(3, product_rel)
+        self.setHeaderData(1, Qt.Horizontal, "Fournisseur")
+        self.setHeaderData(3, Qt.Horizontal, "Produit")
+        self.setHeaderData(5, Qt.Horizontal, "Quantité")
+        self.select()
+    
 class PrevisionnelModel(QStandardItemModel):
     """ Used for QColumnView in tab"""
     def __init__(self):

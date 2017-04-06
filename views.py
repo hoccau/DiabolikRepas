@@ -3,7 +3,7 @@
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel
-from PyQt5.QtGui import QRegExpValidator, QStandardItem
+from PyQt5.QtGui import QRegExpValidator, QStandardItem, QPen, QPalette
 from PyQt5.QtChart import *
 from PyQt5.QtSql import QSqlRelationalDelegate
 
@@ -765,4 +765,28 @@ class DatesRangeDialog(QDialog):
         self.accept()
         return (self.date_start.date().toString('yyyy-MM-dd'),
             self.date_stop.date().toString('yyyy-MM-dd'))
+
+class DateDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super(DateDelegate, self).__init__(parent)
+
+    def paint(self, painter, opt, index):
+        painter.save()
+        date = QDate.fromString(index.data(), 'yyyy-MM-dd')
+        color = opt.palette.color(QPalette.Text)
+        painter.setPen(QPen(color))
+        painter.drawText(opt.rect, Qt.AlignCenter, date.toString('dd/MM/yyyy'))
+        painter.restore()
+    
+    def createEditor(self, parent, option, index):
+        col = index.column()
+        if col == 2:
+            editor = QDateEdit(parent)
+            return editor
+        
+    def setModelData(self, editor, model, index):
+        value = editor.date().toString('yyyy-MM-dd')
+        model.setData(index, value)
+
+
 

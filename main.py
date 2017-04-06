@@ -65,13 +65,16 @@ class MainWindow(QMainWindow):
         self.tables = {
             'reserve': self._add_table_model(self.model.qt_table_reserve, 'reserve'),
             'repas': self._add_table_model(self.model.qt_table_repas, 'repas consommés'),
+            'arrivages': self._add_table_model(self.model.qt_table_inputs, 'arrivages'),
             'sorties': self._add_table_model(self.model.qt_table_outputs, 'sorties')
             }
         self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
         
-        #Repas table must be selected by row for editing
+        # Repas table must be selected by row for editing
         self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
-
+        # Autorize Edit for 'arrivages'
+        self.tables['arrivages'].setEditTriggers(QAbstractItemView.SelectedClicked)
+        self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
         self.setCentralWidget(self.tabs)
 
     def _add_table_model(self, model, name, size=None):
