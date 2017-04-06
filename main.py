@@ -9,6 +9,7 @@ Logiciel d'économat léger pour centre de vacances
 from PyQt5 import QtSql
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QSettings
 from model import Model
 from views import *
 from PyQt5.QtSql import QSqlRelationalDelegate
@@ -17,6 +18,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         
+        self.config = QSettings("Kidivid", "DiabolikRepas")
         self.initUI()
 
     def initUI(self):
@@ -26,33 +28,48 @@ class MainWindow(QMainWindow):
 
         exitAction = self.add_action('&Quitter', qApp.quit, 'Ctrl+Q')
         openAction = self.add_action('&Ouvrir', self.open_db, 'Ctrl+O')
-        exportPdfAction = self.add_action('&Exporter la liste des courses', self.export_pdf)
-        delRowAction = self.add_action('&Supprimer la ligne', self.remove_current_row)
-        addFormAction = self.add_action('&Denrées', self.add_input)
-        addFournisseurAction = self.add_action('&Fournisseur', self.add_fournisseur)
-        addRepasAction = self.add_action('Repas', self.add_repas)
-        addProductAction = self.add_action('Produit', self.add_product)
-        editRepasAction = self.add_action('Repas', self.edit_repas)
-        setInfosAction = self.add_action('Editer les infos du centre', self.set_infos)
-        ViewRapportAction = self.add_action('Rapport', self.viewRapport)
-        editRepasPrevAction = self.add_action('Previsionnel', self.add_previsionnel)
+        
+        self.db_actions = {}
+        self.db_actions['exportPdfAction'] = self.add_action(
+            '&Exporter la liste des courses', self.export_pdf)
+        self.db_actions['delRowAction'] = self.add_action(
+            '&Supprimer la ligne', self.remove_current_row)
+        self.db_actions['addFormAction'] = self.add_action(
+            '&Denrées', self.add_input)
+        self.db_actions['addFournisseurAction'] = self.add_action(
+            '&Fournisseur', self.add_fournisseur)
+        self.db_actions['addRepasAction'] = self.add_action(
+            'Repas', self.add_repas)
+        self.db_actions['addProductAction'] = self.add_action(
+            'Produit', self.add_product)
+        self.db_actions['editRepasAction'] = self.add_action(
+            'Repas', self.edit_repas)
+        self.db_actions['setInfosAction'] = self.add_action(
+            'Editer les infos du centre', self.set_infos)
+        self.db_actions['ViewRapportAction'] = self.add_action(
+            'Rapport', self.viewRapport)
+        self.db_actions['editRepasPrevAction'] = self.add_action(
+            'Previsionnel', self.add_previsionnel)
+        self.db_actions['close'] = self.add_action(
+            'Fermer', self.close_db, 'Ctrl+W')
 
         fileMenu = menubar.addMenu('&Fichier')
         fileMenu.addAction(openAction)
+        fileMenu.addAction(self.db_actions['close'])
+        fileMenu.addAction(self.db_actions['exportPdfAction'])
         fileMenu.addAction(exitAction)
-        fileMenu.addAction(exportPdfAction)
         edit_menu = menubar.addMenu('&Édition')
-        edit_menu.addAction(delRowAction)
-        edit_menu.addAction(setInfosAction)
-        edit_menu.addAction(editRepasAction)
-        edit_menu.addAction(editRepasPrevAction)
+        edit_menu.addAction(self.db_actions['delRowAction'])
+        edit_menu.addAction(self.db_actions['setInfosAction'])
+        edit_menu.addAction(self.db_actions['editRepasAction'])
+        edit_menu.addAction(self.db_actions['editRepasPrevAction'])
         view_menu = menubar.addMenu('&Vue')
-        view_menu.addAction(ViewRapportAction)
+        view_menu.addAction(self.db_actions['ViewRapportAction'])
         addMenu = menubar.addMenu('&Ajouter')
-        addMenu.addAction(addFormAction)
-        addMenu.addAction(addProductAction)
-        addMenu.addAction(addFournisseurAction)
-        addMenu.addAction(addRepasAction)
+        addMenu.addAction(self.db_actions['addFormAction'])
+        addMenu.addAction(self.db_actions['addProductAction'])
+        addMenu.addAction(self.db_actions['addFournisseurAction'])
+        addMenu.addAction(self.db_actions['addRepasAction'])
 
         self.statusBar().showMessage('Ready')
         self.setMinimumSize(850,300)
@@ -134,26 +151,53 @@ class MainWindow(QMainWindow):
         if reponse == QMessageBox.Yes:
             good = self.model.qt_table_inputs.removeRow(row)
 
-    def show_row(self):
-        row = self.mainView.currentIndex().row()
-        model = self.mainView.currentIndex().model()
-        print("id:", model.index(row,0).data(), "m2:", m2)
-        print("row", row)
-        
+    def enable_db_actions(self, toggle=True):
+        for name, action in self.db_actions.items():
+            action.setEnabled(toggle)
+
+    def connect_db(self, db_path):
+        mime_db = QMimeDatabase()
+        mime = mime_db.mimeTypeForFile(db_path)
+        if mime.name() != 'application/x-sqlite3':
+            QMessageBox.warning(self, "Erreur", "Mauvais format de fichier")
+            return False
+        else:
+            self.model.connect_db(db_path)
+            self.config.setValue("lastdbpath", db_path)
+            self.enable_db_actions(True)
+            return True
+
+    def create_new_db(self):
+        db_name = self.input_db_name()
+        if db_name:
+            user_path = os.path.expanduser('~')
+            user_folder_name = "DiabolikRepas"
+            if not os.path.isdir(os.path.join(user_path, user_folder_name)):
+                os.mkdir(os.path.join(user_path, user_folder_name))
+        created = self.model.create_db(db_name)
+        if created:
+            self.model.connect_db(db_name)
+        self.set_infos()
+
     def open_db(self):
-        file_name = QFileDialog.getOpenFileName(self, 'Open File')
+        file_name = QFileDialog.getOpenFileName(
+            self, 'Ouvrir un fichier', '', "Bases de données (*.db)")
         if file_name[0]:
-            self.model.connect_db(file_name[0])
+            if self.model.db.isOpen():
+                self.close_db()
+            self.connect_db(file_name[0])
+
+    def close_db(self):
+        self.model.db.close()
+        self.enable_db_actions(False)
+        self.tabs.close()
 
     def retrieve_db(self):
-        files = os.listdir('./')
-        files = [x for x in files if x.split('.')[-1] == 'db']
-
-        if len(files) == 1:
-            QMessageBox.information(self, "Base trouvée","Base de donnée : "+files[0])
-            self.model.connect_db(files[0])
-        
-        elif len(files) == 0:
+        path = self.config.value("lastdbpath")
+        if path:
+            if os.path.exists(path):
+                self.connect_db(path)
+        else:
             reponse = QMessageBox.question(
                 None,
                 'message',
@@ -162,20 +206,9 @@ class MainWindow(QMainWindow):
                 QMessageBox.No
                 )
             if reponse == QMessageBox.Yes:
-                db_name = self.input_db_name()
-                created = self.model.create_db(db_name)
-                if created:
-                    self.model.connect_db(db_name)
-                self.set_infos()
-
+                self.create_new_db()
             if reponse == QMessageBox.No:
-                return None
-
-        elif len(files) > 1:
-            #QMessageBox.critical(None, "Plusieurs bases trouvées", "Plusieurs bases de données trouvées. Je ne sais que faire...")
-            combo = QComboBox(self)
-            for db_name in files:
-                combo.addItem(db_name)
+                return False
 
     def input_db_name(self):
         name, ok = QInputDialog.getText(self, 'Input Dialog', 
