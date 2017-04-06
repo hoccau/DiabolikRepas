@@ -1,6 +1,6 @@
-<repas nom="FRUIT" offset="3" type="gouter">
-<plat nom="FRUIT" type="autre">
-<ingrédient nom="FRUIT">
+<repas nom="GAUFFRE" offset="3" type="gouter">
+<plat nom="GAUFFRE" type="autre">
+<ingrédient nom="GAUFFRE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

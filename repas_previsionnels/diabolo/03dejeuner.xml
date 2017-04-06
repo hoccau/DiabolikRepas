@@ -1,22 +1,6 @@
-<repas nom="Poulet du chef" offset="3" type="déjeuner">
-<plat nom="TOMATE" type="entrée">
-<ingrédient nom="TOMATE">
-<quantité unit="gr">
-<age-6>80</age-6>
-<age6-12>100</age6-12>
-<age12>100</age12>
-</quantité>
-</ingrédient>
-</plat>
-<plat nom="POULET RIZ" type="plat">
-<ingrédient nom="RIZ">
-<quantité unit="gr">
-<age-6>50</age-6>
-<age6-12>60</age6-12>
-<age12>80</age12>
-</quantité>
-</ingrédient>
-<ingrédient nom="POULET">
+<repas nom="Le repas de la mer" offset="3" type="déjeuner">
+<plat nom="FRIAND AU FROMAGE" type="entrée">
+<ingrédient nom="FRIAND AU FROMAGE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>
@@ -24,12 +8,28 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="SALADE DE FRUIT" type="dessert">
-<ingrédient nom="SALADE DE FRUIT">
+<plat nom="POISSON RATATOUILLE" type="plat">
+<ingrédient nom="RATATOUILLE">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>
-<age12>110</age12>
+<age12>120</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="POISSON">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="FRUIT" type="dessert">
+<ingrédient nom="FRUIT">
+<quantité unit="pièce">
+<age-6>1</age-6>
+<age6-12>1</age6-12>
+<age12>1</age12>
 </quantité>
 </ingrédient>
 </plat>

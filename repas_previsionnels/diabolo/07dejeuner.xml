@@ -1,15 +1,22 @@
-<repas nom="Le bon menu du Languedoc" offset="7" type="déjeuner">
-<plat nom="SALADE VERTE" type="entrée">
-<ingrédient nom="SALADE VERTE">
+<repas nom="En hommage à Antoine Parmentier..." offset="7" type="déjeuner">
+<plat nom="Maïs suremi" type="entrée">
+<ingrédient nom="SUREMI">
 <quantité unit="gr">
-<age-6>80</age-6>
-<age6-12>100</age6-12>
-<age12>100</age12>
+<age-6>40</age-6>
+<age6-12>50</age6-12>
+<age12>50</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="maïs">
+<quantité unit="gr">
+<age-6>40</age-6>
+<age6-12>50</age6-12>
+<age12>50</age12>
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="CASSOULET" type="plat">
-<ingrédient nom="CASSOULET">
+<plat nom="HACHIS PARMENTIER" type="plat">
+<ingrédient nom="HACHIS PARMENTIER">
 <quantité unit="gr">
 <age-6>200</age-6>
 <age6-12>250</age6-12>
@@ -17,8 +24,8 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="YAOURT AROMATISE" type="dessert">
-<ingrédient nom="YAOURT AROMATISE">
+<plat nom="FROMAGE BLANC" type="dessert">
+<ingrédient nom="FROMAGE BLANC">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

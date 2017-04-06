@@ -1,31 +1,24 @@
-<repas nom="Steak" offset="3" type="souper">
-<plat nom="SALADE VERTE" type="entrée">
-<ingrédient nom="SALADE VERTE">
-<quantité unit="gr">
-<age-6>80</age-6>
-<age6-12>100</age6-12>
-<age12>100</age12>
+<repas nom="Saveurs d'Italie" offset="3" type="souper">
+<plat nom="SOUPE" type="entrée">
+<ingrédient nom="SOUPE">
+<quantité unit="ml">
+<age-6>250</age-6>
+<age6-12>300</age6-12>
+<age12>350</age12>
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="STEACK HACHE PETIT POIS" type="plat">
-<ingrédient nom="PETIT POIS">
-<quantité unit="gr">
-<age-6>80</age-6>
-<age6-12>100</age6-12>
-<age12>120</age12>
-</quantité>
-</ingrédient>
-<ingrédient nom="STEACK HACHE">
+<plat nom="PIZZA" type="plat">
+<ingrédient nom="PIZZA">
 <quantité unit="pièce">
-<age-6>1</age-6>
-<age6-12>1</age6-12>
-<age12>1</age12>
+<age-6>0.25</age-6>
+<age6-12>0.50</age6-12>
+<age12>0.75</age12>
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="YAOURT AUX FRUITS" type="dessert">
-<ingrédient nom="YAOURT AUX FRUITS">
+<plat nom="CREME VANILLE" type="dessert">
+<ingrédient nom="CREME VANILLE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

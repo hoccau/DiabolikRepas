@@ -1,13 +1,6 @@
-<repas nom="Chicken forever" offset="6" type="déjeuner">
-<plat nom="CONCOMBRE CREME" type="entrée">
-<ingrédient nom="crème">
-<quantité unit="gr">
-<age-6>20</age-6>
-<age6-12>40</age6-12>
-<age12>40</age12>
-</quantité>
-</ingrédient>
-<ingrédient nom="CONCOMBRE">
+<repas nom="Le bon menu du Languedoc" offset="6" type="déjeuner">
+<plat nom="SALADE VERTE" type="entrée">
+<ingrédient nom="SALADE VERTE">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>
@@ -15,24 +8,17 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="NUGGETS FRITES" type="plat">
-<ingrédient nom="FRITES">
+<plat nom="CASSOULET" type="plat">
+<ingrédient nom="CASSOULET">
 <quantité unit="gr">
-<age-6>150</age-6>
-<age6-12>180</age6-12>
-<age12>200</age12>
-</quantité>
-</ingrédient>
-<ingrédient nom="NUGGETS">
-<quantité unit="pièce">
-<age-6>4</age-6>
-<age6-12>5</age6-12>
-<age12>6</age12>
+<age-6>200</age-6>
+<age6-12>250</age6-12>
+<age12>300</age12>
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="FRUIT" type="dessert">
-<ingrédient nom="FRUIT">
+<plat nom="YAOURT AROMATISE" type="dessert">
+<ingrédient nom="YAOURT AROMATISE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

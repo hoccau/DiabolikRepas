@@ -1,6 +1,6 @@
-<repas nom="Saucices lentilles" offset="2" type="déjeuner">
-<plat nom="BETTERAVES" type="entrée">
-<ingrédient nom="BETTERAVES">
+<repas nom="Poulet du chef" offset="2" type="déjeuner">
+<plat nom="TOMATE" type="entrée">
+<ingrédient nom="TOMATE">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>
@@ -8,21 +8,28 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="LENTILLES SAUCISSES" type="plat">
-<ingrédient nom="LENTILLES SAUCISSES">
+<plat nom="POULET RIZ" type="plat">
+<ingrédient nom="RIZ">
 <quantité unit="gr">
-<age-6>200</age-6>
-<age6-12>240</age6-12>
-<age12>300</age12>
+<age-6>50</age-6>
+<age6-12>60</age6-12>
+<age12>80</age12>
 </quantité>
 </ingrédient>
-</plat>
-<plat nom="FRUIT" type="dessert">
-<ingrédient nom="FRUIT">
+<ingrédient nom="POULET">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>
 <age12>1</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="SALADE DE FRUIT" type="dessert">
+<ingrédient nom="SALADE DE FRUIT">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>110</age12>
 </quantité>
 </ingrédient>
 </plat>

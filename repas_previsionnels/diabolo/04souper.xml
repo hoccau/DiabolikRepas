@@ -1,24 +1,31 @@
-<repas nom="Saveurs d'Italie" offset="4" type="souper">
-<plat nom="SOUPE" type="entrée">
-<ingrédient nom="SOUPE">
-<quantité unit="ml">
-<age-6>250</age-6>
-<age6-12>300</age6-12>
-<age12>350</age12>
-</quantité>
-</ingrédient>
-</plat>
-<plat nom="PIZZA" type="plat">
-<ingrédient nom="PIZZA">
+<repas nom="Quelle fraîcheur dans l'assiète" offset="4" type="souper">
+<plat nom="MELON" type="entrée">
+<ingrédient nom="MELON">
 <quantité unit="pièce">
-<age-6>0.25</age-6>
-<age6-12>0.50</age6-12>
-<age12>0.75</age12>
+<age-6>0.10</age-6>
+<age6-12>0.25</age6-12>
+<age12>0.25</age12>
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="CREME VANILLE" type="dessert">
-<ingrédient nom="CREME VANILLE">
+<plat nom="GRATIN DE CHOUX FLEUR LARDONS" type="plat">
+<ingrédient nom="LARDONS">
+<quantité unit="gr">
+<age-6>75</age-6>
+<age6-12>100</age6-12>
+<age12>150</age12>
+</quantité>
+</ingrédient>
+<ingrédient nom="GRATIN DE CHOUX FLEUR">
+<quantité unit="gr">
+<age-6>80</age-6>
+<age6-12>100</age6-12>
+<age12>120</age12>
+</quantité>
+</ingrédient>
+</plat>
+<plat nom="GLACE" type="dessert">
+<ingrédient nom="GLACE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

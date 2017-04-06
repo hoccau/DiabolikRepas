@@ -1,10 +1,10 @@
-<repas nom="YAOURT A BOIRE" offset="7" type="gouter">
-<plat nom="YAOURT A BOIRE" type="autre">
-<ingrédient nom="YAOURT A BOIRE">
+<repas nom="Cookies" offset="7" type="gouter">
+<plat nom="COOKIES" type="autre">
+<ingrédient nom="COOKIES">
 <quantité unit="pièce">
-<age-6>1</age-6>
-<age6-12>1</age6-12>
-<age12>1</age12>
+<age-6>2</age-6>
+<age6-12>2</age6-12>
+<age12>2</age12>
 </quantité>
 </ingrédient>
 </plat>

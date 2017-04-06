@@ -1,26 +1,19 @@
-<repas nom="Le repas de la mer" offset="4" type="déjeuner">
-<plat nom="FRIAND AU FROMAGE" type="entrée">
-<ingrédient nom="FRIAND AU FROMAGE">
-<quantité unit="pièce">
-<age-6>1</age-6>
-<age6-12>1</age6-12>
-<age12>1</age12>
-</quantité>
-</ingrédient>
-</plat>
-<plat nom="POISSON RATATOUILLE" type="plat">
-<ingrédient nom="RATATOUILLE">
+<repas nom="Spécialités de Bologne" offset="4" type="déjeuner">
+<plat nom="Taboulé" type="entrée">
+<ingrédient nom="taboulé">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>
-<age12>120</age12>
+<age12>100</age12>
 </quantité>
 </ingrédient>
-<ingrédient nom="POISSON">
-<quantité unit="pièce">
-<age-6>1</age-6>
-<age6-12>1</age6-12>
-<age12>1</age12>
+</plat>
+<plat nom="LASAGNE" type="plat">
+<ingrédient nom="LASAGNE">
+<quantité unit="gr">
+<age-6>200</age-6>
+<age6-12>250</age6-12>
+<age12>300</age12>
 </quantité>
 </ingrédient>
 </plat>

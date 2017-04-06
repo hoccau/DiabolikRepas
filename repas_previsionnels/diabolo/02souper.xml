@@ -1,6 +1,6 @@
-<repas nom="Cordon bleu du soir" offset="2" type="souper">
-<plat nom="Céleri " type="entrée">
-<ingrédient nom="céleri">
+<repas nom="Steak" offset="2" type="souper">
+<plat nom="SALADE VERTE" type="entrée">
+<ingrédient nom="SALADE VERTE">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>
@@ -8,15 +8,15 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="CORDON BLEU JARDINIERE DE LEGUME" type="plat">
-<ingrédient nom="jardinière">
+<plat nom="STEACK HACHE PETIT POIS" type="plat">
+<ingrédient nom="PETIT POIS">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>
 <age12>120</age12>
 </quantité>
 </ingrédient>
-<ingrédient nom="CORDON BLEU">
+<ingrédient nom="STEACK HACHE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>
@@ -24,8 +24,8 @@
 </quantité>
 </ingrédient>
 </plat>
-<plat nom="FLAMBI" type="dessert">
-<ingrédient nom="FLAMBI">
+<plat nom="YAOURT AUX FRUITS" type="dessert">
+<ingrédient nom="YAOURT AUX FRUITS">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

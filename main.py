@@ -9,10 +9,11 @@ Logiciel d'économat léger pour centre de vacances
 from PyQt5 import QtSql
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QMimeDatabase
+from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
 from views import *
-from PyQt5.QtSql import QSqlRelationalDelegate
+import repas_xml_to_db
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -50,12 +51,18 @@ class MainWindow(QMainWindow):
             'Rapport', self.viewRapport)
         self.db_actions['editRepasPrevAction'] = self.add_action(
             'Previsionnel', self.add_previsionnel)
+        self.db_actions['import_previsionnel'] = self.add_action(
+            'Importer un repas prévisionnel', self.import_xml_repas)
+        self.db_actions['init_prev'] = self.add_action(
+            'Réinitialiser le prévisonnel', self.init_prev_by_xml_repas)
         self.db_actions['close'] = self.add_action(
             'Fermer', self.close_db, 'Ctrl+W')
 
         fileMenu = menubar.addMenu('&Fichier')
         fileMenu.addAction(openAction)
         fileMenu.addAction(self.db_actions['close'])
+        fileMenu.addAction(self.db_actions['import_previsionnel'])
+        fileMenu.addAction(self.db_actions['init_prev'])
         fileMenu.addAction(self.db_actions['exportPdfAction'])
         fileMenu.addAction(exitAction)
         edit_menu = menubar.addMenu('&Édition')
@@ -174,10 +181,11 @@ class MainWindow(QMainWindow):
             user_folder_name = "DiabolikRepas"
             if not os.path.isdir(os.path.join(user_path, user_folder_name)):
                 os.mkdir(os.path.join(user_path, user_folder_name))
-        created = self.model.create_db(db_name)
+            path = os.path.join(user_path, user_folder_name, db_name)
+        created = self.model.create_db(path)
         if created:
-            self.model.connect_db(db_name)
-        self.set_infos()
+            self.connect_db(path)
+            self.set_infos()
 
     def open_db(self):
         file_name = QFileDialog.getOpenFileName(
@@ -276,6 +284,32 @@ class MainWindow(QMainWindow):
                 filename += '.pdf'
             import export_pdf
             export_pdf.create_pdf(filename, self.model, date_start, date_stop)
+
+    def init_prev_by_xml_repas(self):
+        reponse = QMessageBox.question(
+            None,
+            'Réinitialiser le prévisionnel?',
+            'Vous allez effacer tout le prévisionnel existant. Êtes-vous sûr(e) ?',
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+            )
+        if reponse == QMessageBox.Yes:
+            self.import_all_xml_default()
+
+    def import_all_xml_default(self):
+        default_path = './repas_previsionnels/diabolo/'
+        repas_files = os.listdir(default_path)
+        for repas in repas_files:
+            repas = repas_xml_to_db.Repas(os.path.join(default_path, repas))
+            repas.xml_to_db(model=self.model)
+
+    def import_xml_repas(self):
+        file_name = QFileDialog.getOpenFileName(
+            self, 'Ouvrir un repas', '', "Repas XML (*.xml)")
+        if file_name[0]:
+            repas = repas_xml_to_db.Repas(file_name[0])
+            repas.xml_to_db(model=self.model)
+
 
 if __name__ == '__main__':
     import sys, os

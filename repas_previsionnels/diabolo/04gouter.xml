@@ -1,6 +1,6 @@
-<repas nom="GAUFFRE" offset="4" type="gouter">
-<plat nom="GAUFFRE" type="autre">
-<ingrédient nom="GAUFFRE">
+<repas nom="BARRE CHOCOLATE" offset="4" type="gouter">
+<plat nom="BARRE CHOCOLATE" type="autre">
+<ingrédient nom="BARRE CHOCOLATE">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>

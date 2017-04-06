@@ -1,10 +1,10 @@
-<repas nom="COMPOTE" offset="1" type="gouter">
-<plat nom="COMPOTE" type="autre">
-<ingrédient nom="COMPOTE">
+<repas nom="biscuits" offset="1" type="gouter">
+<plat nom="biscuits" type="autre">
+<ingrédient nom="biscuit">
 <quantité unit="pièce">
-<age-6>1</age-6>
-<age6-12>1</age6-12>
-<age12>1</age12>
+<age-6>2</age-6>
+<age6-12>2</age6-12>
+<age12>2</age12>
 </quantité>
 </ingrédient>
 </plat>
