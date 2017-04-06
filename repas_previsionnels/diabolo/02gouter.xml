@@ -1,6 +1,6 @@
-<repas nom="BN" offset="2" type="gouter">
-<plat nom="BN" type="autre">
-<ingrédient nom="BN">
+<repas nom="biscuits" offset="2" type="gouter">
+<plat nom="biscuits" type="autre">
+<ingrédient nom="biscuit">
 <quantité unit="pièce">
 <age-6>2</age-6>
 <age6-12>2</age6-12>

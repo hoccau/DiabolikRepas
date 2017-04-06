@@ -1,6 +1,6 @@
 <repas nom="Spécialités de Bologne" offset="5" type="déjeuner">
-<plat nom="TABOULE" type="entrée">
-<ingrédient nom="TABOULE">
+<plat nom="Taboulé" type="entrée">
+<ingrédient nom="taboulé">
 <quantité unit="gr">
 <age-6>80</age-6>
 <age6-12>100</age6-12>

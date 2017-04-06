@@ -76,9 +76,30 @@ class Model(QSqlQueryModel):
         while self.query.next():
             return self.query.value(0)
 
+    def get_infos(self):
+        values = ['centre', 'directeur_nom', 'nombre_enfants_6', 
+            'nombre_enfants_6_12', 'nombre_enfants_12', 'place',
+            'startdate', 'enddate']
+        self.exec_("SELECT "+", ".join(values)+" FROM infos")
+        result = {}
+        while self.query.next():
+            for i, value in enumerate(values):
+                result[value] = self.query.value(i)
+        return result
+
+    def get_prev_products_by_dates(self, date_start, date_stop):
+        self.exec_(
+            "SELECT products.name, quantity, units.unit FROM ingredients_prev\
+            INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
+            INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id\
+            INNER JOIN products ON products.id = ingredients_prev.product_id\
+            INNER JOIN units ON units.id = products.unit_id\
+            WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
+        return self._query_to_lists(3)
+
     def get_(self, values=[], table=None, condition=None, distinct=False):
         sql_values = ",".join(values)
-        if condition == None:
+        if not condition:
             condition = ""
         else:
             condition = " WHERE "+str(condition)
@@ -394,14 +415,43 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
 
     def add_row(self, plat_id):
         query = QSqlQuery("INSERT INTO ingredients_prev(\
-                product_id, dishes_prev_id, quantity, unit_id)\
-                VALUES(1, "+str(plat_id)+", 0, 1)")
+                product_id, dishes_prev_id, quantity)\
+                VALUES(1, "+str(plat_id)+", 0)")
         self.select()
     
     def del_row(self, id=None):
         if id:
             query = QSqlQuery("DELETE FROM ingredients_prev WHERE id ="+str(id))
         self.select()
+
+class IngredientPrevQueryModel(QSqlQueryModel):
+    def __init__(self):
+        super(IngredientPrevQueryModel, self).__init__()
+        self.q = "SELECT products.name, quantity, units.unit FROM ingredients_prev\
+            INNER JOIN products ON products.id = ingredients_prev.product_id\
+            INNER JOIN units ON units.id = products.unit_id"
+        self.filter = ""
+        self.select()
+
+    def select(self):
+        print(self.q + self.filter)
+        self.setQuery(self.q + self.filter)
+        print(self.lastError().text())
+
+    def setFilter(self, filter_):
+        self.filter = ' WHERE '+filter_
+        self.select()
+    
+    def add_row(self, plat_id):
+        query = QSqlQuery("INSERT INTO ingredients_prev(\
+                product_id, dishes_prev_id, quantity)\
+                VALUES(1, "+str(plat_id)+", 0)")
+        self.select()
+    
+    def del_row(self, id_=None):
+        if id_:
+            query = QSqlQuery("DELETE FROM ingredients_prev WHERE id ="+str(id_))
+            self.select()
 
 class OutputsModel(QSqlQueryModel):
     def __init__(self):

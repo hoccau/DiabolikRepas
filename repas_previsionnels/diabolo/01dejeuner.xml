@@ -23,7 +23,7 @@
 <age12>300</age12>
 </quantité>
 </ingrédient>
-<ingrédient nom="GRUYERE">
+<ingrédient nom="gruyère">
 <quantité unit="gr">
 <age-6>20</age-6>
 <age6-12>30</age6-12>

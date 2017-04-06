@@ -1,5 +1,5 @@
 <repas nom="En hommage à Antoine Parmentier..." offset="8" type="déjeuner">
-<plat nom="MAIS SUREMI" type="entrée">
+<plat nom="Maïs suremi" type="entrée">
 <ingrédient nom="SUREMI">
 <quantité unit="gr">
 <age-6>40</age-6>
@@ -7,7 +7,7 @@
 <age12>50</age12>
 </quantité>
 </ingrédient>
-<ingrédient nom="MAIS">
+<ingrédient nom="maïs">
 <quantité unit="gr">
 <age-6>40</age-6>
 <age6-12>50</age6-12>

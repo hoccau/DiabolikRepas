@@ -1,6 +1,6 @@
 <repas nom="Chicken forever" offset="6" type="déjeuner">
 <plat nom="CONCOMBRE CREME" type="entrée">
-<ingrédient nom="CREME">
+<ingrédient nom="crème">
 <quantité unit="gr">
 <age-6>20</age-6>
 <age6-12>40</age6-12>

@@ -91,14 +91,15 @@ class MainWindow(QMainWindow):
         RapportDialog(self)
 
     def remove_current_row(self):
-        current_table =  self.tabs.currentWidget().model().tableName()
+        #current_table = self.tabs.currentWidget().model().tableName()
+        current_tab = self.tabs.currentIndex()
         select = self.tabs.currentWidget().selectionModel()
         row = select.currentIndex().row()
         if row != -1:
-            if current_table == 'repas':
+            if current_tab == 1:
                 self.remove_repas(row)
             else:
-                print(current_table)
+                print(current_tab)
 
     def remove_repas(self, row):
         reponse = QMessageBox.question(

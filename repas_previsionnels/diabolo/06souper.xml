@@ -25,7 +25,7 @@
 </ingrédient>
 </plat>
 <plat nom="CREME CHOCOLAT" type="dessert">
-<ingrédient nom="CREME CHOCOLAT">
+    <ingrédient nom="CREME CHOCOLAT">
 <quantité unit="pièce">
 <age-6>1</age-6>
 <age6-12>1</age6-12>
