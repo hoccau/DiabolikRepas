@@ -734,3 +734,35 @@ class PrevisionnelColumnView(QGroupBox):
     def select_repas(self):
         self.date = self.calendar.selectedDate()
         self.model.query_for_day(self.date.toString('yyyy-MM-dd'))
+
+class DatesRangeDialog(QDialog):
+    def __init__(self, parent=None, name=""):
+        super(DatesRangeDialog, self).__init__(parent)
+        
+        self.date_start = QDateEdit()
+        self.date_start.setDate(QDate.currentDate())
+        self.date_stop = QDateEdit()
+        self.date_stop.setDate(QDate.currentDate())
+
+        layout = QFormLayout()
+        layout.addRow('Du', self.date_start)
+        layout.addRow('Au', self.date_stop)
+
+        self.ok_button = QPushButton('OK')
+        self.cancel_button = QPushButton('Annuler')
+        
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        layout.addRow('', button_layout)
+        self.setLayout(layout)
+        
+        self.ok_button.clicked.connect(self.get_dates)
+        self.cancel_button.clicked.connect(self.reject)
+        self.exec_()
+
+    def get_dates(self):
+        self.accept()
+        return (self.date_start.date().toString('yyyy-MM-dd'),
+            self.date_stop.date().toString('yyyy-MM-dd'))
+

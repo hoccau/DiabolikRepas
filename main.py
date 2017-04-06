@@ -26,6 +26,7 @@ class MainWindow(QMainWindow):
 
         exitAction = self.add_action('&Quitter', qApp.quit, 'Ctrl+Q')
         openAction = self.add_action('&Ouvrir', self.open_db, 'Ctrl+O')
+        exportPdfAction = self.add_action('&Exporter la liste des courses', self.export_pdf)
         delRowAction = self.add_action('&Supprimer la ligne', self.remove_current_row)
         addFormAction = self.add_action('&Denrées', self.add_input)
         addFournisseurAction = self.add_action('&Fournisseur', self.add_fournisseur)
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow):
         fileMenu = menubar.addMenu('&Fichier')
         fileMenu.addAction(openAction)
         fileMenu.addAction(exitAction)
+        fileMenu.addAction(exportPdfAction)
         edit_menu = menubar.addMenu('&Édition')
         edit_menu.addAction(delRowAction)
         edit_menu.addAction(setInfosAction)
@@ -212,6 +214,16 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Erreur", "Ce nom existe déjà.")
             else:
                 QMessageBox.warning(self, "Erreur", "Erreur de requette inconnue!")
+
+    def export_pdf(self):
+        date_start, date_stop = DatesRangeDialog(self).get_dates()
+        filename, _format = QFileDialog.getSaveFileName(
+            self, "Exporter le rapport", None, 'PDF(*.pdf)')
+        if filename:
+            if filename[-4:] != '.pdf':
+                filename += '.pdf'
+            import export_pdf
+            export_pdf.create_pdf(filename, self.model, date_start, date_stop)
 
 if __name__ == '__main__':
     import sys, os
