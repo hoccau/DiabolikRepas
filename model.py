@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, QSqlRelation, QSqlTableModel
-from PyQt5.QtCore import Qt, QFile, QIODevice, QModelIndex
+from PyQt5.QtCore import Qt, QFile, QIODevice, QModelIndex, QAbstractTableModel, QVariant
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 DEBUG_SQL = True
@@ -46,7 +46,7 @@ class Model(QSqlQueryModel):
 
     def _create_models(self):
         self.query = QSqlQuery()
-        self.qt_table_reserve = ReserveModel()
+        self.qt_table_reserve = ReserveTableModel()
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_repas = RepasModel(self, self.db)
         self.qt_table_outputs = OutputsModel()
@@ -320,14 +320,64 @@ class ReserveModel(QSqlQueryModel):
 
     def select(self):
         self.setQuery(
+            "SELECT DISTINCT products.name,\
+            total(inputs.quantity) - total(outputs.quantity) as quantité\
+            FROM products\
+            INNER JOIN inputs on inputs.product_id = products.id\
+            LEFT JOIN outputs on outputs.product_id = products.id\
+            GROUP BY inputs.id")
+
+class ReserveTableModel(QAbstractTableModel):
+    """ Because SQLite doesn't implement FULL OUTER JOIN, we do the job with
+    Python."""
+    def __init__(self, parent=None):
+        super(ReserveTableModel, self).__init__(parent)
+        self.inputs = {}
+
+        query = QSqlQuery(
+                "SELECT products.name as produit,\
+                sum(inputs.quantity)\
+                FROM inputs\
+                INNER JOIN products ON inputs.product_id = products.id\
+                group by products.id")
+        query.exec_()
+        while query.next():
+            self.inputs[query.value(0)] = query.value(1)
+        query = QSqlQuery(
             "SELECT products.name as produit,\
-            sum(inputs.quantity) - total(outputs.quantity) as quantité,\
-            sum(inputs.quantity * inputs.prix) as 'prix total',\
-            AVG(inputs.Prix) AS 'prix moyen'\
-            FROM inputs\
-            INNER JOIN products ON inputs.product_id = products.id\
-            LEFT JOIN outputs ON outputs.product_id = products.id\
-            GROUP BY products.id")
+            total(outputs.quantity)\
+            FROM outputs\
+            INNER JOIN products ON outputs.product_id = products.id\
+            group by products.id")
+        while query.next():
+            print(query.value(0))
+            self.inputs[query.value(0)] -= query.value(1)
+        self.data_table = [kv for kv in sorted(self.inputs.items())]
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if section == 0 and orientation == Qt.Horizontal:
+                return 'Produit'
+            if section == 1 and orientation == Qt.Horizontal:
+                return 'Stock'
+        else:
+            return QVariant()
+    def setHeaderData(self, section, orientation, value):
+        self.headerDataChanged()
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            i = index.row()
+            j = index.column()
+            return self.data_table[i][j]
+        else:
+            return QVariant()
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.data_table)
+
+    def columnCount(self, parent=QModelIndex()):
+        return len(self.data_table[0])
 
 class RepasModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
