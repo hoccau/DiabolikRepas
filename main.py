@@ -163,7 +163,9 @@ class MainWindow(QMainWindow):
                 )
             if reponse == QMessageBox.Yes:
                 db_name = self.input_db_name()
-                self.model.create_db(db_name)
+                created = self.model.create_db(db_name)
+                if created:
+                    self.model.connect_db(db_name)
                 self.set_infos()
 
             if reponse == QMessageBox.No:

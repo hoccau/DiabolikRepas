@@ -23,6 +23,7 @@ class Model(QSqlQueryModel):
                 requests = r.split(';')[:-1] #remove the last because empty
             for req in requests:
                 self.exec_(req)
+            return True
 
     def exec_(self, request=None):
         """ Execute a request and return True if no error occur """
@@ -377,7 +378,10 @@ class ReserveTableModel(QAbstractTableModel):
         return len(self.data_table)
 
     def columnCount(self, parent=QModelIndex()):
-        return len(self.data_table[0])
+        if len(self.data_table) > 0:
+            return len(self.data_table[0])
+        else:
+            return 0
 
 class RepasModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
