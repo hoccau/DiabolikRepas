@@ -140,8 +140,8 @@ class InputForm(Form):
                 new_product = ProductForm(self, self.product.text())
                 self.all_products_names = self.parent.model.get_all_products_names()
                 self.product_completer.setModel(QStringListModel(self.all_products_names))
+                self.product.setText(new_product.name.text())
         if self.product.text() != '':
-            self.product.setText(new_product.name.text())
             unit = self.model.get_product_unit(self.product.text())
             self.product_id = self.model.get_product_id_by_name(self.product.text())
             self.refresh_unit_label(unit)
