@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
         self.model = Model(self)
         self.retrieve_db()
         
+    def _create_tables_views(self):
         self.tabs = QTabWidget()
         self.tables = {
             'reserve': self._add_table_model(self.model.qt_table_reserve, 'reserve'),
@@ -176,6 +177,7 @@ class MainWindow(QMainWindow):
         else:
             self.model.connect_db(db_path)
             self.config.setValue("lastdbpath", db_path)
+            self._create_tables_views()
             self.enable_db_actions(True)
             return True
 

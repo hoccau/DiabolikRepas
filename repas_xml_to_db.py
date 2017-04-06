@@ -34,7 +34,7 @@ class Repas():
 
     def _set_dom(self):
         if self.xml_is_valid():
-            with open(self.xml_file) as f:
+            with open(self.xml_file, 'r', encoding='utf-8') as f:
                 xml = f.read()
             w = self.dom.setContent(xml)
             print(w)
