@@ -29,6 +29,7 @@ class MainWindow(QMainWindow):
 
         exitAction = self.add_action('&Quitter', qApp.quit, 'Ctrl+Q')
         openAction = self.add_action('&Ouvrir', self.open_db, 'Ctrl+O')
+        aboutAction = self.add_action('&à propos', self.about_d)
         
         self.db_actions = {}
         self.db_actions['exportPdfAction'] = self.add_action(
@@ -77,6 +78,8 @@ class MainWindow(QMainWindow):
         addMenu.addAction(self.db_actions['addProductAction'])
         addMenu.addAction(self.db_actions['addFournisseurAction'])
         addMenu.addAction(self.db_actions['addRepasAction'])
+        helpmenu = menubar.addMenu('&Aide')
+        helpmenu.addAction(aboutAction)
 
         self.statusBar().showMessage('Ready')
         self.setMinimumSize(850,300)
@@ -310,6 +313,8 @@ class MainWindow(QMainWindow):
             repas = repas_xml_to_db.Repas(file_name[0])
             repas.xml_to_db(model=self.model)
 
+    def about_d(self):
+        QMessageBox.information(self, "Diabolik Repas", "version 0.0.1")
 
 if __name__ == '__main__':
     import sys, os
