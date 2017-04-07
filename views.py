@@ -657,7 +657,9 @@ class Previsionnel(QDialog):
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
         if reponse == QMessageBox.Yes:
-            self.ingredients_model.del_row(id=None)
+            row = self.ingredients_prev_view.selectionModel().currentIndex().row()
+            id_ = self.ingredients_prev_view.model().record(row).value(0)
+            self.ingredients_model.del_row(id=id_)
 
 class PlatPrevisionnel(QWidget):
     """ not finished/used... """
