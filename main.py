@@ -307,6 +307,7 @@ class MainWindow(QMainWindow):
             self.import_all_xml_default()
 
     def import_all_xml_default(self):
+        self.model.delete_all_previsionnel()
         default_path = './repas_previsionnels/diabolo/'
         repas_files = os.listdir(default_path)
         for repas in repas_files:

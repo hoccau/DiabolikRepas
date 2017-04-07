@@ -279,6 +279,10 @@ class Model(QSqlQueryModel):
     def delete(self, table, qfilter_key, qfilter_value):
         self.exec_('DELETE FROM '+table+' WHERE '+qfilter_key+' = '+"'"+qfilter_value+"'")
 
+    def delete_all_previsionnel(self):
+        for table in ['ingredients_prev', 'repas_prev', 'dishes_prev']:
+            self.exec_("DELETE FROM "+table)
+
     def _query_to_dic(self):
         """ return a dict which contains query results """
         dic = {}
