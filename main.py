@@ -207,6 +207,7 @@ class MainWindow(QMainWindow):
 
     def close_db(self):
         self.model.db.close()
+        self.tabs.close()
         self.enable_db_actions(False)
 
     def retrieve_db(self):
