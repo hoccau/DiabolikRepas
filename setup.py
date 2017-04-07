@@ -13,7 +13,7 @@ shortcut_table = [
      "DesktopFolder",          # Directory_
      "Diabolik Repas",           # Name
      "TARGETDIR",              # Component_
-     "[TARGETDIR]DiabolikRepas.exe",# Target
+     "[TARGETDIR]main.exe",# Target
      None,                     # Arguments
      None,                     # Description
      None,                     # Hotkey
@@ -28,7 +28,7 @@ msi_data = {'Shortcut':shortcut_table}
 options = {'build_exe': {
         "excludes": [],
         "includes": [],
-        "include_files": ['design', 'create_db.sql', 'repas_previsionnels'],
+        "include_files": ['design', 'create_db.sql', 'repas_previsionnels', 'repas.xsd'],
         "optimize": 2},
 		'bdist_msi':{'data': msi_data}
          }
