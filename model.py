@@ -17,7 +17,7 @@ class Model(QSqlQueryModel):
     def create_db(self, db_name):
         connected = self.connect_db(db_name)
         if connected:
-            with open('create_db.sql', 'r') as create_db_file:
+            with open('create_db.sql', 'r', encoding='utf-8') as create_db_file:
                 r = create_db_file.read()
                 r = r.replace('\n',' ')
                 requests = r.split(';')[:-1] #remove the last because empty
