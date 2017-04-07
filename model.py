@@ -333,8 +333,11 @@ class ReserveTableModel(QAbstractTableModel):
     Python."""
     def __init__(self, parent=None):
         super(ReserveTableModel, self).__init__(parent)
+        self.select()
+    
+    # not sure that it is the more efficient way, but it's work. 
+    def select(self):
         self.inputs = {}
-
         query = QSqlQuery(
                 "SELECT products.name as produit,\
                 sum(inputs.quantity)\
@@ -354,6 +357,7 @@ class ReserveTableModel(QAbstractTableModel):
             print(query.value(0))
             self.inputs[query.value(0)] -= query.value(1)
         self.data_table = [kv for kv in sorted(self.inputs.items())]
+        self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
