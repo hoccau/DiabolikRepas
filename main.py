@@ -185,6 +185,8 @@ class MainWindow(QMainWindow):
         if self.model.db.isOpen():
             self.close_db()
         db_name = self.input_db_name()
+        if not db_name:
+            return False
         if db_name:
             user_path = os.path.expanduser('~')
             user_folder_name = "DiabolikRepas"
