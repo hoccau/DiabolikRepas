@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(850,300)
         self.show()
         
+        self.enable_db_actions(False) #disabled by default
         self.model = Model(self)
         self.retrieve_db()
         
