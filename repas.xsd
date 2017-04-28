@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-	<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    	<xs:element name='repas'>
-   			<xs:complexType>
-				<xs:sequence>
-					<xs:element name = 'plat' type = 'platType' minOccurs = '0'
-                		maxOccurs = 'unbounded' />
-				</xs:sequence>
-   <xs:attribute name = 'nom' type = 'xs:string'/>
-	<xs:attribute name = 'type' type = 'repas_typeType'/>
-	<xs:attribute name = 'offset' type = 'xs:integer'/>
-			</xs:complexType>
-		</xs:element>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name='root'>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name='repas' type='repasType' minOccurs = '1'
+                    maxOccurs = 'unbounded'/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name='repasType'>
+        <xs:sequence>
+            <xs:element name = 'plat' type = 'platType' minOccurs = '0'
+                maxOccurs = 'unbounded' />
+        </xs:sequence>
+        <xs:attribute name = 'type' type = 'repas_typeType'/>
+        <xs:attribute name = 'offset' type = 'xs:integer'/>
+    </xs:complexType>
 
 	<xs:complexType name="platType">
       <xs:sequence>
@@ -60,8 +66,8 @@
 			<xs:enumeration value='petit déjeuner'/>
 			<xs:enumeration value='déjeuner'/>
 			<xs:enumeration value='gouter'/>
-			<xs:enumeration value='souper'/>
-			<xs:enumeration value='cinquième'/>
+			<xs:enumeration value='dîner'/>
+			<xs:enumeration value='piquenique'/>
 			<xs:enumeration value='autre'/>
 		</xs:restriction>
 	</xs:simpleType>

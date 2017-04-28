@@ -54,14 +54,14 @@ class Repas():
         repas_list = self.dom.elementsByTagName('repas')
         for i in range(repas_list.length()):
             repas = repas_list.at(i).toElement()
-            self.query.prepare('INSERT INTO repas_prev(name, date, type_id) VALUES\
-            (:name, :date, (SELECT id FROM type_repas WHERE type= :type))')
-            self.query.bindValue(':name', repas.attribute('nom'))
+            self.query.prepare('INSERT INTO repas_prev(date, type_id) VALUES\
+            (:date, (SELECT id FROM type_repas WHERE type= :type))')
             offset = int(repas.attribute('offset'))
             day = date_start.addDays(offset)
             self.query.bindValue(':date', date_start.addDays(offset))
             self.query.bindValue(':type', repas.attribute('type'))
             s = self.query.exec_()
+            print('type:', repas.attribute('type'))
             print(self.query.executedQuery(), s, self.query.lastError().text())
 
             #plats

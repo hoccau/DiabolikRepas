@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         self.db_actions['editRepasPrevAction'] = self.add_action(
             'Previsionnel', self.add_previsionnel)
         self.db_actions['import_previsionnel'] = self.add_action(
-            'Importer un repas prévisionnel', self.import_xml_repas)
+            'Importer un prévisionnel', self.import_xml_repas)
         self.db_actions['init_prev'] = self.add_action(
             'Réinitialiser le prévisonnel', self.init_prev_by_xml_repas)
         self.db_actions['close'] = self.add_action(
@@ -319,7 +319,7 @@ class MainWindow(QMainWindow):
 
     def import_xml_repas(self):
         file_name = QFileDialog.getOpenFileName(
-            self, 'Ouvrir un repas', '', "Repas XML (*.xml)")
+            self, 'Ouvrir un prévisionnel', '', "Repas XML (*.xml)")
         if file_name[0]:
             repas = repas_xml_to_db.Repas(file_name[0])
             repas.xml_to_db(model=self.model)

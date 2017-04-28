@@ -11,9 +11,9 @@ place varchar(20),
 startdate varchar(10),
 enddate varchar(10)
 );
-INSERT INTO infos(
-centre, directeur_nom, nombre_enfants_6, nombre_enfants_6_12, nombre_enfants_12, place, startdate, enddate) VALUES (
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO infos
+    VALUES (
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 CREATE TABLE fournisseurs(
 id integer PRIMARY KEY,
@@ -49,7 +49,6 @@ INSERT INTO units(unit) VALUES
 
 CREATE TABLE repas_prev(
 id integer PRIMARY KEY,
-name varchar(30),
 date varchar(10) NOT NULL,
 type_id integer NOT NULL,
 FOREIGN KEY (type_id) REFERENCES type_repas(id)
@@ -97,8 +96,8 @@ type varchar(20)
 INSERT INTO type_repas(type) VALUES ('petit déjeuner');
 INSERT INTO type_repas(type) VALUES ('déjeuner');
 INSERT INTO type_repas(type) VALUES ('gouter');
-INSERT INTO type_repas(type) VALUES ('souper');
-INSERT INTO type_repas(type) VALUES ('cinquième');
+INSERT INTO type_repas(type) VALUES ('dîner');
+INSERT INTO type_repas(type) VALUES ('piquenique');
 INSERT INTO type_repas(type) VALUES ('autre');
 
 CREATE TABLE outputs(

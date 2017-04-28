@@ -566,7 +566,7 @@ class Previsionnel(QDialog):
         
         self.repas_prev_view.setModel(self.repas_model)
         self.repas_prev_view.setColumnHidden(0, True) # hide id
-        self.repas_prev_view.setColumnHidden(2, True) # hide date
+        self.repas_prev_view.setColumnHidden(1, True) # hide date
 
         self.plats_prev_view.setModel(self.plats_model)
         self.plats_prev_view.setColumnHidden(0, True)  #hide id

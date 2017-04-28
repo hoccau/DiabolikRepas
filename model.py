@@ -414,14 +414,13 @@ class RepasPrevModel(AbstractPrevisionnelModel):
 
         self.setTable("repas_prev")
         f_rel = QSqlRelation("type_repas","id","type")
-        self.setRelation(3, f_rel)
-        self.rel_type = self.relationModel(3) #QsqlTable for combo box
-        self.setHeaderData(1, Qt.Horizontal, "Nom")
-        self.setHeaderData(3, Qt.Horizontal, "Type")
+        self.setRelation(2, f_rel)
+        self.rel_type = self.relationModel(2) #QsqlTable for combo box
+        #self.setHeaderData(2, Qt.Horizontal, "Type")
         self.select()
 
     def add_row(self, date=""):
-        query = QSqlQuery("INSERT INTO repas_prev(name, date, type_id)\
+        query = QSqlQuery("INSERT INTO repas_prev(date, type_id)\
                 VALUES(NULL, '"+date+"',1)")
         self.select()
 
