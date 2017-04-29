@@ -7,12 +7,16 @@ Logiciel d'économat léger pour centre de vacances
 """
 
 from PyQt5 import QtSql
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import (
+    QMainWindow, QApplication, qApp, QAction, QTabWidget, QTableView, 
+    QAbstractItemView, QInputDialog, QMessageBox)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings, QMimeDatabase
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
-from views import *
+from views import (
+    ProductForm, InputForm, RepasForm, InfosCentreDialog, RapportDialog,
+    Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate)
 import repas_xml_to_db
 import logging
 
@@ -98,12 +102,17 @@ class MainWindow(QMainWindow):
     def _create_tables_views(self):
         self.tabs = QTabWidget()
         self.tables = {
-            'reserve': self._add_table_model(self.model.qt_table_reserve, 'reserve'),
-            'repas': self._add_table_model(self.model.qt_table_repas, 'repas consommés'),
-            'arrivages': self._add_table_model(self.model.qt_table_inputs, 'arrivages'),
-            'sorties': self._add_table_model(self.model.qt_table_outputs, 'sorties')
+            'reserve': self._add_table_model(
+                self.model.qt_table_reserve, 'reserve'),
+            'repas': self._add_table_model(
+                self.model.qt_table_repas, 'repas consommés'),
+            'arrivages': self._add_table_model(
+                self.model.qt_table_inputs, 'arrivages'),
+            'sorties': self._add_table_model(
+                self.model.qt_table_outputs, 'sorties')
             }
         self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
+        self.tabs.currentChanged.connect(self.current_tab_changed)
         
         # Repas table must be selected by row for editing
         self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -127,11 +136,20 @@ class MainWindow(QMainWindow):
         action.triggered.connect(function_name)
         return action
 
+    def current_tab_changed(self):
+        logging.debug(self.tabs.currentIndex())
+        if self.tabs.currentIndex() in (0, 1, 2, 3):
+            self.db_actions['delRowAction'].setEnabled(True)
+        else:
+            self.db_actions['delRowAction'].setEnabled(False)
+
     def viewRapport(self):
         RapportDialog(self)
 
     def remove_current_row(self):
-        #current_table = self.tabs.currentWidget().model().tableName()
+        current_table_widget = self.tabs.currentWidget()
+        #.model().tableName()
+        logging.debug(type(current_table_widget))
         current_tab = self.tabs.currentIndex()
         select = self.tabs.currentWidget().selectionModel()
         row = select.currentIndex().row()
@@ -261,7 +279,7 @@ class MainWindow(QMainWindow):
         self.prev_window = Previsionnel(self)
 
     def edit_repas(self):
-        current_table =  self.tabs.currentWidget().model().tableName()
+        current_table = self.tabs.currentWidget().model().tableName()
         if current_table == 'repas':
             select = self.tabs.currentWidget().selectionModel()
             row = select.currentIndex().row()

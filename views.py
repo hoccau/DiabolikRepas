@@ -163,7 +163,7 @@ class InputForm(Form):
 
     def refresh_unit_label(self, unit):
         matching = {
-           'unités':'par pièce',
+           'Unités':'par pièce',
            'Kilogrammes':'le kilo',
            'Litres':'le litre'
            }
@@ -380,7 +380,7 @@ class OutputLine():
 
     def short_unit_label(self, unit):
         matching = {
-           'unités':'pièces',
+           'Unités':'pièces',
            'Kilogrammes':'kilos',
            'Litres':'litres'
            }
@@ -777,10 +777,10 @@ class PrevisionnelColumnView(QGroupBox):
     def __init__(self, parent):
         super(PrevisionnelColumnView, self).__init__(parent)
 
-        self.model = parent.model.previsionnel_model
+        self.previsionnel_model = parent.model.previsionnel_model
         self.calendar = QCalendarWidget()
         self.column_view = QColumnView()
-        self.column_view.setModel(self.model)
+        self.column_view.setModel(self.previsionnel_model)
         self.column_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         layout = QVBoxLayout()
@@ -793,7 +793,7 @@ class PrevisionnelColumnView(QGroupBox):
     
     def select_repas(self):
         self.date = self.calendar.selectedDate()
-        self.model.query_for_day(self.date.toString('yyyy-MM-dd'))
+        self.previsionnel_model.query_for_day(self.date.toString('yyyy-MM-dd'))
 
 class DatesRangeDialog(QDialog):
     def __init__(self, parent=None, name=""):

@@ -50,7 +50,7 @@ id integer PRIMARY KEY,
 unit varchar(20) NOT NULL
 );
 INSERT INTO units(unit) VALUES
-('unités'), ('Kilogrammes'), ('Litres');
+('Unités'), ('Kilogrammes'), ('Litres');
 
 CREATE TABLE repas_prev(
 id integer PRIMARY KEY,
