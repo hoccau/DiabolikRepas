@@ -49,6 +49,7 @@ class Model(QSqlQueryModel):
         self.query = QSqlQuery()
         self.qt_table_reserve = ReserveTableModel()
         self.qt_table_infos = InfosModel(self, self.db)
+        self.qt_table_periodes_infos = PeriodesModel(self, self.db)
         self.qt_table_repas = RepasModel(self, self.db)
         self.qt_table_outputs = OutputsModel()
         self.qt_table_inputs = InputsModel(self, self.db)
@@ -316,6 +317,20 @@ class InfosModel(QSqlTableModel):
         super(InfosModel, self).__init__(parent, db)
 
         self.setTable("infos")
+        self.select()
+
+class PeriodesModel(QSqlTableModel):
+    def __init__(self, parent, db):
+        super(PeriodesModel, self).__init__(parent, db)
+
+        self.setTable('infos_periodes')
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
+        self.setHeaderData(1, Qt.Horizontal, "Début")
+        self.setHeaderData(2, Qt.Horizontal, "Fin")
+        self.setHeaderData(3, Qt.Horizontal, "Enfants de\n moins de 6 ans")
+        self.setHeaderData(4, Qt.Horizontal, "Enfants entre\n 6 et 12 ans")
+        self.setHeaderData(
+            5, Qt.Horizontal, "Enfants de\n plus de 12 ans\n & adultes")
         self.select()
 
 class ReserveModel(QSqlQueryModel):

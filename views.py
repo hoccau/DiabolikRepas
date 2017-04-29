@@ -409,54 +409,86 @@ class InfosCentreDialog(QDialog):
 
         self.setWindowTitle("Informations du centre")
         self.parent = parent
-        model = parent.model.qt_table_infos
-        mapper = QDataWidgetMapper(self)
-        mapper.setModel(model)
+        infos_model = parent.model.qt_table_infos
+        self.periodes_infos_model = parent.model.qt_table_periodes_infos
+
+        self.mapper = QDataWidgetMapper(self)
+        self.mapper.setModel(infos_model)
 
         self.centre = QLineEdit()
         self.directeur_nom = QLineEdit()
-        self.nbr_children_6 = QSpinBox()
-        self.nbr_children_6_12 = QSpinBox()
-        self.nbr_children_12 = QSpinBox()
-        self.nbr_children_6.setMinimum(0)
-        self.nbr_children_6_12.setMinimum(0)
-        self.nbr_children_12.setMinimum(0)
         self.place = QLineEdit()
-        self.startdate = QDateEdit()
-        self.startdate.setDate(QDate.currentDate())
-        self.enddate = QDateEdit()
-        self.enddate.setDate(QDate.currentDate())
 
-        mapper.addMapping(self.centre, model.fieldIndex("centre"))
-        mapper.addMapping(self.directeur_nom, model.fieldIndex("directeur_nom"))
-        mapper.addMapping(self.nbr_children_6, model.fieldIndex("nombre_enfants_6"))
-        mapper.addMapping(self.nbr_children_6_12, model.fieldIndex("nombre_enfants_6_12"))
-        mapper.addMapping(self.nbr_children_12, model.fieldIndex("nombre_enfants_12"))
-        mapper.addMapping(self.place, model.fieldIndex("place"))
-        mapper.addMapping(self.startdate, model.fieldIndex("startdate"))
-        mapper.addMapping(self.enddate, model.fieldIndex("enddate"))
+        periode_layout = QVBoxLayout()
+        self.period_view = QTableView()
+        self.period_view.setModel(self.periodes_infos_model)
+        self.period_view.hideColumn(0) # hide id
+        # Date delegate must be instanciated otherwise it raises segfault
+        date_delegates = [DateDelegate() for x in range(2)]
+        self.period_view.setItemDelegateForColumn(1, date_delegates[0])
+        self.period_view.setItemDelegateForColumn(2, date_delegates[1])
+        self.add_button = QPushButton('+')
+        self.del_button = QPushButton('-')
+        periode_buttons_layout = QHBoxLayout()
+        periode_buttons_layout.addWidget(self.add_button)
+        periode_buttons_layout.addWidget(self.del_button)
+        periode_layout.addWidget(self.period_view)
+        periode_layout.addLayout(periode_buttons_layout)
         
-        layout = QFormLayout(self)
+        self.mapper.addMapping(self.centre, infos_model.fieldIndex("centre"))
+        self.mapper.addMapping(
+            self.directeur_nom, infos_model.fieldIndex("directeur_nom"))
+        self.mapper.addMapping(self.place, infos_model.fieldIndex("place"))
         
-        layout.addRow("Nom du centre:", self.centre)
-        layout.addRow("Lieu:", self.place)
-        layout.addRow("Nom du directeur:", self.directeur_nom)
-        layout.addRow("Enfants de moins de 6 ans:", self.nbr_children_6)
-        layout.addRow("Enfants entre 6 et 12 ans:", self.nbr_children_6_12)
-        layout.addRow("Enfants de plus de 12 ans:", self.nbr_children_12)
-        layout.addRow("Début:", self.startdate)
-        layout.addRow("Fin:", self.enddate)
+        self.layout = QFormLayout(self)
+        
+        self.layout.addRow("Nom du centre:", self.centre)
+        self.layout.addRow("Lieu:", self.place)
+        self.layout.addRow("Nom du directeur:", self.directeur_nom)
+        self.layout.addRow('Périodes:', periode_layout)
         
         buttons = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
             self)
-        buttons.accepted.connect(mapper.submit)
-        buttons.accepted.connect(self.accept)
+
+        self.add_button.clicked.connect(self.add_periode)
+        self.del_button.clicked.connect(self.del_periode)
+        buttons.accepted.connect(self.submit_all_infos)
         buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        self.layout.addWidget(buttons)
         
-        mapper.toFirst()
+        self.mapper.toFirst()
+        self.resize(660, 360)
         self.exec_()
+
+    def add_periode(self):
+        model = self.period_view.model()
+        nbr_rows = self.periodes_infos_model.rowCount()
+        if nbr_rows == 0:
+            date_start = QDate().currentDate()
+        else:
+            last_date_stop = model.record(nbr_rows -1).value('date_stop')
+            date_start = QDate().fromString(last_date_stop, 'yyyy-MM-dd')
+            date_start = date_start.addDays(1)
+        if model.isDirty():
+            submited = model.submitAll()
+        inserted = model.insertRow(nbr_rows)
+        record = model.record()
+        record.setValue('date_start', date_start.toString('yyyy-MM-dd'))
+        record.setGenerated('id', False)
+        record_is_set = model.setRecord(model.rowCount() -1, record)
+
+    def del_periode(self):
+        model = self.period_view.model()
+        model.removeRow(model.rowCount() -1)
+        model.submitAll()
+
+    def submit_all_infos(self):
+        info_submited = self.mapper.submit()
+        periode_model = self.period_view.model()
+        periode_submited = periode_model.submitAll()
+        if info_submited and periode_submited:
+            self.accept()
 
 class RapportDialog(QDialog):
     def __init__(self, parent):
@@ -803,10 +835,10 @@ class DateDelegate(QStyledItemDelegate):
         painter.restore()
     
     def createEditor(self, parent, option, index):
-        col = index.column()
-        if col == 2:
-            editor = QDateEdit(parent)
-            return editor
+        #col = index.column()
+        #if col == 2:
+        editor = QDateEdit(parent)
+        return editor
         
     def setModelData(self, editor, model, index):
         value = editor.date().toString('yyyy-MM-dd')

@@ -197,7 +197,9 @@ class MainWindow(QMainWindow):
         created = self.model.create_db(path)
         if created:
             self.connect_db(path)
-            self.set_infos()
+            infos_centre = InfosCentreDialog(self)
+            infos_centre.periodes_infos_model.insertRow(
+                infos_centre.periodes_infos_model.rowCount())
             self.import_all_xml_default()
 
     def open_db(self):

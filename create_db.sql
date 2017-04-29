@@ -4,16 +4,21 @@ PRAGMA encoding = "UTF-8";
 CREATE TABLE infos(
 centre varchar(20),
 directeur_nom varchar(20),
-nombre_enfants_6 int,
-nombre_enfants_6_12 int,
-nombre_enfants_12 int,
 place varchar(20),
 startdate varchar(10),
 enddate varchar(10)
 );
 INSERT INTO infos
-    VALUES (
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    VALUES (NULL, NULL, NULL, NULL, NULL);
+
+CREATE TABLE infos_periodes(
+    id integer PRIMARY KEY,
+    date_start varchar(10),
+    date_stop varchar(10),
+    nombre_enfants_6 int,
+    nombre_enfants_6_12 int,
+    nombre_enfants_12 int
+    );
 
 CREATE TABLE fournisseurs(
 id integer PRIMARY KEY,
