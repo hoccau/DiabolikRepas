@@ -6,6 +6,7 @@ from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel
 from PyQt5.QtGui import QRegExpValidator, QStandardItem, QPen, QPalette
 from PyQt5.QtChart import *
 from PyQt5.QtSql import QSqlRelationalDelegate
+import logging
 
 class Form(QDialog):
     """Abstract class"""
@@ -254,7 +255,7 @@ class RepasForm(Form):
         date = self.date.selectedDate()
         type_ = self.type.currentText()
         ingrs = self.model.auto_fill_query(date.toString('yyyy-MM-dd'), type_)
-        print(ingrs)
+        logging.debug(ingrs)
         for prev_ingr in ingrs:
             reserve = self.model.get_reserve_by_products(prev_ingr[0])
             total = 0
@@ -667,7 +668,7 @@ class Previsionnel(QDialog):
         self.plats_model.setFilter("relTblAl_2.type_id = "+str(id_)
             +" AND relTblAl_2.date = '"+str(self.date.toString('yyyy-MM-dd')+"'"))
         if self.plats_model.lastError().text().rstrip(' '):
-            print(self.plats_model.lastError().text())
+            logging.warning(self.plats_model.lastError().text())
         self.plats_box.setTitle('Les plats du repas sélectionné')
         self.select_ingredient()
 

@@ -14,6 +14,10 @@ from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
 from views import *
 import repas_xml_to_db
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -137,7 +141,7 @@ class MainWindow(QMainWindow):
             elif current_tab == 2:
                 self.remove_input(row)
             else:
-                print(current_tab)
+                logging.warning(str(current_tab)+' cannot delete a row')
 
     def remove_repas(self, row):
         reponse = QMessageBox.question(
@@ -331,7 +335,14 @@ class MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     import sys, os
-    
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(
+        logging.Formatter('%(levelname)s::%(module)s:%(lineno)d :: %(message)s'))
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(stdout_handler)
+
     app = QApplication(sys.argv)
     main_window = MainWindow()
     sys.exit(app.exec_())

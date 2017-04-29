@@ -4,6 +4,7 @@
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, QSqlRelation, QSqlTableModel
 from PyQt5.QtCore import Qt, QFile, QIODevice, QModelIndex, QAbstractTableModel, QVariant
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
+import logging
 
 DEBUG_SQL = True
 
@@ -31,10 +32,9 @@ class Model(QSqlQueryModel):
             req = self.query.exec_(request)
         else:
             req = self.query.exec_()
-        if DEBUG_SQL:
-            print(req, ':', self.query.lastQuery())
-            if req == False:
-                print('SQL ERROR:', self.query.lastError().text())
+        logging.debug(str(req) + ':' + self.query.lastQuery())
+        if req == False:
+            logging.warning('SQL ERROR:', self.query.lastError().text())
         return req
 
     def connect_db(self, db_name):
@@ -205,7 +205,6 @@ class Model(QSqlQueryModel):
             return self.query.value(0)
 
     def set_(self, dic, table):
-        print(dic)
         self.query.prepare(
             "INSERT INTO "+table+"("+",".join(dic.keys())+")\
             VALUES ("\
@@ -221,13 +220,13 @@ class Model(QSqlQueryModel):
         self.query.bindValue(':nom', name)
         req = self.exec_()
         if req == False:
-            print(self.query.lastError().databaseText())
+            logging.warning(self.query.lastError().databaseText())
             return self.query.lastError().databaseText()
         else:
             return req
 
     def add_output(self, datas):
-        print('outputs datas', datas)
+        logging.debug('outputs datas', datas)
         self.query.prepare("INSERT INTO outputs(quantity, repas_id, product_id)"\
             +" VALUES("+str(datas['quantity'])+', '+str(datas['repas_id'])+', '+\
             str(datas['product_id'])+")")
@@ -260,7 +259,7 @@ class Model(QSqlQueryModel):
             l += [str(k) + "='" + str(v)+"'"]
         success = self.exec_("UPDATE "+table+" SET "+', '.join(l)+\
         ' WHERE '+qfilter_key+" = '"+qfilter_value+"'")
-        print('update succuss', success)
+        logging.info('update success', success)
         return success
 
     def auto_fill_query(self, date, type_):
@@ -373,7 +372,6 @@ class ReserveTableModel(QAbstractTableModel):
             INNER JOIN products ON outputs.product_id = products.id\
             group by products.id")
         while query.next():
-            print(query.value(0))
             self.inputs[query.value(0)] -= query.value(1)
         self.data_table = [kv for kv in sorted(self.inputs.items())]
         self.layoutChanged.emit()
@@ -511,9 +509,9 @@ class IngredientPrevQueryModel(QSqlQueryModel):
         self.select()
 
     def select(self):
-        print(self.q + self.filter)
         self.setQuery(self.q + self.filter)
-        print(self.lastError().text())
+        if self.lastError().text().rstrip(' '):
+            logging.warning(self.lastError().text())
 
     def setFilter(self, filter_):
         self.filter = ' WHERE '+filter_
@@ -608,7 +606,8 @@ class PrevisionnelModel(QStandardItemModel):
                     INNER JOIN products ON products.id = ingredients_prev.product_id\
                     INNER JOIN units ON products.unit_id = units.id\
                     WHERE dishes_prev_id = "+str(plat_id))
-                print(query.lastError().text())
+                if query.lastError().text().rstrip(' '):
+                    logging.warning(query.lastError().text())
                 ingredients_items = {}
                 while query.next():
                     ingredients_items[query.value(0)] =\
