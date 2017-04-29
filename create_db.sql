@@ -95,7 +95,7 @@ type varchar(20)
 );
 INSERT INTO type_repas(type) VALUES ('petit déjeuner');
 INSERT INTO type_repas(type) VALUES ('déjeuner');
-INSERT INTO type_repas(type) VALUES ('gouter');
+INSERT INTO type_repas(type) VALUES ('goûter');
 INSERT INTO type_repas(type) VALUES ('dîner');
 INSERT INTO type_repas(type) VALUES ('piquenique');
 INSERT INTO type_repas(type) VALUES ('autre');

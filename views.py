@@ -535,6 +535,24 @@ class Previsionnel(QDialog):
         self.calendar = QCalendarWidget()
         self.layout = QVBoxLayout()
 
+        btn_names = [
+            'petit déjeuner',
+            'déjeuner',
+            'goûter',
+            'dîner',
+            'piquenique',
+            'autre']
+        self.repas_buttons_group = QButtonGroup()
+        self.repas_buttons_group.setExclusive(True)
+        self.repas_buttons_layout = QHBoxLayout()
+        self.repas_buttons = {}
+        for name in btn_names:
+            self.repas_buttons[name] = QPushButton(name)
+            self.repas_buttons[name].setCheckable(True)
+            self.repas_buttons[name].clicked.connect(self.select_plat)
+            self.repas_buttons_group.addButton(self.repas_buttons[name])
+            self.repas_buttons_layout.addWidget(self.repas_buttons[name])
+
         self.add_repas_button = QPushButton('+')
         self.add_plat_button = QPushButton('+')
         self.add_ingredient_button = QPushButton('+')
@@ -551,9 +569,12 @@ class Previsionnel(QDialog):
                 'Ingredients', [self.add_ingredient_button, self.del_ingredient_button])
 
         self.layout.addWidget(self.calendar)
-        self.layout.addWidget(self.repas_box)
-        self.layout.addWidget(self.plats_box)
-        self.layout.addWidget(self.ingredients_box)
+        self.layout.addLayout(self.repas_buttons_layout)
+        #self.layout.addWidget(self.repas_box)
+        plats_ingrs_layout = QHBoxLayout()
+        plats_ingrs_layout.addWidget(self.plats_box)
+        plats_ingrs_layout.addWidget(self.ingredients_box)
+        self.layout.addLayout(plats_ingrs_layout)
         self.setLayout(self.layout)
         
         self.repas_model = parent.model.repas_prev_model
@@ -584,7 +605,7 @@ class Previsionnel(QDialog):
         self.del_plat_button.clicked.connect(self.del_plat)
         self.del_ingredient_button.clicked.connect(self.del_ingredient)
         
-        self.setMinimumSize(377, 684)
+        self.setMinimumSize(377, 500)
         self.exec_()
 
     def _create_view(self, box_name, buttons):
@@ -608,10 +629,13 @@ class Previsionnel(QDialog):
         self.select_plat()
 
     def select_plat(self):
-        row = self.repas_prev_view.selectionModel().currentIndex().row()
-        id_ = self.repas_prev_view.model().record(row).value(0)
+        # below: buttons must be in same order than db table
+        id_ = self.repas_buttons_group.checkedId() * -1 -1
         self.current_repas_id = id_
-        self.plats_model.setFilter("repas_prev_id = "+str(id_))
+        self.plats_model.setFilter("relTblAl_2.type_id = "+str(id_)
+            +" AND relTblAl_2.date = '"+str(self.date.toString('yyyy-MM-dd')+"'"))
+        if self.plats_model.lastError().text().rstrip(' '):
+            print(self.plats_model.lastError().text())
         self.plats_box.setTitle('Les plats du repas sélectionné')
         self.select_ingredient()
 
