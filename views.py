@@ -684,7 +684,14 @@ class Previsionnel(QDialog):
         self.repas_model.add_row(date=self.date.toString('yyyy-MM-dd'))
     
     def add_plat(self):
-        self.plats_model.add_row(repas_id=self.current_repas_id)
+        # First, add repas if not exist
+        repas_type_id = self.repas_buttons_group.checkedId() * -1 - 1
+        date = self.calendar.selectedDate().toString('yyyy-MM-dd')
+        self.repas_model.add_row(
+            date = self.date.toString('yyyy-MM-dd'),
+            type_id = repas_type_id)
+        self.plats_model.add_row(repas_id = self.repas_model.get_id(
+            date, repas_type_id))
 
     def add_ingredient(self):
         self.ingredients_model.add_row(plat_id=self.current_plat_id)

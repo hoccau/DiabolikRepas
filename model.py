@@ -432,10 +432,24 @@ class RepasPrevModel(AbstractPrevisionnelModel):
         #self.setHeaderData(2, Qt.Horizontal, "Type")
         self.select()
 
-    def add_row(self, date=""):
+    def add_row(self, date="", type_id=None):
         query = QSqlQuery("INSERT INTO repas_prev(date, type_id)\
-                VALUES(NULL, '"+date+"',1)")
-        self.select()
+                VALUES('"+date+"',"+str(type_id)+")")
+        if query.lastError().text().rstrip(' '):
+            logging.warning(query.lastQuery())
+            logging.warning(query.lastError().text())
+        else:
+            self.select()
+            return True
+
+    def get_id(self, date, type_id):
+        query = QSqlQuery(
+            "SELECT id FROM repas_prev WHERE date = "\
+            + str(date) + " AND type_id = " + str(type_id))
+        if query.lastError().text().rstrip(' '):
+            logging.warning(query.lastQuery())
+            logging.warning(query.lastError().text())
+        return query.value(0)
 
     def del_row(self, id=None):
         if id:
@@ -460,6 +474,9 @@ class PlatPrevModel(AbstractPrevisionnelModel):
     def add_row(self, repas_id):
         query = QSqlQuery("INSERT INTO dishes_prev(name, repas_prev_id, type_id)\
                 VALUES(NULL, "+str(repas_id)+", 1)")
+        if query.lastError().text().rstrip(' '):
+            logging.warning(query.lastQuery())
+            logging.warning(query.lastError().text())
         self.select()
     
     def del_row(self, id=None):

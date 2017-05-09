@@ -9,7 +9,7 @@ Logiciel d'économat léger pour centre de vacances
 from PyQt5 import QtSql
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, qApp, QAction, QTabWidget, QTableView, 
-    QAbstractItemView, QInputDialog, QMessageBox)
+    QAbstractItemView, QInputDialog, QMessageBox, QFileDialog)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings, QMimeDatabase
 from PyQt5.QtSql import QSqlRelationalDelegate
@@ -137,7 +137,6 @@ class MainWindow(QMainWindow):
         return action
 
     def current_tab_changed(self):
-        logging.debug(self.tabs.currentIndex())
         if self.tabs.currentIndex() in (0, 1, 2, 3):
             self.db_actions['delRowAction'].setEnabled(True)
         else:
