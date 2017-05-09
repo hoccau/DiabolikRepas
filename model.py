@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, QSqlRelation, QSqlTableModel
-from PyQt5.QtCore import Qt, QFile, QIODevice, QModelIndex, QAbstractTableModel, QVariant
+from PyQt5.QtCore import (
+    Qt, QFile, QIODevice, QModelIndex, QAbstractTableModel, QVariant)
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 import logging
 
@@ -498,6 +499,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         self.setRelation(4, rel4)
 
         self.rel_name = self.relationModel(1) #QsqlTable for combo box
+        self.rel_name.sort(1, Qt.SortOrder(0))
         self.rel_unit = self.relationModel(4) #QsqlTable for combo box
         
         self.setHeaderData(1, Qt.Horizontal, "produit")

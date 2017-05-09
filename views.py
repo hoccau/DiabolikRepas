@@ -476,6 +476,7 @@ class InfosCentreDialog(QDialog):
         inserted = model.insertRow(nbr_rows)
         record = model.record()
         record.setValue('date_start', date_start.toString('yyyy-MM-dd'))
+        record.setValue('date_stop', date_start.toString('yyyy-MM-dd'))
         record.setGenerated('id', False)
         record_is_set = model.setRecord(model.rowCount() -1, record)
 
@@ -600,6 +601,9 @@ class Previsionnel(QDialog):
                 'Plats', [self.add_plat_button, self.del_plat_button])
         self.ingredients_prev_view, self.ingredients_box = self._create_view(
                 'Ingredients', [self.add_ingredient_button, self.del_ingredient_button])
+        completer_delegate = CompleterDelegate()
+        self.ingredients_prev_view.setItemDelegateForColumn(
+            1, completer_delegate)
 
         self.layout.addWidget(self.calendar)
         self.layout.addLayout(self.repas_buttons_layout)
@@ -852,5 +856,13 @@ class DateDelegate(QStyledItemDelegate):
         value = editor.date().toString('yyyy-MM-dd')
         model.setData(index, value)
 
+class CompleterDelegate(QSqlRelationalDelegate):
+    def __init__(self, parent=None):
+        super(CompleterDelegate, self).__init__(parent)
 
-
+    def createEditor(self, parent, option, index):
+        editor = QComboBox(parent)
+        editor.setModel(index.model().rel_name)
+        editor.setModelColumn(1)
+        editor.setEditable(True)
+        return editor
