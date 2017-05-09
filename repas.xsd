@@ -65,7 +65,7 @@
 		<xs:restriction base="xs:string">
 			<xs:enumeration value='petit déjeuner'/>
 			<xs:enumeration value='déjeuner'/>
-			<xs:enumeration value='gouter'/>
+			<xs:enumeration value='goûter'/>
 			<xs:enumeration value='dîner'/>
 			<xs:enumeration value='piquenique'/>
 			<xs:enumeration value='autre'/>
