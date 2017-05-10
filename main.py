@@ -221,7 +221,7 @@ class MainWindow(QMainWindow):
             infos_centre = InfosCentreDialog(self)
             infos_centre.periodes_infos_model.insertRow(
                 infos_centre.periodes_infos_model.rowCount())
-            self.import_all_xml_default()
+            #self.import_all_xml_default()
 
     def open_db(self):
         file_name = QFileDialog.getOpenFileName(

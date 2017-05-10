@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*- 
 
-from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, QSqlRelation, QSqlTableModel
+from PyQt5.QtSql import (
+        QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, 
+        QSqlRelation, QSqlTableModel)
 from PyQt5.QtCore import (
     Qt, QFile, QIODevice, QModelIndex, QAbstractTableModel, QVariant)
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -470,6 +472,7 @@ class PlatPrevModel(AbstractPrevisionnelModel):
         self.type_repas_model = self.relationModel(3) #QsqlTable for combo box
         self.setHeaderData(2, Qt.Horizontal, "Nom")
         self.setHeaderData(3, Qt.Horizontal, "Type")
+
         self.select()
 
     def add_row(self, repas_id):
@@ -502,6 +505,8 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         self.rel_name.sort(1, Qt.SortOrder(0))
         self.rel_unit = self.relationModel(4) #QsqlTable for combo box
         
+        self.dataChanged.connect(self.rel_name.select)
+
         self.setHeaderData(1, Qt.Horizontal, "produit")
         self.setHeaderData(2, Qt.Horizontal, "repas")
         self.setHeaderData(4, Qt.Horizontal, "unités")
