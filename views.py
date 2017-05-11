@@ -1,9 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*- 
 
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import (
+    QWidget, QDialog, QGroupBox, QStyledItemDelegate, QGridLayout, QPushButton,
+    QCalendarWidget, QTableView, QComboBox, QTextEdit, QLabel, QVBoxLayout,
+    QHBoxLayout, QCompleter, QDoubleSpinBox, QButtonGroup, QLineEdit, 
+    QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit)
 from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize
-from PyQt5.QtGui import QRegExpValidator, QStandardItem, QPen, QPalette, QIcon
+from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import FournisseurModel
 import logging
@@ -649,16 +653,6 @@ class RapportDialog(QDialog):
     def display_price_by_day(self, day):
         price = self.parent.model.get_price_by_day(day)
         self.price_by_day.setText(str(round(price, 2)) + " €")
-
-    def create_chart(self, dic):
-        series = QPieSeries()
-        for k, v in dic.items():
-            series.append(k,v)
-        chart = QChart()
-        #chart.setTitle("Graphique")
-        chart.addSeries(series)
-        chartView = QChartView(chart)
-        return chartView
         
     def create_box(self, titre, widgets):
         layout = QGridLayout()
@@ -702,8 +696,6 @@ class Previsionnel(QDialog):
         self.del_plat_button = QPushButton('-')
         self.del_ingredient_button = QPushButton('-')
         
-        self.repas_prev_view, self.repas_box = self._create_view(
-                'Repas', [self.add_repas_button, self.del_repas_button])
         self.plats_prev_view, self.plats_box = self._create_view(
                 'Plats', [self.add_plat_button, self.del_plat_button])
         self.ingredients_prev_view, self.ingredients_box = self._create_view(
@@ -714,7 +706,6 @@ class Previsionnel(QDialog):
 
         self.layout.addWidget(self.calendar)
         self.layout.addLayout(self.repas_buttons_layout)
-        #self.layout.addWidget(self.repas_box)
         plats_ingrs_layout = QHBoxLayout()
         plats_ingrs_layout.addWidget(self.plats_box)
         plats_ingrs_layout.addWidget(self.ingredients_box)
@@ -726,13 +717,8 @@ class Previsionnel(QDialog):
         self.ingredients_model = parent.model.ingredient_prev_model
         
         self.calendar.selectionChanged.connect(self.select_repas)
-        self.repas_prev_view.clicked.connect(self.select_plat)
         self.plats_prev_view.clicked.connect(self.select_ingredient)
         
-        self.repas_prev_view.setModel(self.repas_model)
-        self.repas_prev_view.setColumnHidden(0, True) # hide id
-        self.repas_prev_view.setColumnHidden(1, True) # hide date
-
         self.plats_prev_view.setModel(self.plats_model)
         self.plats_prev_view.setColumnHidden(0, True)  #hide id
         self.plats_prev_view.setColumnHidden(2, True)  #hide repas_prev
@@ -753,7 +739,8 @@ class Previsionnel(QDialog):
         self.exec_()
 
     def _create_view(self, box_name, buttons):
-        """ Return a QTableView (with good relationnal delegate) and a box containing it """
+        """ Return a QTableView (with good relationnal delegate)
+        and a box containing it """
         view = QTableView()
         view.setItemDelegate(QSqlRelationalDelegate(view))
         groupbox = QGroupBox(box_name, parent=self)
@@ -768,8 +755,8 @@ class Previsionnel(QDialog):
 
     def select_repas(self):
         self.date = self.calendar.selectedDate()
-        self.repas_model.setFilter("date = '"+self.date.toString('yyyy-MM-dd')+"'")
-        self.repas_box.setTitle('Les repas du '+self.date.toString('dddd d MMM yyyy'))
+        self.repas_model.setFilter(
+            "date = '"+self.date.toString('yyyy-MM-dd')+"'")
         self.select_plat()
 
     def select_plat(self):

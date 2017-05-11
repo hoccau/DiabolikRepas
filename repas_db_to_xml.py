@@ -134,8 +134,8 @@ class CreateXml():
         elif id_ == 3:
             return 'ml'
     
-    def write_file(self):
-        with open('xml_test.xml', 'w') as f:
+    def write_file(self, name='xml_test.xml'):
+        with open(name, 'w') as f:
             f.write(self.doc.toString())
 
 if '__main__' == __name__:

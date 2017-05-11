@@ -4,8 +4,7 @@
 from PyQt5.QtSql import (
         QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, 
         QSqlRelation, QSqlTableModel)
-from PyQt5.QtCore import (
-    Qt, QFile, QIODevice, QModelIndex, QAbstractTableModel, QVariant)
+from PyQt5.QtCore import Qt, QModelIndex, QAbstractTableModel, QVariant
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 import logging
 
@@ -220,7 +219,7 @@ class Model(QSqlQueryModel):
         return q
 
     def add_fournisseur(self, name):
-        p = self.query.prepare("INSERT INTO fournisseurs (nom) VALUES(:nom)")
+        self.query.prepare("INSERT INTO fournisseurs (nom) VALUES(:nom)")
         self.query.bindValue(':nom', name)
         req = self.exec_()
         if req == False:
@@ -471,7 +470,7 @@ class PlatPrevModel(AbstractPrevisionnelModel):
         self.setRelation(2, rel2)
         self.setRelation(3, rel3)
         self.type_repas_model = self.relationModel(3) #QsqlTable for combo box
-        self.setHeaderData(2, Qt.Horizontal, "Nom")
+        self.setHeaderData(1, Qt.Horizontal, "Nom")
         self.setHeaderData(3, Qt.Horizontal, "Type")
 
         self.select()
@@ -510,6 +509,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
 
         self.setHeaderData(1, Qt.Horizontal, "produit")
         self.setHeaderData(2, Qt.Horizontal, "repas")
+        self.setHeaderData(3, Qt.Horizontal, "Quantité")
         self.setHeaderData(4, Qt.Horizontal, "unités")
         self.select()
 

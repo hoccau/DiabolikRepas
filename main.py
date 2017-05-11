@@ -6,19 +6,18 @@ Diabolik Repas
 Logiciel d'économat léger pour centre de vacances
 """
 
-from PyQt5 import QtSql
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, qApp, QAction, QTabWidget, QTableView, 
     QAbstractItemView, QInputDialog, QMessageBox, QFileDialog)
-from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings, QMimeDatabase
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
 from views import (
-    ProductForm, InputForm, RepasForm, InfosCentreDialog, RapportDialog,
+    ProductForm, RepasForm, InfosCentreDialog, RapportDialog,
     Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
     InputsArray, StartupView)
 import repas_xml_to_db
+import repas_db_to_xml
 import logging
 
 logger = logging.getLogger(__name__)
@@ -64,8 +63,8 @@ class MainWindow(QMainWindow):
             'Previsionnel', self.add_previsionnel)
         self.db_actions['import_previsionnel'] = self.add_action(
             'Importer un prévisionnel', self.import_xml_repas)
-        self.db_actions['init_prev'] = self.add_action(
-            'Réinitialiser le prévisonnel', self.init_prev_by_xml_repas)
+        self.db_actions['export_previsionnel'] = self.add_action(
+            'Exporter le prévisonnel', self.export_xml_repas)
         self.db_actions['close'] = self.add_action(
             'Fermer', self.close_db, 'Ctrl+W')
 
@@ -74,7 +73,7 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(openAction)
         fileMenu.addAction(self.db_actions['close'])
         fileMenu.addAction(self.db_actions['import_previsionnel'])
-        fileMenu.addAction(self.db_actions['init_prev'])
+        fileMenu.addAction(self.db_actions['export_previsionnel'])
         fileMenu.addAction(self.db_actions['exportPdfAction'])
         fileMenu.addAction(exitAction)
         edit_menu = menubar.addMenu('&Édition')
@@ -175,7 +174,7 @@ class MainWindow(QMainWindow):
             QMessageBox.No
             )
         if reponse == QMessageBox.Yes:
-            good = self.model.qt_table_repas.removeRow(row)
+            self.model.qt_table_repas.removeRow(row)
             self.model.qt_table_repas.select()
             self.model.qt_table_outputs.select()
 
@@ -189,7 +188,7 @@ class MainWindow(QMainWindow):
             QMessageBox.No
             )
         if reponse == QMessageBox.Yes:
-            good = self.model.qt_table_inputs.removeRow(row)
+            self.model.qt_table_inputs.removeRow(row)
 
     def enable_db_actions(self, toggle=True):
         for name, action in self.db_actions.items():
@@ -239,7 +238,7 @@ class MainWindow(QMainWindow):
 
     def close_db(self):
         self.model.db.close()
-        self.tabs.close()
+        self.startup_view.close()
         self.enable_db_actions(False)
 
     def retrieve_db(self):
@@ -352,6 +351,15 @@ class MainWindow(QMainWindow):
         if file_name[0]:
             repas = repas_xml_to_db.Repas(file_name[0])
             repas.xml_to_db(model=self.model)
+
+    def export_xml_repas(self):
+        filename, _format = QFileDialog.getSaveFileName(
+            self, 'Exporter un prévisionnel', '', "Repas XML (*.xml)")
+        if filename:
+            if filename[-4:] != '.xml':
+                filename += '.xml'
+            repas = repas_db_to_xml.CreateXml(self.model)
+            repas.write_file(filename)
 
     def about_d(self):
         QMessageBox.information(self, "Diabolik Repas", "version 0.0.1")
