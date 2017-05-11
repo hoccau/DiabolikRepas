@@ -2,12 +2,38 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QModelIndex
-from PyQt5.QtGui import QRegExpValidator, QStandardItem, QPen, QPalette
-from PyQt5.QtChart import *
+from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize
+from PyQt5.QtGui import QRegExpValidator, QStandardItem, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import FournisseurModel
 import logging
+
+class StartupView(QWidget):
+    def __init__(self, parent):
+        super(StartupView, self).__init__(parent)
+        
+        self.grid = QGridLayout()
+
+        previsionnel_button = self._create_button('previsionnel.png', 'Prévisionnel')
+        input_button = self._create_button('input.png', 'Arrivage de denrées')
+        output_button = self._create_button('output.png', 'Repas')
+        
+        self.grid.addWidget(previsionnel_button, 0, 0)
+        self.grid.addWidget(input_button, 1, 0)
+        self.grid.addWidget(output_button, 1, 1)
+
+        self.setLayout(self.grid)
+
+        previsionnel_button.clicked.connect(parent.add_previsionnel)
+        input_button.clicked.connect(parent.add_input)
+        output_button.clicked.connect(parent.add_repas)
+
+    def _create_button(self, image, text):
+        button = QPushButton()
+        button.setIcon(QIcon('images/'+image))
+        button.setIconSize(QSize(127, 100))
+        button.setText(text)
+        return button
 
 class Form(QDialog):
     """Abstract class"""
@@ -223,6 +249,7 @@ class InputsArray(QDialog):
         import_button = QPushButton('Importer le prévisionnel')
         self.add_button = QPushButton('+')
         self.del_button = QPushButton('-')
+        save_button = QPushButton('Enregistrer')
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -232,10 +259,12 @@ class InputsArray(QDialog):
         layout.addWidget(import_button)
         layout.addWidget(self.view)
         layout.addLayout(buttons_layout)
+        layout.addWidget(save_button)
 
         self.add_button.clicked.connect(self.add_row)
         self.del_button.clicked.connect(self.del_row)
         import_button.clicked.connect(self.import_prev)
+        save_button.clicked.connect(self.model.submitAll)
 
         self.resize(660, 360)
         self.exec_()
@@ -279,7 +308,7 @@ class InputsArray(QDialog):
                 self.model.rowCount() -1, record)
             logging.debug(record_is_set)
             logging.warning(self.model.lastError().text())
-            submited = self.model.submitAll()
+        #submited = self.model.submitAll()
 
 class RepasForm(Form):
     """ Form to add or modify an effective repas (with product outputs) """

@@ -17,7 +17,7 @@ from model import Model
 from views import (
     ProductForm, InputForm, RepasForm, InfosCentreDialog, RapportDialog,
     Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
-    InputsArray)
+    InputsArray, StartupView)
 import repas_xml_to_db
 import logging
 
@@ -122,6 +122,10 @@ class MainWindow(QMainWindow):
         self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
         self.setCentralWidget(self.tabs)
 
+    def _create_main_view(self):
+        self.startup_view = StartupView(self)
+        self.setCentralWidget(self.startup_view)
+
     def _add_table_model(self, model, name, size=None):
         table = QTableView(self)
         table.setModel(model)
@@ -200,7 +204,8 @@ class MainWindow(QMainWindow):
         else:
             self.model.connect_db(db_path)
             self.config.setValue("lastdbpath", db_path)
-            self._create_tables_views()
+            #self._create_tables_views()
+            self._create_main_view()
             self.enable_db_actions(True)
             return True
 
