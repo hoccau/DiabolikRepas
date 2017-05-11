@@ -16,7 +16,8 @@ from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
 from views import (
     ProductForm, InputForm, RepasForm, InfosCentreDialog, RapportDialog,
-    Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate)
+    Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
+    InputsArray)
 import repas_xml_to_db
 import logging
 
@@ -266,7 +267,7 @@ class MainWindow(QMainWindow):
         InfosCentreDialog(self)
 
     def add_input(self):
-        self.form = InputForm(self)
+        InputsArray(self, self.model.qt_table_inputs)
 
     def add_product(self):
         self.product_form = ProductForm(self)

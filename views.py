@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*- 
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel
+from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QModelIndex
 from PyQt5.QtGui import QRegExpValidator, QStandardItem, QPen, QPalette
 from PyQt5.QtChart import *
 from PyQt5.QtSql import QSqlRelationalDelegate
+from model import FournisseurModel
 import logging
 
 class Form(QDialog):
@@ -203,8 +204,85 @@ class InputForm(Form):
         for fournisseur, id_ in list(self.model.get_fournisseurs().items()):
             self.fournisseur.addItem(fournisseur)
 
+class InputsArray(QDialog):
+    def __init__(self, parent, model):
+        super(InputsArray, self).__init__(parent)
+
+        self.model = model
+        self.parent = parent
+
+        self.view = QTableView(self)
+        self.view.setModel(model)
+        
+        sql_delegate = QSqlRelationalDelegate(self.view)
+        self.view.setItemDelegate(sql_delegate)
+        date_delegate = DateDelegate()
+        self.view.setItemDelegateForColumn(2, date_delegate)
+        self.view.hideColumn(0) # hide id
+
+        import_button = QPushButton('Importer le prévisionnel')
+        self.add_button = QPushButton('+')
+        self.del_button = QPushButton('-')
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.add_button)
+        buttons_layout.addWidget(self.del_button)
+        layout.addWidget(import_button)
+        layout.addWidget(self.view)
+        layout.addLayout(buttons_layout)
+
+        self.add_button.clicked.connect(self.add_row)
+        self.del_button.clicked.connect(self.del_row)
+        import_button.clicked.connect(self.import_prev)
+
+        self.resize(660, 360)
+        self.exec_()
+
+    def add_row(self):
+        if self.model.isDirty():
+            submited = self.model.submitAll()
+        inserted = self.model.insertRow(self.model.rowCount())
+        logging.debug(inserted)
+    
+    def del_row(self):
+        self.model.removeRow(self.model.rowCount() -1)
+        self.model.submitAll()
+
+    def import_prev(self):
+        date_start, date_stop = DatesRangeDialog(self).get_dates()
+        logging.debug(date_start)
+        fournisseur_model = FournisseurModel(self, self.parent.model.db)
+        fournisseur = SelectFournisseur(self, fournisseur_model).get_()
+        logging.debug(fournisseur)
+        fournisseur_id = self.parent.model.get_(
+            ['id'], 'fournisseurs', "nom='" + fournisseur + "'")[0]['id']
+        logging.debug(fournisseur_id)
+        products = self.parent.model.get_prev_products_by_dates(
+            date_start, date_stop)
+        logging.debug(products)
+        for product in products:
+            product_id = product[0]
+            quantity = product[2]
+            date = QDate.currentDate().toString('yyyy-MM-dd')
+            logging.debug(date)
+            inserted = self.model.insertRow(self.model.rowCount())
+            record = self.model.record()
+            record.setValue(1, fournisseur_id) # fournisseur_id
+            record.setValue(2, date) # date
+            record.setValue(3, product_id) # product_id
+            record.setValue(4, 0) # prix
+            record.setValue(5, quantity) # quantité
+            record.setGenerated('id', False)
+            record_is_set = self.model.setRecord(
+                self.model.rowCount() -1, record)
+            logging.debug(record_is_set)
+            logging.warning(self.model.lastError().text())
+            submited = self.model.submitAll()
+
 class RepasForm(Form):
-    """ Form to add or modify a effective repas (with product outputs) """
+    """ Form to add or modify an effective repas (with product outputs) """
     def __init__(self, parent=None, id_=None):
         super(RepasForm, self).__init__(parent)
 
@@ -834,6 +912,32 @@ class DatesRangeDialog(QDialog):
         return (self.date_start.date().toString('yyyy-MM-dd'),
             self.date_stop.date().toString('yyyy-MM-dd'))
 
+class SelectFournisseur(QDialog):
+    def __init__(self, parent=None, model=None):
+        super(SelectFournisseur, self).__init__(parent)
+
+        self.combobox = QComboBox()
+        self.combobox.setModel(model)
+        self.combobox.setModelColumn(1)
+        ok_button = QPushButton('OK')
+        layout = QVBoxLayout()
+        layout.addWidget(self.combobox)
+        layout.addWidget(ok_button)
+        self.setLayout(layout)
+
+        ok_button.clicked.connect(self.get_)
+        self.combobox.currentIndexChanged.connect(self.ll)
+
+        self.exec_()
+
+    def get_(self):
+        self.accept()
+        return  self.combobox.currentText()
+
+    def ll(self):
+        logging.debug(self.combobox.currentData())
+
+
 class DateDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super(DateDelegate, self).__init__(parent)
@@ -850,6 +954,7 @@ class DateDelegate(QStyledItemDelegate):
         #col = index.column()
         #if col == 2:
         editor = QDateEdit(parent)
+        editor.setDate(QDate.currentDate())
         return editor
         
     def setModelData(self, editor, model, index):

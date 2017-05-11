@@ -57,7 +57,6 @@ class CreateXml():
                         age_el.appendChild(age_value)
                         quant_el.appendChild(age_el)
 
-
     def repas(self):
         repas = []
         self.model.query.exec_("SELECT repas_prev.id, date, type_repas.type "\

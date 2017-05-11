@@ -95,13 +95,14 @@ class Model(QSqlQueryModel):
 
     def get_prev_products_by_dates(self, date_start, date_stop):
         self.exec_(
-            "SELECT products.name, quantity, units.unit FROM ingredients_prev\
+            "SELECT products.id, products.name, quantity, units.unit "\
+            + "FROM ingredients_prev\
             INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
             INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id\
             INNER JOIN products ON products.id = ingredients_prev.product_id\
             INNER JOIN units ON units.id = products.unit_id\
             WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
-        return self._query_to_lists(3)
+        return self._query_to_lists(4)
 
     def get_(self, values=[], table=None, condition=None, distinct=False):
         sql_values = ",".join(values)
@@ -572,7 +573,8 @@ class InputsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
         super(InputsModel, self).__init__(parent, db)
 
-        self.setEditStrategy(QSqlRelationalTableModel.OnFieldChange)
+        #self.setEditStrategy(QSqlRelationalTableModel.OnFieldChange)
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("inputs")
         fournisseur_rel = QSqlRelation("fournisseurs","id","nom")
         product_rel = QSqlRelation("products","id","name")
@@ -645,6 +647,13 @@ class PrevisionnelModel(QStandardItemModel):
         items_row = QStandardItem()
         items_row.appendRow(items)
         return items_row
+
+class FournisseurModel(QSqlTableModel):
+    def __init__(self, parent, db):
+        super(FournisseurModel, self).__init__(parent, db)
+
+        self.setTable('fournisseurs')
+        self.select()
 
 if '__main__' == __name__:
     m = Model()

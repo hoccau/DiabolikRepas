@@ -47,9 +47,9 @@ def create_liste(products):
     html += "</tr>"
     for p in products:
         html += '<tr><th>'\
-            +p[0]+'</th>'\
-            +'<th>'+str(round(p[1], 2))+'</th>'\
-            +'<th>'+p[2]+'</th></tr>'
+            +p[1]+'</th>'\
+            +'<th>'+str(round(p[2], 2))+'</th>'\
+            +'<th>'+p[3]+'</th></tr>'
     html += '</table>'
     return html
 
