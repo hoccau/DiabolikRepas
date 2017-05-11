@@ -9,6 +9,7 @@ import logging
 from PyQt5.QtCore import QDate
 from PyQt5.QtXml import QDomDocument
 import pprint
+from collections import OrderedDict
 
 class CreateXml():
     def __init__(self, model):
@@ -109,11 +110,11 @@ class CreateXml():
             + "nombre_enfants_12 FROM infos_periodes "\
             + "WHERE date_start <= '" + day + "' AND date_stop >= '" + day + "'")
         logging.debug(self.model.query.lastQuery())
-        res = {}
+        res = OrderedDict()
         while self.model.query.next():
             res['age-6'] = quantity / float(self.model.query.value(0)) * factor
             res['age6-12'] = quantity / float(self.model.query.value(1)) * factor
-            res['age-12'] = quantity / float(self.model.query.value(2)) * factor
+            res['age12'] = quantity / float(self.model.query.value(2)) * factor
             return res
     
     def date_to_offset(self, date):
