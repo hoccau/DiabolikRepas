@@ -447,12 +447,13 @@ class RepasPrevModel(AbstractPrevisionnelModel):
 
     def get_id(self, date, type_id):
         query = QSqlQuery(
-            "SELECT id FROM repas_prev WHERE date = "\
-            + str(date) + " AND type_id = " + str(type_id))
+            "SELECT id FROM repas_prev WHERE date = '"\
+            + str(date) + "' AND type_id = " + str(type_id))
         if query.lastError().text().rstrip(' '):
             logging.warning(query.lastQuery())
             logging.warning(query.lastError().text())
-        return query.value(0)
+        elif query.first():
+            return query.value(0)
 
     def del_row(self, id=None):
         if id:
@@ -475,9 +476,9 @@ class PlatPrevModel(AbstractPrevisionnelModel):
 
         self.select()
 
-    def add_row(self, repas_id):
+    def add_row(self, repas_id, type_id):
         query = QSqlQuery("INSERT INTO dishes_prev(name, repas_prev_id, type_id)\
-                VALUES(NULL, "+str(repas_id)+", 1)")
+                VALUES(NULL, "+str(repas_id)+", " + str(type_id) + ")")
         if query.lastError().text().rstrip(' '):
             logging.warning(query.lastQuery())
             logging.warning(query.lastError().text())
@@ -494,6 +495,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         super(IngredientPrevModel, self).__init__(parent, db)
 
         self.setTable('ingredients_prev')
+        #self.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
         rel1 = QSqlRelation("products","id","name")
         rel2 = QSqlRelation("dishes_prev","id","name")
         rel4 = QSqlRelation("units","id","unit")
