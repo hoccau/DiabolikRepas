@@ -7,15 +7,15 @@ Logiciel d'économat léger pour centre de vacances
 """
 
 from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, qApp, QAction, QTabWidget, QTableView, 
-    QAbstractItemView, QInputDialog, QMessageBox, QFileDialog)
+    QMainWindow, QApplication, qApp, QAction, QTableView, 
+    QInputDialog, QMessageBox, QFileDialog)
 from PyQt5.QtCore import QSettings, QMimeDatabase
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
 from views import (
     ProductForm, RepasForm, InfosCentreDialog, RapportDialog,
     Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
-    InputsArray, StartupView)
+    InputsArray, MainWidget)
 import repas_xml_to_db
 import repas_db_to_xml
 import logging
@@ -92,46 +92,16 @@ class MainWindow(QMainWindow):
         helpmenu.addAction(aboutAction)
 
         self.statusBar().showMessage('Ready')
-        self.setMinimumSize(850,300)
+        self.setMinimumSize(850, 300)
         self.show()
         
         self.enable_db_actions(False) #disabled by default
         self.model = Model(self)
         self.retrieve_db()
         
-    def _create_tables_views(self):
-        self.tabs = QTabWidget()
-        self.tables = {
-            'reserve': self._add_table_model(
-                self.model.qt_table_reserve, 'reserve'),
-            'repas': self._add_table_model(
-                self.model.qt_table_repas, 'repas consommés'),
-            'arrivages': self._add_table_model(
-                self.model.qt_table_inputs, 'arrivages'),
-            'sorties': self._add_table_model(
-                self.model.qt_table_outputs, 'sorties')
-            }
-        self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
-        self.tabs.currentChanged.connect(self.current_tab_changed)
-        
-        # Repas table must be selected by row for editing
-        self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
-        # Autorize Edit for 'arrivages'
-        self.tables['arrivages'].setEditTriggers(QAbstractItemView.DoubleClicked)
-        self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
-        self.setCentralWidget(self.tabs)
-
     def _create_main_view(self):
-        self.startup_view = StartupView(self)
-        self.setCentralWidget(self.startup_view)
-
-    def _add_table_model(self, model, name, size=None):
-        table = QTableView(self)
-        table.setModel(model)
-        table.setItemDelegate(QSqlRelationalDelegate())
-        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tabs.addTab(table, name)
-        return table
+        self.main_widget = MainWidget(self)
+        self.setCentralWidget(self.main_widget)
 
     def add_action(self, name, function_name, shortcut=None):
         action = QAction(name, self)
@@ -141,7 +111,7 @@ class MainWindow(QMainWindow):
         return action
 
     def current_tab_changed(self):
-        if self.tabs.currentIndex() in (0, 1, 2, 3):
+        if self.main_widget.tabs.currentIndex() in (0, 1, 2, 3):
             self.db_actions['delRowAction'].setEnabled(True)
         else:
             self.db_actions['delRowAction'].setEnabled(False)
@@ -238,7 +208,7 @@ class MainWindow(QMainWindow):
 
     def close_db(self):
         self.model.db.close()
-        self.startup_view.close()
+        self.main_widget.close()
         self.enable_db_actions(False)
 
     def retrieve_db(self):

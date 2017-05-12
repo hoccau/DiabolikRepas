@@ -5,28 +5,73 @@ from PyQt5.QtWidgets import (
     QWidget, QDialog, QGroupBox, QStyledItemDelegate, QGridLayout, QPushButton,
     QCalendarWidget, QTableView, QComboBox, QTextEdit, QLabel, QVBoxLayout,
     QHBoxLayout, QCompleter, QDoubleSpinBox, QButtonGroup, QLineEdit, 
-    QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit)
+    QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit,
+    QAbstractItemView, QTabWidget)
 from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize
 from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import FournisseurModel
 import logging
 
-class StartupView(QWidget):
+class MainWidget(QWidget):
     def __init__(self, parent):
-        super(StartupView, self).__init__(parent)
+        super(MainWidget, self).__init__(parent)
         
-        self.grid = QGridLayout()
+        self.parent = parent
+        self.buttons = BigButtons(parent)
+        self._create_tables_views()
+        
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.buttons)
+        main_layout.addWidget(self.tabs)
 
-        previsionnel_button = self._create_button('previsionnel.png', 'Prévisionnel')
+        self.setLayout(main_layout)
+    
+    def _create_tables_views(self):
+        self.tabs = QTabWidget()
+        self.tables = {
+            'reserve': self._add_table_model(
+                self.parent.model.qt_table_reserve, 'reserve'),
+            'repas': self._add_table_model(
+                self.parent.model.qt_table_repas, 'repas consommés'),
+            'arrivages': self._add_table_model(
+                self.parent.model.qt_table_inputs, 'arrivages'),
+            'sorties': self._add_table_model(
+                self.parent.model.qt_table_outputs, 'sorties')
+            }
+        #self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
+        self.tabs.currentChanged.connect(self.parent.current_tab_changed)
+        
+        # Repas table must be selected by row for editing
+        self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
+        # Autorize Edit for 'arrivages'
+        self.tables['arrivages'].setEditTriggers(QAbstractItemView.DoubleClicked)
+        self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
+    
+    def _add_table_model(self, model, name, size=None):
+        table = QTableView(self)
+        table.setModel(model)
+        table.setItemDelegate(QSqlRelationalDelegate())
+        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tabs.addTab(table, name)
+        return table
+
+class BigButtons(QWidget):
+    def __init__(self, parent):
+        super(BigButtons, self).__init__(parent)
+        
+        self.layout = QHBoxLayout()
+
+        previsionnel_button = self._create_button(
+            'previsionnel.png', 'Prévisionnel')
         input_button = self._create_button('input.png', 'Arrivage de denrées')
         output_button = self._create_button('output.png', 'Repas')
         
-        self.grid.addWidget(previsionnel_button, 0, 0)
-        self.grid.addWidget(input_button, 1, 0)
-        self.grid.addWidget(output_button, 1, 1)
+        self.layout.addWidget(previsionnel_button)
+        self.layout.addWidget(input_button)
+        self.layout.addWidget(output_button)
 
-        self.setLayout(self.grid)
+        self.setLayout(self.layout)
 
         previsionnel_button.clicked.connect(parent.add_previsionnel)
         input_button.clicked.connect(parent.add_input)
