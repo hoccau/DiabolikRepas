@@ -84,29 +84,63 @@ class ProductForm(QDialog):
         self.name.setToolTip("Avec les accents, en minuscule")
         self.units = QComboBox()
         self.units.addItems(['unités','Kilogrammes', 'Litres'])
+        self.recommended_6 = QDoubleSpinBox()
+        self.recommended_6_12 = QDoubleSpinBox()
+        self.recommended_12 = QDoubleSpinBox()
         self.ok_button = QPushButton('OK')
         self.cancel_button = QPushButton('Annuler')
 
         layout = QFormLayout()
         layout.addRow('Nom du produit', self.name)
         layout.addRow('Unité de mesure', self.units)
+        recommend_layout = QGridLayout()
+        recommend_layout.addWidget(
+            QLabel('Quantité recommandée pour un enfant de moins de 6 ans'),
+            0, 0)
+        recommend_layout.addWidget(self.recommended_6, 0, 1)
+        recommend_layout.addWidget(
+            QLabel('Quantité recommandée pour un enfant entre 6 et 12 ans'),
+            1, 0)
+        recommend_layout.addWidget(self.recommended_6_12, 1, 1)
+        recommend_layout.addWidget(
+            QLabel('Quantité recommandée pour un enfant de plus de 12 ans (ou adulte)'),
+            2, 0)
+        recommend_layout.addWidget(self.recommended_12, 2, 1)
+        self.units_labels = [QLabel('Pièces') for x in range(3)]
+        [recommend_layout.addWidget(label, x, 2)\
+            for x, label in enumerate(self.units_labels)]
         g_layout = QVBoxLayout()
         g_layout.addWidget(self.warning_label)
         g_layout.addLayout(layout)
+        g_layout.addLayout(recommend_layout)
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
         g_layout.addLayout(button_layout)
         self.setLayout(g_layout)
         
+        self.units.currentTextChanged.connect(self.change_units)
         self.ok_button.clicked.connect(self.record)
         self.cancel_button.clicked.connect(self.reject)
         self.exec_()
+    
+    def change_units(self, unit):
+        matching = {
+           'unités':'pièces',
+           'Kilogrammes':'grammes',
+           'Litres':'millilitres'
+           }
+        [label.setText(matching[unit]) for label in self.units_labels]
+
     def record(self):
         if self.name != '':
             product_name = self.name.text().lower()
+            recommends = [
+                self.recommended_6.value(), 
+                self.recommended_6_12.value(), 
+                self.recommended_12.value()] 
             res, err = self.model.add_product(
-                product_name, self.units.currentIndex() + 1)
+                product_name, self.units.currentIndex() + 1, recommends)
             if res:
                 self.accept()
             if not res:
@@ -978,17 +1012,43 @@ class DateDelegate(QStyledItemDelegate):
         value = editor.date().toString('yyyy-MM-dd')
         model.setData(index, value)
 
+# Below : not finished work (see TODO file)
 class CompleterDelegate(QSqlRelationalDelegate):
     def __init__(self, parent=None):
         super(CompleterDelegate, self).__init__(parent)
 
     def createEditor(self, parent, option, index):
-        editor = QComboBox(parent)
+        editor = FComboBox(parent, self)
         editor.setModel(index.model().rel_name)
         editor.setModelColumn(1)
         editor.setEditable(True)
+        #editor.editTextChanged.connect(self.deb)
         #editor.editTextChanged.connect(self.sender)
         return editor
 
     def setModelData(self, editor, model, index):
+        completion = editor.completer().currentCompletion()
+        logging.debug(completion)
+        #if completion:
+        #    model.setData(index, completion)
+        #    logging.debug('completion complete...')
+        #else:
         super(CompleterDelegate, self).setModelData(editor, model, index)
+
+    def deb(self):
+        logging.debug('editTextChanged')
+
+class FComboBox(QComboBox):
+    def __init__(self, parent, delegate):
+        super(FComboBox, self).__init__(parent)
+        self.delegate = delegate
+
+    def focusOutEvent(self, event):
+        logging.debug('focusOut!')
+        logging.debug(self.currentText())
+        logging.debug(self.currentIndex())
+        logging.debug(self.completer().currentCompletion())
+        self.setCurrentText(self.completer().currentCompletion())
+        logging.debug(self.currentIndex())
+        self.model().submit()
+        completion = self.completer().currentCompletion()

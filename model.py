@@ -234,11 +234,16 @@ class Model(QSqlQueryModel):
             +" VALUES("+str(datas['quantity'])+', '+str(datas['repas_id'])+', '+\
             str(datas['product_id'])+")")
 
-    def add_product(self, product, unit_id):
+    def add_product(self, product, unit_id, recommends):
         self.query.prepare(
-            "INSERT INTO products (name, unit_id) VALUES (:name, :unit_id)")
+                "INSERT INTO products (name, unit_id, "\
+                + " recommended_6, recommended_6_12, recommended_12)"\
+                + " VALUES (:name, :unit_id, :r_6, :r_6_12, :r_12)")
         self.query.bindValue(':name', product)
         self.query.bindValue(':unit_id', unit_id)
+        self.query.bindValue(':r_6', recommends[0])
+        self.query.bindValue(':r_6_12', recommends[1])
+        self.query.bindValue(':r_12', recommends[2])
         res = self.exec_()
         return res, self.query.lastError().databaseText()
 
@@ -505,6 +510,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
 
         self.rel_name = self.relationModel(1) #QsqlTable for combo box
         self.rel_name.sort(1, Qt.SortOrder(0))
+        self.rel_name.setEditStrategy(QSqlTableModel.OnFieldChange)
         self.rel_unit = self.relationModel(4) #QsqlTable for combo box
         
         self.dataChanged.connect(self.rel_name.select)

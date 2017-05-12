@@ -30,6 +30,9 @@ CREATE TABLE products(
 id integer PRIMARY KEY,
 name VARCHAR(20) NOT NULL,
 unit_id integer NOT NULL,
+recommended_6 real,
+recommended_6_12 real,
+recommended_12 real,
 FOREIGN KEY (unit_id) REFERENCES units(id)
 );
 CREATE UNIQUE INDEX idx_name ON products (name);
@@ -59,15 +62,6 @@ type_id integer NOT NULL,
 FOREIGN KEY (type_id) REFERENCES type_repas(id)
 );
 
-CREATE TABLE ingredients_prev(
-id integer PRIMARY KEY,
-product_id integer NOT NULL,
-dishes_prev_id integer NOT NULL,
-quantity real NOT NULL,
-FOREIGN KEY (product_id) REFERENCES products(id)
-FOREIGN KEY (dishes_prev_id) REFERENCES dishes_prev(id) ON DELETE CASCADE
-);
-
 CREATE TABLE dishes_types(
 id integer PRIMARY KEY,
 type varchar(30)
@@ -82,6 +76,15 @@ repas_prev_id integer NOT NULL,
 type_id integer,
 FOREIGN KEY (repas_prev_id) REFERENCES repas_prev(id) ON DELETE CASCADE
 FOREIGN KEY (type_id) REFERENCES dishes_types(id)
+);
+
+CREATE TABLE ingredients_prev(
+id integer PRIMARY KEY,
+product_id integer NOT NULL,
+dishes_prev_id integer NOT NULL,
+quantity real NOT NULL,
+FOREIGN KEY (product_id) REFERENCES products(id)
+FOREIGN KEY (dishes_prev_id) REFERENCES dishes_prev(id) ON DELETE CASCADE
 );
 
 CREATE TABLE repas(
