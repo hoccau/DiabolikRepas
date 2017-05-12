@@ -88,9 +88,14 @@ class Repas():
         product_id = self._get_product_id(ingr)
         if not product_id:
             self.query.prepare(
-                'INSERT INTO products(name, unit_id) VALUES (:name, :unit_id)')
+                'INSERT INTO products(name, unit_id, '\
+                + 'recommended_6, recommended_6_12, recommended_12) '\
+                + 'VALUES (:name, :unit_id, :r_6, :r_6_12, :r_12)')
             self.query.bindValue(':name', ingr)
             self.query.bindValue(':unit_id', unit_id)
+            self.query.bindValue(':r_6', quantities_array[0])
+            self.query.bindValue(':r_6_12', quantities_array[1])
+            self.query.bindValue(':r_12', quantities_array[2])
             res = self.query.exec_()
             if not res:
                 logging.warning(self.query.lastError())

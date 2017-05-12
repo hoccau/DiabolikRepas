@@ -513,7 +513,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         self.rel_name.setEditStrategy(QSqlTableModel.OnFieldChange)
         self.rel_unit = self.relationModel(4) #QsqlTable for combo box
         
-        self.dataChanged.connect(self.rel_name.select)
+        #self.dataChanged.connect(self.rel_name.select)
 
         self.setHeaderData(1, Qt.Horizontal, "produit")
         self.setHeaderData(2, Qt.Horizontal, "repas")
