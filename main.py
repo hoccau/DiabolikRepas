@@ -293,8 +293,8 @@ class MainWindow(QMainWindow):
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
-            import export_pdf
-            export_pdf.create_pdf(filename, self.model, date_start, date_stop)
+            import export_liste
+            export_liste.create_pdf(filename, self.model, date_start, date_stop)
 
     def init_prev_by_xml_repas(self):
         reponse = QMessageBox.question(

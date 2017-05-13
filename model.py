@@ -45,6 +45,9 @@ class Model(QSqlQueryModel):
         if opened:
             self._create_models()
             self.exec_("PRAGMA foreign_keys = ON")
+            logging.info(db_name + ' open.')
+        else:
+            logging.warning(db_name + ' not open.')
         return opened
 
     def _create_models(self):
@@ -102,6 +105,20 @@ class Model(QSqlQueryModel):
             INNER JOIN units ON units.id = products.unit_id\
             WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
         return self._query_to_lists(4)
+
+    def get_plats_by_dates(self, date_start, date_stop):
+        plats = []
+        self.exec_(
+            "SELECT repas_prev.date, type_repas.type, dishes_types.type, name "\
+            + "FROM dishes_prev "\
+            + "INNER JOIN repas_prev ON repas_prev.id = repas_prev_id "\
+            + "INNER JOIN type_repas ON repas_prev.type_id = type_repas.id "\
+            + "INNER JOIN dishes_types ON dishes_types.id = dishes_prev.type_id "\
+            + "WHERE '" + date_start + "' <= repas_prev.date "\
+            + "AND repas_prev.date <= '" + date_stop + "'")
+        while self.query.next():
+            plats.append([self.query.value(i) for i in range(4)])
+        return plats
 
     def get_(self, values=[], table=None, condition=None, distinct=False):
         sql_values = ",".join(values)

@@ -53,7 +53,6 @@ def create_liste(products):
     html += '</table>'
     return html
 
-
 def create_pdf(filename='foo.pdf', model=None, date_start=None, date_stop=None):
     infos_centre = model.get_infos()
     products = model.get_prev_products_by_dates(date_start, date_stop)
