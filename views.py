@@ -749,6 +749,7 @@ class Previsionnel(QDialog):
         self.calendar = QCalendarWidget()
         self.calendar.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
         self.layout = QVBoxLayout()
+        self.parent = parent
 
         btn_names = [
             'petit déjeuner',
@@ -780,7 +781,7 @@ class Previsionnel(QDialog):
                 'Plats', [self.add_plat_button, self.del_plat_button])
         self.ingredients_prev_view, self.ingredients_box = self._create_view(
                 'Ingredients', [self.add_ingredient_button, self.del_ingredient_button])
-        completer_delegate = CompleterDelegate()
+        completer_delegate = CompleterDelegate(self)
         self.ingredients_prev_view.setItemDelegateForColumn(
             1, completer_delegate)
 
@@ -843,8 +844,9 @@ class Previsionnel(QDialog):
         # below: buttons must be in same order than db table
         id_ = self.repas_buttons_group.checkedId() * -1 -1
         self.current_repas_id = id_
-        self.plats_model.setFilter("relTblAl_2.type_id = "+str(id_)
-            +" AND relTblAl_2.date = '"+str(self.date.toString('yyyy-MM-dd')+"'"))
+        self.plats_model.setFilter("relTblAl_2.type_id = " + str(id_)
+            + " AND relTblAl_2.date = '" + str(
+                self.date.toString('yyyy-MM-dd') + "'"))
         if self.plats_model.lastError().text().rstrip(' '):
             logging.warning(self.plats_model.lastError().text())
         self.plats_box.setTitle('Les plats du repas sélectionné')
@@ -856,7 +858,7 @@ class Previsionnel(QDialog):
         self.current_plat_id = id_
         self.ingredients_box.setTitle('Les ingrédients du plat sélectionné')
         self.ingredients_model.setFilter(
-                "dishes_prev_id = "+str(id_))
+                "dishes_prev_id = " + str(id_))
 
     def add_repas(self):
         self.repas_model.add_row(date=self.date.toString('yyyy-MM-dd'))
@@ -877,7 +879,8 @@ class Previsionnel(QDialog):
     def del_repas(self):
         reponse = QMessageBox.question(
                 None, 'Sûr(e) ?', "Vous allez détruire définitivement ce repas"\
-                + "ainsi que tous les plats et ingrédients associés. Êtes-vous sûr(e) ?",
+                + " ainsi que tous les plats et ingrédients associés. "\
+                + "Êtes-vous sûr(e) ?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
         if reponse == QMessageBox.Yes:
@@ -902,6 +905,15 @@ class Previsionnel(QDialog):
             row = self.ingredients_prev_view.selectionModel().currentIndex().row()
             id_ = self.ingredients_prev_view.model().record(row).value(0)
             self.ingredients_model.del_row(id=id_)
+
+    def set_auto_quantity(self, product, row):
+        date = self.calendar.selectedDate().toString('yyyy-MM-dd')
+        quantity = self.parent.model.get_recommended_quantity(
+            date, product)
+        if quantity:
+            index = self.ingredients_model.index(row, 3) # 3: quantity column
+            logging.debug(self.ingredients_model.data(index))
+            s = self.ingredients_model.setData(index, quantity)
 
 class PlatPrevisionnel(QWidget):
     """ not finished/used... """
@@ -1047,8 +1059,6 @@ class DateDelegate(QStyledItemDelegate):
         painter.restore()
     
     def createEditor(self, parent, option, index):
-        #col = index.column()
-        #if col == 2:
         editor = QDateEdit(parent)
         editor.setDate(QDate.currentDate())
         return editor
@@ -1061,6 +1071,7 @@ class DateDelegate(QStyledItemDelegate):
 class CompleterDelegate(QSqlRelationalDelegate):
     def __init__(self, parent=None):
         super(CompleterDelegate, self).__init__(parent)
+        self.parent = parent
 
     def createEditor(self, parent, option, index):
         editor = FComboBox(parent, self)
@@ -1073,7 +1084,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
 
     def setModelData(self, editor, model, index):
         completion = editor.completer().currentCompletion()
-        logging.debug(completion)
+        self.parent.set_auto_quantity(editor.currentText(), index.row())
         #if completion:
         #    model.setData(index, completion)
         #    logging.debug('completion complete...')

@@ -291,6 +291,38 @@ class Model(QSqlQueryModel):
         for table in ['ingredients_prev', 'repas_prev', 'dishes_prev']:
             self.exec_("DELETE FROM "+table)
 
+    def get_recommended_quantity(self, day, product):
+        self.exec_(
+            "SELECT nombre_enfants_6, "\
+            + "nombre_enfants_6_12, "\
+            + "nombre_enfants_12 "\
+            + "FROM infos_periodes "\
+            + "WHERE date_start <= '" + day + "' <= date_stop")
+        if self.query.first():
+            nbr_enfants = [self.query.value(x) for x in range(3)]
+        else:
+            logging.warning("Pas de périodes trouvées dans les infos du centre")
+            return False
+        self.exec_(
+            "SELECT recommended_6, "\
+            + "recommended_6_12, "\
+            + "recommended_12, "\
+            + "unit_id "
+            + "FROM products "\
+            + "WHERE name = '" + product + "'")
+        if self.query.first():
+            recommends = [self.query.value(x) for x in range(3)]
+            unit_id = self.query.value(3)
+        else:
+            logging.warning('Pas de produit trouvé')
+            return False
+        total = 0
+        res = [x * recommends[i] for i, x in enumerate(nbr_enfants)]
+        res = sum(res)
+        if unit_id in (2, 3): # if Kilogrammes or litres
+            res = res / 1000.
+        return res
+
     def _query_to_dic(self):
         """ return a dict which contains query results """
         dic = {}

@@ -72,34 +72,20 @@ class Repas():
         quantities_array.append(quantities.firstChildElement('age6-12'))
         quantities_array.append(quantities.firstChildElement('age12'))
         quantities_array = [float(el.text()) for el in quantities_array]
+        
+        unit_map = {'pièce':1, 'gr':2, 'ml':3}
+        
+        product_id = self._get_product_id(ingr)
+        if not product_id:
+            product_id = self.add_product(ingr, unit_map[unit], quantities_array)
+
         if unit in ['gr','ml']:
             quantities_array = [i / 1000. for i in quantities_array]
-            if unit == 'gr':
-                unit_id = 2
-            if unit == 'ml':
-                unit_id = 3
-        elif unit == 'pièce':
-            unit_id = 1
         quantities_array[0] *= periode['nombre_enfants_6']
         quantities_array[1] *= periode['nombre_enfants_6_12']
         quantities_array[2] *= periode['nombre_enfants_12']
         total_quantity = sum(quantities_array)
     
-        product_id = self._get_product_id(ingr)
-        if not product_id:
-            self.query.prepare(
-                'INSERT INTO products(name, unit_id, '\
-                + 'recommended_6, recommended_6_12, recommended_12) '\
-                + 'VALUES (:name, :unit_id, :r_6, :r_6_12, :r_12)')
-            self.query.bindValue(':name', ingr)
-            self.query.bindValue(':unit_id', unit_id)
-            self.query.bindValue(':r_6', quantities_array[0])
-            self.query.bindValue(':r_6_12', quantities_array[1])
-            self.query.bindValue(':r_12', quantities_array[2])
-            res = self.query.exec_()
-            if not res:
-                logging.warning(self.query.lastError())
-            product_id = self._get_product_id(ingr)
         self.query.prepare('INSERT INTO ingredients_prev\
         (product_id, dishes_prev_id, quantity)\
         VALUES(:product_id, :dishes_prev_id, :quantity)')
@@ -110,6 +96,21 @@ class Repas():
         if not s:
             logging.info(self.query.executedQuery())
             logging.warning(self.query.lastError().text())
+
+    def add_product(self, ingr, unit_id, quantities_array):
+        self.query.prepare(
+            'INSERT INTO products(name, unit_id, '\
+            + 'recommended_6, recommended_6_12, recommended_12) '\
+            + 'VALUES (:name, :unit_id, :r_6, :r_6_12, :r_12)')
+        self.query.bindValue(':name', ingr)
+        self.query.bindValue(':unit_id', unit_id)
+        self.query.bindValue(':r_6', quantities_array[0])
+        self.query.bindValue(':r_6_12', quantities_array[1])
+        self.query.bindValue(':r_12', quantities_array[2])
+        res = self.query.exec_()
+        if not res:
+            logging.warning(self.query.lastError())
+        return self._get_product_id(ingr)
 
     def xml_to_db(self, model=None):
         self.query = model.query
