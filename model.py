@@ -52,6 +52,7 @@ class Model(QSqlQueryModel):
 
     def _create_models(self):
         self.query = QSqlQuery()
+        self.qt_table_products = ProductsModel(self, self.db)
         self.qt_table_reserve = ReserveTableModel()
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_periodes_infos = PeriodesModel(self, self.db)
@@ -646,6 +647,21 @@ class InputsModel(QSqlRelationalTableModel):
         self.setHeaderData(5, Qt.Horizontal, "Quantité")
         self.select()
     
+class ProductsModel(QSqlRelationalTableModel):
+    def __init__(self, parent, db):
+        super(ProductsModel, self).__init__(parent, db)
+
+        #self.setEditStrategy(QSqlTableModel.OnManualSubmit)
+        self.setTable("products")
+        units_rel = QSqlRelation("units","id","unit")
+        self.setRelation(2, units_rel)
+        self.setHeaderData(1, Qt.Horizontal, "Nom")
+        self.setHeaderData(2, Qt.Horizontal, "Unité de mesure")
+        self.setHeaderData(3, Qt.Horizontal, "Quantité pour moins de 6 ans")
+        self.setHeaderData(4, Qt.Horizontal, "Quantité pour 6-12 ans")
+        self.setHeaderData(5, Qt.Horizontal, "Quantité pour plus de ans")
+        self.select()
+
 class PrevisionnelModel(QStandardItemModel):
     """ Used for QColumnView in tab"""
     def __init__(self):

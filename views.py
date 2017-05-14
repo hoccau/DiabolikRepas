@@ -117,24 +117,49 @@ class Form(QDialog):
         self.show()
 
 class ProductForm(QDialog):
-    def __init__(self, parent=None, name=""):
+    def __init__(self, parent=None, index=None, name=""):
         super(ProductForm, self).__init__(parent)
-        self.model = parent.model
+        self.model = parent.model.qt_table_products
+
+        self.mapper = QDataWidgetMapper(self)
+        self.mapper.setModel(self.model)
 
         self.warning_label = QLabel(
             "Assurez-vous que le produit que vous allez entrer\n"
             +"n'existe pas déjà sous un autre nom.")
         self.name = QLineEdit()
-        self.name.setText(name)
         self.name.setToolTip("Avec les accents, en minuscule")
         self.units = QComboBox()
-        self.units.addItems(['unités','Kilogrammes', 'Litres'])
-        self.recommended_6 = QDoubleSpinBox()
-        self.recommended_6_12 = QDoubleSpinBox()
-        self.recommended_12 = QDoubleSpinBox()
+        self.units_model = self.model.relationModel(2)
+        self.units.setModel(self.units_model)
+        self.units.setModelColumn(1)
+        self.recommends = [QDoubleSpinBox() for i in range(3)]
+        [spin.setMaximum(999) for spin in self.recommends]
+
         self.ok_button = QPushButton('OK')
         self.cancel_button = QPushButton('Annuler')
-
+        
+        self.mapper.setItemDelegate(QSqlRelationalDelegate(self))
+        self.mapper.addMapping(self.name, 1)
+        self.mapper.addMapping(self.units, 2)
+        self.mapper.addMapping(self.recommends[0], 3)
+        self.mapper.addMapping(self.recommends[1], 4)
+        self.mapper.addMapping(self.recommends[2], 5)
+        
+        for widget in [self.name, self.units] + self.recommends:
+            if self.mapper.mappedSection(widget) == -1:
+                logging.warning('Widget ' + str(widget) + 'not mapped.')
+        
+        if index is not None:
+            self.mapper.setCurrentIndex(index)
+        else:
+            inserted = self.model.insertRow(self.model.rowCount())
+            if not inserted:
+                logging.warning(
+                    'Row not inserted in model {0}'.format(self.model))
+            self.mapper.toLast()
+            self.name.setText(name)
+        
         layout = QFormLayout()
         layout.addRow('Nom du produit', self.name)
         layout.addRow('Unité de mesure', self.units)
@@ -142,15 +167,15 @@ class ProductForm(QDialog):
         recommend_layout.addWidget(
             QLabel('Quantité recommandée pour un enfant de moins de 6 ans'),
             0, 0)
-        recommend_layout.addWidget(self.recommended_6, 0, 1)
+        recommend_layout.addWidget(self.recommends[0], 0, 1)
         recommend_layout.addWidget(
             QLabel('Quantité recommandée pour un enfant entre 6 et 12 ans'),
             1, 0)
-        recommend_layout.addWidget(self.recommended_6_12, 1, 1)
+        recommend_layout.addWidget(self.recommends[1], 1, 1)
         recommend_layout.addWidget(
             QLabel('Quantité recommandée pour un enfant de plus de 12 ans (ou adulte)'),
             2, 0)
-        recommend_layout.addWidget(self.recommended_12, 2, 1)
+        recommend_layout.addWidget(self.recommends[2], 2, 1)
         self.units_labels = [QLabel('Pièces') for x in range(3)]
         [recommend_layout.addWidget(label, x, 2)\
             for x, label in enumerate(self.units_labels)]
@@ -165,36 +190,34 @@ class ProductForm(QDialog):
         self.setLayout(g_layout)
         
         self.units.currentTextChanged.connect(self.change_units)
-        self.ok_button.clicked.connect(self.record)
+        self.ok_button.clicked.connect(self.submit)
         self.cancel_button.clicked.connect(self.reject)
+
         self.exec_()
+
+    def submit(self):
+        s = self.mapper.submit()
+        if s:
+            logging.info('Produit ' + self.name.text() + ' ajouté.')
+            self.accept()
+        else:
+            error = self.model.lastError()
+            logging.warning(error.text())
+            if error.databaseText() == 'UNIQUE constraint failed: products.name':
+                QMessageBox.warning(
+                      self, "Erreur", "Ce produit existe déjà")
+            else:
+                QMessageBox.warning(
+                    self, "Erreur", "Le produit n'a pas pu être enregistré.\n"\
+                    + "Détail:" + error.text())
     
     def change_units(self, unit):
         matching = {
-           'unités':'pièces',
+           'Unités':'pièces',
            'Kilogrammes':'grammes',
            'Litres':'millilitres'
            }
         [label.setText(matching[unit]) for label in self.units_labels]
-
-    def record(self):
-        if self.name != '':
-            product_name = self.name.text().lower()
-            recommends = [
-                self.recommended_6.value(), 
-                self.recommended_6_12.value(), 
-                self.recommended_12.value()] 
-            res, err = self.model.add_product(
-                product_name, self.units.currentIndex() + 1, recommends)
-            if res:
-                self.accept()
-            if not res:
-                if err == 'UNIQUE constraint failed: products.name':
-                    QMessageBox.warning(
-                            self, "Erreur", "Ce produit existe déjà")
-                else:
-                    QMessageBox.warning(
-                            self, "Erreur", "Le produit n'a pas pu être enregistré")
 
 class InputForm(Form):
     def __init__(self, parent=None):
@@ -1110,7 +1133,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
             if reponse == QMessageBox.Yes:
-                ProductForm(self.parent.parent, editor.currentText())
+                ProductForm(self.parent.parent, name=editor.currentText())
         else:
             self.parent.set_auto_quantity(editor.currentText(), index.row())
             super(CompleterDelegate, self).setModelData(editor, model, index)
