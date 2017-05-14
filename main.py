@@ -41,8 +41,12 @@ class MainWindow(QMainWindow):
         aboutAction = self.add_action('&à propos', self.about_d)
         
         self.db_actions = {}
-        self.db_actions['exportPdfAction'] = self.add_action(
-            '&Exporter la liste des courses', self.export_pdf)
+        self.db_actions['exportPdfListeAction'] = self.add_action(
+            '&Exporter la liste des courses', self.export_pdf_liste)
+        self.db_actions['exportPdfMenuAction'] = self.add_action(
+            '&Exporter les menus', self.export_pdf_menu)
+        self.db_actions['exportPdfStockAction'] = self.add_action(
+            '&Exporter le stock', self.export_pdf_stock)
         self.db_actions['delRowAction'] = self.add_action(
             '&Supprimer la ligne', self.remove_current_row)
         self.db_actions['addFormAction'] = self.add_action(
@@ -68,14 +72,17 @@ class MainWindow(QMainWindow):
         self.db_actions['close'] = self.add_action(
             'Fermer', self.close_db, 'Ctrl+W')
 
-        fileMenu = menubar.addMenu('&Fichier')
-        fileMenu.addAction(newAction)
-        fileMenu.addAction(openAction)
-        fileMenu.addAction(self.db_actions['close'])
-        fileMenu.addAction(self.db_actions['import_previsionnel'])
-        fileMenu.addAction(self.db_actions['export_previsionnel'])
-        fileMenu.addAction(self.db_actions['exportPdfAction'])
-        fileMenu.addAction(exitAction)
+        file_menu = menubar.addMenu('&Fichier')
+        file_menu.addAction(newAction)
+        file_menu.addAction(openAction)
+        file_menu.addAction(self.db_actions['close'])
+        file_menu.addAction(self.db_actions['import_previsionnel'])
+        file_menu.addAction(self.db_actions['export_previsionnel'])
+        export_menu = file_menu.addMenu('&Exporter en PDF')
+        export_menu.addAction(self.db_actions['exportPdfListeAction'])
+        export_menu.addAction(self.db_actions['exportPdfMenuAction'])
+        export_menu.addAction(self.db_actions['exportPdfStockAction'])
+        file_menu.addAction(exitAction)
         edit_menu = menubar.addMenu('&Édition')
         edit_menu.addAction(self.db_actions['delRowAction'])
         edit_menu.addAction(self.db_actions['setInfosAction'])
@@ -286,7 +293,7 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Erreur", "Erreur de requette inconnue!")
 
-    def export_pdf(self):
+    def export_pdf_liste(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
         filename, _format = QFileDialog.getSaveFileName(
             self, "Exporter la liste des courses", None, 'PDF(*.pdf)')
@@ -295,6 +302,25 @@ class MainWindow(QMainWindow):
                 filename += '.pdf'
             import export_liste
             export_liste.create_pdf(filename, self.model, date_start, date_stop)
+
+    def export_pdf_stock(self):
+        filename, _format = QFileDialog.getSaveFileName(
+            self, "Exporter le stock", None, 'PDF(*.pdf)')
+        if filename:
+            if filename[-4:] != '.pdf':
+                filename += '.pdf'
+            import export_stock
+            export_stock.create_pdf(filename, self.model)
+
+    def export_pdf_menu(self):
+        date_start, date_stop = DatesRangeDialog(self).get_dates()
+        filename, _format = QFileDialog.getSaveFileName(
+            self, "Exporter le menu", None, 'PDF(*.pdf)')
+        if filename:
+            if filename[-4:] != '.pdf':
+                filename += '.pdf'
+            import export_menus
+            export_menus.create_pdf(filename, self.model, date_start, date_stop)
 
     def init_prev_by_xml_repas(self):
         reponse = QMessageBox.question(

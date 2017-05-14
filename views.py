@@ -366,10 +366,13 @@ class InputsArray(QDialog):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
         logging.debug(date_start)
         fournisseur_model = FournisseurModel(self, self.parent.model.db)
-        fournisseur = SelectFournisseur(self, fournisseur_model).get_()
+        fournisseur = SelectFournisseur(self.parent, fournisseur_model).get_()
         logging.debug(fournisseur)
-        fournisseur_id = self.parent.model.get_(
-            ['id'], 'fournisseurs', "nom='" + fournisseur + "'")[0]['id']
+        if fournisseur:
+            fournisseur_id = self.parent.model.get_(
+                ['id'], 'fournisseurs', "nom='" + fournisseur + "'")[0]['id']
+        else:
+            return False
         logging.debug(fournisseur_id)
         products = self.parent.model.get_prev_products_by_dates(
             date_start, date_stop)
@@ -1023,18 +1026,23 @@ class DatesRangeDialog(QDialog):
 class SelectFournisseur(QDialog):
     def __init__(self, parent=None, model=None):
         super(SelectFournisseur, self).__init__(parent)
+        self.parent = parent
 
         self.combobox = QComboBox()
         self.combobox.setModel(model)
         self.combobox.setModelColumn(1)
         ok_button = QPushButton('OK')
+        add_button = QPushButton('+')
         layout = QVBoxLayout()
-        layout.addWidget(self.combobox)
+        f_layout = QHBoxLayout()
+        f_layout.addWidget(self.combobox)
+        f_layout.addWidget(add_button)
+        layout.addLayout(f_layout)
         layout.addWidget(ok_button)
         self.setLayout(layout)
 
         ok_button.clicked.connect(self.get_)
-        self.combobox.currentIndexChanged.connect(self.ll)
+        add_button.clicked.connect(self.add_fournisseur)
 
         self.exec_()
 
@@ -1042,9 +1050,10 @@ class SelectFournisseur(QDialog):
         self.accept()
         return  self.combobox.currentText()
 
-    def ll(self):
-        logging.debug(self.combobox.currentData())
-
+    def add_fournisseur(self):
+        inserted = self.parent.add_fournisseur()
+        if inserted:
+            self.combobox.model().select()
 
 class DateDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):

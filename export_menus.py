@@ -7,15 +7,15 @@ Export menus as pdf file
 
 from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtPrintSupport import QPrinter
-from PyQt5.QtGui import QTextDocument, QPageLayout
+from PyQt5.QtGui import QPageLayout
 from collections import OrderedDict
 import model
+from pdf_utils import html_doc
 
 def create_pdf(filename='menu.pdf', model=None, date_start=None, date_stop=None):
     menu = get_menu_dict(model, date_start, date_stop)
     html = html_menu(menu)
-    print(html)
-    doc = html_doc(html)
+    doc = html_doc(html, 'menu.css')
     printer = QPrinter()
     printer.setOutputFileName(filename)
     printer.setOutputFormat(QPrinter.PdfFormat)
@@ -58,16 +58,6 @@ def html_menu(menu={}):
     
     html += '</tr></tbody></table></div>' #EOF #main
     return html
-
-def html_doc(html_content):
-    doc = QTextDocument()
-    with open('menu.css', 'r') as f:
-        style = f.read()
-        print(style)
-    html = "<head><style>" + style + "</style></head>"
-    html += "<body>" + html_content + '</body>'
-    doc.setHtml(html)
-    return doc
 
 def human_date(date):
     date = QDate.fromString(date, 'yyyy-MM-dd')

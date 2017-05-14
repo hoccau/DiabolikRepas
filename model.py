@@ -85,10 +85,8 @@ class Model(QSqlQueryModel):
             return self.query.value(0)
 
     def get_infos(self):
-        values = ['centre', 'directeur_nom', 'nombre_enfants_6', 
-            'nombre_enfants_6_12', 'nombre_enfants_12', 'place',
-            'startdate', 'enddate']
-        self.exec_("SELECT "+", ".join(values)+" FROM infos")
+        values = ['centre', 'directeur_nom', 'place', 'startdate', 'enddate']
+        self.exec_("SELECT " + ", ".join(values) + " FROM infos")
         result = {}
         while self.query.next():
             for i, value in enumerate(values):
@@ -415,22 +413,28 @@ class ReserveTableModel(QAbstractTableModel):
         self.inputs = {}
         query = QSqlQuery(
                 "SELECT products.name as produit,\
-                sum(inputs.quantity)\
+                sum(inputs.quantity),\
+                units.unit\
                 FROM inputs\
                 INNER JOIN products ON inputs.product_id = products.id\
-                group by products.id")
+                INNER JOIN units ON units.id = products.unit_id\
+                GROUP BY products.id")
         query.exec_()
         while query.next():
-            self.inputs[query.value(0)] = query.value(1)
+            self.inputs[query.value(0)] = [query.value(1), query.value(2)]
         query = QSqlQuery(
             "SELECT products.name as produit,\
-            total(outputs.quantity)\
+            total(outputs.quantity),\
+            units.unit\
             FROM outputs\
             INNER JOIN products ON outputs.product_id = products.id\
+            INNER JOIN units ON units.id = products.unit_id\
             group by products.id")
         while query.next():
-            self.inputs[query.value(0)] -= query.value(1)
-        self.data_table = [kv for kv in sorted(self.inputs.items())]
+            self.inputs[query.value(0)][0] -= query.value(1)
+
+        self.data_table = [[k, v[0], v[1]] for k, v in sorted(self.inputs.items())]
+        logging.debug(self.data_table)
         self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role):

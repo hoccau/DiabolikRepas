@@ -23,13 +23,10 @@ def create_infos_table(model):
     html += "</tr><tr>"
     html += "<th>"+infos['directeur_nom']+"</th>"
     html += "<th>"+infos['place']+"</th>"
-    html += "<th>"+str(infos['nombre_enfants_6'])+"</th>"
-    html += "<th>"+str(infos['nombre_enfants_6_12'])+"</th>"
-    html += "<th>"+str(infos['nombre_enfants_12'])+"</th>"
-    start_date = QDate.fromString(infos['startdate'],'yyyy-MM-dd')
-    end_date = QDate.fromString(infos['enddate'],'yyyy-MM-dd')
-    html += "<th>"+start_date.toString('dd/MM/yyyy')+"</th>"
-    html += "<th>"+end_date.toString('dd/MM/yyyy')+"</th>"
+    #start_date = QDate.fromString(infos['startdate'],'yyyy-MM-dd')
+    #end_date = QDate.fromString(infos['enddate'],'yyyy-MM-dd')
+    #html += "<th>"+start_date.toString('dd/MM/yyyy')+"</th>"
+    #html += "<th>"+end_date.toString('dd/MM/yyyy')+"</th>"
     html += '</tr></table>'
     return html
 
