@@ -553,7 +553,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         super(IngredientPrevModel, self).__init__(parent, db)
 
         self.setTable('ingredients_prev')
-        #self.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
+        self.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
         rel1 = QSqlRelation("products","id","name")
         rel2 = QSqlRelation("dishes_prev","id","name")
         rel4 = QSqlRelation("units","id","unit")

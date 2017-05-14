@@ -877,7 +877,14 @@ class Previsionnel(QDialog):
         self.plats_model.add_row(repas_id, repas_type_id)
 
     def add_ingredient(self):
-        self.ingredients_model.add_row(plat_id=self.current_plat_id)
+        inserted = self.ingredients_model.insertRow(self.ingredients_model.rowCount())
+        record = self.ingredients_model.record()
+        record.setValue(2, self.current_plat_id)
+        record.setValue(3, 0) # quantité
+        record_is_set = self.ingredients_model.setRecord(
+                self.ingredients_model.rowCount() -1, record)
+        logging.debug(record_is_set)
+        logging.debug(self.ingredients_model.lastError().text())
 
     def del_repas(self):
         reponse = QMessageBox.question(
@@ -1081,29 +1088,40 @@ class CompleterDelegate(QSqlRelationalDelegate):
     def __init__(self, parent=None):
         super(CompleterDelegate, self).__init__(parent)
         self.parent = parent
-
+    
     def createEditor(self, parent, option, index):
-        editor = FComboBox(parent, self)
-        editor.setModel(index.model().rel_name)
+        editor = QComboBox(parent)
+        model_p = index.model().relationModel(1)
+        editor.setModel(model_p)
         editor.setModelColumn(1)
         editor.setEditable(True)
-        #editor.editTextChanged.connect(self.deb)
-        #editor.editTextChanged.connect(self.sender)
+        editor.currentIndexChanged.connect(self.sender)
         return editor
-
+    
     def setModelData(self, editor, model, index):
         completion = editor.completer().currentCompletion()
-        self.parent.set_auto_quantity(editor.currentText(), index.row())
-        #if completion:
-        #    model.setData(index, completion)
-        #    logging.debug('completion complete...')
-        #else:
-        super(CompleterDelegate, self).setModelData(editor, model, index)
+        m = model.relationModel(1)
+        logging.debug(m)
+        products = [m.data(m.index(i, 1)) for i in range(m.rowCount() - 1)]
+        if editor.currentText() not in products:
+            reponse = QMessageBox.question(
+                None, 'Produit inexistant', 
+                "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+            if reponse == QMessageBox.Yes:
+                ProductForm(self.parent.parent, editor.currentText())
+        else:
+            self.parent.set_auto_quantity(editor.currentText(), index.row())
+            super(CompleterDelegate, self).setModelData(editor, model, index)
+            self.parent.ingredients_model.submitAll()
 
     def deb(self):
         logging.debug('editTextChanged')
 
 class FComboBox(QComboBox):
+    """ not used, just for remember the focusOutEvent possibility.
+    See TODO file """
     def __init__(self, parent, delegate):
         super(FComboBox, self).__init__(parent)
         self.delegate = delegate
