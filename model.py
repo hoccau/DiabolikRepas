@@ -335,6 +335,7 @@ class Model(QSqlQueryModel):
         total = 0
         res = [x * recommends[i] for i, x in enumerate(nbr_enfants)]
         res = sum(res)
+        logging.info('result for ' + product + ': ' + str(res))
         if unit_id in (2, 3): # if Kilogrammes or litres
             res = res / 1000.
         return res
@@ -563,6 +564,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         self.setRelation(4, rel4)
 
         self.rel_name = self.relationModel(1) #QsqlTable for combo box
+        self.products = parent.qt_table_products
         self.rel_name.sort(1, Qt.SortOrder(0))
         self.rel_name.setEditStrategy(QSqlTableModel.OnFieldChange)
         self.rel_unit = self.relationModel(4) #QsqlTable for combo box

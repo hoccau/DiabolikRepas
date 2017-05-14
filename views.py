@@ -200,6 +200,7 @@ class ProductForm(QDialog):
         if s:
             logging.info('Produit ' + self.name.text() + ' ajouté.')
             self.accept()
+            return self.name.text()
         else:
             error = self.model.lastError()
             logging.warning(error.text())
@@ -943,7 +944,7 @@ class Previsionnel(QDialog):
         date = self.calendar.selectedDate().toString('yyyy-MM-dd')
         quantity = self.parent.model.get_recommended_quantity(
             date, product)
-        if quantity:
+        if quantity is not None:
             index = self.ingredients_model.index(row, 3) # 3: quantity column
             logging.debug(self.ingredients_model.data(index))
             s = self.ingredients_model.setData(index, quantity)
@@ -1122,18 +1123,23 @@ class CompleterDelegate(QSqlRelationalDelegate):
         return editor
     
     def setModelData(self, editor, model, index):
-        completion = editor.completer().currentCompletion()
-        m = model.relationModel(1)
-        logging.debug(m)
-        products = [m.data(m.index(i, 1)) for i in range(m.rowCount() - 1)]
-        if editor.currentText() not in products:
+        m = model.products
+        products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
+        
+        if not editor.currentText().rstrip(' '):
+            pass
+        elif editor.currentText() not in products:
             reponse = QMessageBox.question(
                 None, 'Produit inexistant', 
                 "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
             if reponse == QMessageBox.Yes:
-                ProductForm(self.parent.parent, name=editor.currentText())
+                p = ProductForm(
+                    self.parent.parent, name=editor.currentText()).submit()
+                if p:
+                    index.model().relationModel(1).select()
+                    editor.setCurrentText(p)
         else:
             self.parent.set_auto_quantity(editor.currentText(), index.row())
             super(CompleterDelegate, self).setModelData(editor, model, index)
