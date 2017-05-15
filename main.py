@@ -259,24 +259,13 @@ class MainWindow(QMainWindow):
     def add_previsionnel(self):
         self.prev_window = Previsionnel(self)
 
-    def edit_repas(self):
-        current_table = self.tabs.currentWidget().model().tableName()
-        if current_table == 'repas':
-            select = self.tabs.currentWidget().selectionModel()
-            row = select.currentIndex().row()
-            if row != -1:
-                id_ = self.tabs.currentWidget().model().record(row).value(0)
-                self.repas_window = RepasForm(self, id_)
-            else:
-                QMessageBox.warning(
-                    self,
-                    "Erreur", "Veuillez sélectionner un repas dans le tableau."
-                    )
-        else:
-            QMessageBox.warning(
-                self,
-                "Erreur", 'Veuillez sélectionner un repas dans l\'onglet "repas".'
-            )
+    def edit_repas(self, index):
+        row = index.row()
+        if row != -1:
+            #id_ = self.tabs.currentWidget().model().record(row).value(0)
+            id_ = index.model().index(0, row).data()
+            logging.debug(id_)
+            self.repas_window = RepasForm(self, id_)
 
     def add_outputs(self, repas_id=None):
         self.output_view = OutputForm(self, repas_id)

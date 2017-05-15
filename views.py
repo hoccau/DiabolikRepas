@@ -44,6 +44,7 @@ class MainWidget(QWidget):
         
         # Repas table must be selected by row for editing
         self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tables['repas'].doubleClicked.connect(self.parent.edit_repas)
         # Autorize Edit for 'arrivages'
         self.tables['arrivages'].setEditTriggers(QAbstractItemView.DoubleClicked)
         self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
@@ -346,6 +347,7 @@ class InputsArray(QDialog):
 
         self.view = QTableView(self)
         self.view.setModel(model)
+        self.view.setSortingEnabled(True)
         
         sql_delegate = QSqlRelationalDelegate(self.view)
         self.view.setItemDelegate(sql_delegate)
@@ -371,7 +373,7 @@ class InputsArray(QDialog):
         self.add_button.clicked.connect(self.add_row)
         self.del_button.clicked.connect(self.del_row)
         import_button.clicked.connect(self.import_prev)
-        save_button.clicked.connect(self.model.submitAll)
+        save_button.clicked.connect(self.save_and_close)
 
         self.resize(660, 360)
         self.exec_()
@@ -383,7 +385,9 @@ class InputsArray(QDialog):
         logging.debug(inserted)
     
     def del_row(self):
-        self.model.removeRow(self.model.rowCount() -1)
+        select = self.view.selectionModel()
+        row = select.currentIndex().row()
+        self.model.removeRow(row)
         self.model.submitAll()
 
     def import_prev(self):
@@ -418,7 +422,10 @@ class InputsArray(QDialog):
                 self.model.rowCount() -1, record)
             logging.debug(record_is_set)
             logging.warning(self.model.lastError().text())
-        #submited = self.model.submitAll()
+
+    def save_and_close(self):
+        self.model.submitAll()
+        self.close()
 
 class RepasForm(Form):
     """ Form to add or modify an effective repas (with product outputs) """
@@ -1107,7 +1114,6 @@ class DateDelegate(QStyledItemDelegate):
         value = editor.date().toString('yyyy-MM-dd')
         model.setData(index, value)
 
-# Below : not finished work (see TODO file)
 class CompleterDelegate(QSqlRelationalDelegate):
     def __init__(self, parent=None):
         super(CompleterDelegate, self).__init__(parent)
@@ -1144,9 +1150,6 @@ class CompleterDelegate(QSqlRelationalDelegate):
             self.parent.set_auto_quantity(editor.currentText(), index.row())
             super(CompleterDelegate, self).setModelData(editor, model, index)
             self.parent.ingredients_model.submitAll()
-
-    def deb(self):
-        logging.debug('editTextChanged')
 
 class FComboBox(QComboBox):
     """ not used, just for remember the focusOutEvent possibility.
