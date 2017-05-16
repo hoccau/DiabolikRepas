@@ -1,7 +1,7 @@
 import sys, os
 from cx_Freeze import setup, Executable
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 if sys.platform == "win32":
 	base = "Win32GUI"

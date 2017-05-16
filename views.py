@@ -973,6 +973,29 @@ class PrevisionnelColumnView(QGroupBox):
         self.date = self.calendar.selectedDate()
         self.previsionnel_model.query_for_day(self.date.toString('yyyy-MM-dd'))
 
+class DateDialog(QDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.date = QDateEdit()
+        self.date.setDate(QDate.currentDate())
+        layout = QFormLayout()
+        layout.addRow('Du', self.date)
+        
+        self.ok_button = QPushButton('OK')
+        
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.ok_button)
+        layout.addRow('', button_layout)
+        self.setLayout(layout)
+        
+        self.ok_button.clicked.connect(self.get_date)
+        self.exec_()
+    
+    def get_date(self):
+        self.accept()
+        return self.date.date().toString('yyyy-MM-dd')
+
 class DatesRangeDialog(QDialog):
     def __init__(self, parent=None, name=""):
         super(DatesRangeDialog, self).__init__(parent)

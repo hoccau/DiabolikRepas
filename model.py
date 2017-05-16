@@ -181,6 +181,23 @@ class Model(QSqlQueryModel):
         if self.query.first():
             return self.query.value(0)
 
+    def get_all_avg_prices(self):
+        self.exec_(
+            "SELECT inputs.product_id, AVG(prix) FROM inputs "\
+	    + "INNER JOIN products ON products.id = inputs.product_id "\
+            + "GROUP BY inputs.product_id")
+        return self._query_to_dic()
+
+    def get_all_outputs_by_date(self, date):
+        self.exec_(
+            "SELECT outputs.product_id, products.name, outputs.quantity, "\
+	    + "outputs.repas_id, repas.type_id as repas_type_id FROM outputs "\
+            + "INNER JOIN products ON products.id = outputs.product_id "\
+            + "INNER JOIN repas ON repas.id = outputs.repas_id "\
+            + "WHERE repas.date = '2017-05-16' "\
+            + "ORDER BY repas_type_id")
+        return self._query_to_lists(5)
+
     def get_price_by_repas(self, repas_id):
         self.exec_(
             "SELECT\
