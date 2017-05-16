@@ -59,8 +59,6 @@ class MainWindow(QMainWindow):
             'Repas', self.add_repas)
         self.db_actions['addProductAction'] = self.add_action(
             'Produit', self.add_product)
-        self.db_actions['editRepasAction'] = self.add_action(
-            'Repas', self.edit_repas)
         self.db_actions['setInfosAction'] = self.add_action(
             'Editer les infos du centre', self.set_infos)
         self.db_actions['ViewRapportAction'] = self.add_action(
@@ -89,7 +87,6 @@ class MainWindow(QMainWindow):
         edit_menu = menubar.addMenu('&Édition')
         edit_menu.addAction(self.db_actions['delRowAction'])
         edit_menu.addAction(self.db_actions['setInfosAction'])
-        edit_menu.addAction(self.db_actions['editRepasAction'])
         edit_menu.addAction(self.db_actions['editRepasPrevAction'])
         view_menu = menubar.addMenu('&Vue')
         view_menu.addAction(self.db_actions['ViewRapportAction'])

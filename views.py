@@ -449,8 +449,8 @@ class RepasForm(Form):
         self.comment.setFixedHeight(50)
         self.add_field("Type:", self.type)
         self.add_field("Date:", self.date)
-        #self.add_field('', self.auto_fill_button) # future feature :)
         self.add_field("Commentaire:", self.comment)
+        self.add_field('', self.auto_fill_button)
 
         #outputs 
         self.outputs_view = QTableView(self)
@@ -467,7 +467,7 @@ class RepasForm(Form):
         buttons_outputs_layout = QHBoxLayout()
         buttons_outputs_layout.addWidget(self.add_output_button)
         buttons_outputs_layout.addWidget(self.del_output_button)
-        self.grid.addLayout(buttons_outputs_layout, 5,1)
+        self.grid.addLayout(buttons_outputs_layout, 6, 1)
 
         self.mapper.setItemDelegate(QSqlRelationalDelegate(self))
         self.mapper.addMapping(self.date, 1)
@@ -531,13 +531,23 @@ class RepasForm(Form):
             self.output_model.submitAll()
 
     def auto_fill(self):
-        date = self.date.selectedDate()
-        type_ = self.type.currentText()
-        ingrs = self.model.auto_fill_query(date.toString('yyyy-MM-dd'), type_)
+        date = self.date.date()
+        rel_model = self.model.relationModel(2)
+        type_id = rel_model.data(rel_model.index(self.type.currentIndex(), 0))
+        ingrs = self.parent.model.get_prev_ingrs(
+            date.toString('yyyy-MM-dd'), type_id)
         logging.debug(ingrs)
-        for prev_ingr in ingrs:
-            reserve = self.model.get_reserve_by_products(prev_ingr[0])
-            total = 0
+        if not ingrs:
+            logging.warning(
+                "Aucun produit n'a été trouvé dans le prévisionnel")
+            QMessageBox.warning(
+                self, "Erreur", "L'enregistrement du repas a échoué.")
+        for ingr in ingrs:
+            self.output_model.insertRow(self.output_model.rowCount())
+            idx = self.output_model.index(self.output_model.rowCount() -1, 1)
+            self.output_model.setData(idx, ingr[2]) # quantity
+            idx = self.output_model.index(self.output_model.rowCount() -1, 3)
+            self.output_model.setData(idx, ingr[0]) # product
     
     def submit_datas(self):
         repas_submited = self.model.submitAll()
@@ -1136,8 +1146,8 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
         product_model = input_model.relationModel(3)
         index_input = input_model.index(editor.currentIndex(), 3)
         name = input_model.data(index_input)
-        logging.debug(name)
-        product_model.setFilter("name = '" + name + "'")
+        if name:
+            product_model.setFilter("name = '" + name + "'")
         value = product_model.data(product_model.index(0, 0))
         logging.debug(value) # il faut récupéreer l'ID, pas le résultat de la relation...
         model.setData(index, value)

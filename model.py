@@ -105,6 +105,21 @@ class Model(QSqlQueryModel):
             WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
         return self._query_to_lists(4)
 
+    def get_prev_ingrs(self, date, repas_type_id):
+        self.exec_(
+            "SELECT ingredients_prev.product_id, "\
+            + "products.name, ingredients_prev.quantity "\
+            + "FROM ingredients_prev "\
+            + "INNER JOIN products "\
+            + "ON products.id = ingredients_prev.product_id "\
+            + "WHERE ingredients_prev.dishes_prev_id IN ("\
+	    + "SELECT dishes_prev.id FROM dishes_prev "\
+	    + "INNER JOIN repas_prev "\
+            + "ON repas_prev.id = dishes_prev.repas_prev_id "\
+	    + "WHERE repas_prev.date = '" + date + "' "\
+            + "AND repas_prev.type_id = " + str(repas_type_id) +")")
+        return self._query_to_lists(3)
+
     def get_plats_by_dates(self, date_start, date_stop):
         plats = []
         self.exec_(
@@ -502,6 +517,9 @@ class AbstractPrevisionnelModel(QSqlRelationalTableModel):
         self.parent = parent
         self.setEditStrategy(QSqlTableModel.OnFieldChange)
 
+    def get_data(self, row, col):
+        return self.data(self.index(row, col))
+
 class RepasPrevModel(AbstractPrevisionnelModel):
     def __init__(self, parent, db):
         super(RepasPrevModel, self).__init__(parent, db)
@@ -515,7 +533,7 @@ class RepasPrevModel(AbstractPrevisionnelModel):
 
     def add_row(self, date="", type_id=None):
         query = QSqlQuery("INSERT INTO repas_prev(date, type_id)\
-                VALUES('"+date+"',"+str(type_id)+")")
+                VALUES('" + date + "'," + str(type_id) + ")")
         if query.lastError().text().rstrip(' '):
             logging.warning(query.lastQuery())
             logging.warning(query.lastError().text())
