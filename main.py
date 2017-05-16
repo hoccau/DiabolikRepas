@@ -263,9 +263,9 @@ class MainWindow(QMainWindow):
         row = index.row()
         if row != -1:
             #id_ = self.tabs.currentWidget().model().record(row).value(0)
-            id_ = index.model().index(0, row).data()
-            logging.debug(id_)
-            self.repas_window = RepasForm(self, id_)
+            index = index.model().index(row, 0)
+            logging.debug(index)
+            self.repas_window = RepasForm(self, index=index)
 
     def add_outputs(self, repas_id=None):
         self.output_view = OutputForm(self, repas_id)

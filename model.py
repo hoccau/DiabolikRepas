@@ -57,7 +57,7 @@ class Model(QSqlQueryModel):
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_periodes_infos = PeriodesModel(self, self.db)
         self.qt_table_repas = RepasModel(self, self.db)
-        self.qt_table_outputs = OutputsModel()
+        self.qt_table_outputs = OutputsModel(self, self.db)
         self.qt_table_inputs = InputsModel(self, self.db)
 
         self.previsionnel_model = PrevisionnelModel()
@@ -472,6 +472,7 @@ class RepasModel(QSqlRelationalTableModel):
         super(RepasModel, self).__init__(parent, db)
 
         self.setTable("repas")
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         f_rel = QSqlRelation("type_repas","id","type")
         self.setRelation(2, f_rel)
         self.setHeaderData(0, Qt.Horizontal, "Identification")
@@ -617,7 +618,7 @@ class IngredientPrevQueryModel(QSqlQueryModel):
             query = QSqlQuery("DELETE FROM ingredients_prev WHERE id ="+str(id_))
             self.select()
 
-class OutputsModel(QSqlQueryModel):
+class OutputsReadModel(QSqlQueryModel):
     def __init__(self):
         super(OutputsModel, self).__init__()
         self.select()
@@ -632,6 +633,15 @@ class OutputsModel(QSqlQueryModel):
         ")
         self.setHeaderData(0, Qt.Horizontal, "Nom")
         self.setHeaderData(1, Qt.Horizontal, "quantité")
+
+class OutputsModel(QSqlRelationalTableModel):
+    def __init__(self, parent, db):
+        super().__init__(parent, db)
+        self.setTable("outputs")
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
+        product_rel = QSqlRelation("products", 'id', 'name')
+        self.setRelation(3, product_rel)
+        self.select()
 
 class InputsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):

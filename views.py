@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QCompleter, QDoubleSpinBox, QButtonGroup, QLineEdit, 
     QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit,
     QAbstractItemView, QTabWidget)
-from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize
+from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray
 from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
 from model import FournisseurModel
@@ -429,16 +429,21 @@ class InputsArray(QDialog):
 
 class RepasForm(Form):
     """ Form to add or modify an effective repas (with product outputs) """
-    def __init__(self, parent=None, id_=None):
+    def __init__(self, parent=None, index=None):
         super(RepasForm, self).__init__(parent)
 
-        model = parent.model
-        self.availables_products = self.model.get_all_products_names()
-        self.already_used_products_ids = []
+        self.model = parent.model.qt_table_repas
+        self.type_model = self.model.relationModel(2)
+        self.inputs_model = parent.model.qt_table_inputs
+
+        self.mapper = QDataWidgetMapper(self)
+        self.mapper.setModel(self.model)
 
         self.type = QComboBox()
-        self.refresh_type()
-        self.date = QCalendarWidget()
+        self.type.setModel(self.type_model)
+        self.type.setModelColumn(1)
+        self.date = QDateEdit()
+        self.date.setDate(QDate.currentDate())
         self.auto_fill_button = QPushButton('Importer le prévisionnel')
         self.comment = QTextEdit()
         self.comment.setFixedHeight(50)
@@ -448,32 +453,82 @@ class RepasForm(Form):
         self.add_field("Commentaire:", self.comment)
 
         #outputs 
-        output_box = QGroupBox('', self)
-        self.outputs_layout = QVBoxLayout()
-        self.outputs = []
-        output_box.setLayout(self.outputs_layout)
-        self.add_field("sorties", output_box)
-        self.add_output_button = QPushButton("Ajouter une sortie")
-        self.grid.addWidget(self.add_output_button, 100, 0)
+        self.outputs_view = QTableView(self)
+        self.outputs_view.setItemDelegate(QSqlRelationalDelegate(self.outputs_view))
+        self.output_model = parent.model.qt_table_outputs
+        self.outputs_view.setModel(self.output_model)
+        product_delegate = ProductOutputDelegate(self)
+        self.outputs_view.setItemDelegateForColumn(3, product_delegate) 
+        self.outputs_view.hideColumn(0) # hide id
+        self.outputs_view.hideColumn(2) # hide repas id
+        self.add_field("sorties", self.outputs_view)
+        self.add_output_button = QPushButton("+")
+        self.del_output_button = QPushButton("-")
+        buttons_outputs_layout = QHBoxLayout()
+        buttons_outputs_layout.addWidget(self.add_output_button)
+        buttons_outputs_layout.addWidget(self.del_output_button)
+        self.grid.addLayout(buttons_outputs_layout, 5,1)
 
-        self.add_output_button.clicked.connect(self.add_output)
+        self.mapper.setItemDelegate(QSqlRelationalDelegate(self))
+        self.mapper.addMapping(self.date, 1)
+        self.mapper.addMapping(self.type, 2)
+        self.mapper.addMapping(self.comment, 4, QByteArray(b'plainText'))
+
+        for widget in [self.date, self.type, self.comment]:
+            if self.mapper.mappedSection(widget) == -1:
+                logging.warning('Widget ' + str(widget) + 'not mapped.')
+        
+        if index is not None:
+            logging.debug(index.data())
+            self.index = index
+            id_ = index.model().data(index)
+            logging.info('User want to update repas ' + str(id_))
+            self.mapper.setCurrentModelIndex(index)
+        else: # if this is a new one
+            inserted = self.model.insertRow(self.model.rowCount())
+            if not inserted:
+                logging.warning(
+                    'Row not inserted in model {0}'.format(self.model))
+            self.model.setData(
+                self.model.index(self.model.rowCount() - 1, 1),
+                self.date.date().toString('yyyy-MM-dd'))
+            self.model.setData(
+                self.model.index(self.model.rowCount() - 1, 2),
+                1)
+            index = self.model.index(self.model.rowCount() - 1, 0)
+            id_ = index.model().data(index)
+
+            self.index = self.model.index(self.model.rowCount() -1, 0)
+            self.mapper.toLast()
+        
+        self.output_model.setFilter('repas_id = ' + str(id_))
+
+        self.add_output_button.clicked.connect(self.add_output_row)
+        self.del_output_button.clicked.connect(self.del_output_row)
         self.auto_fill_button.clicked.connect(self.auto_fill)
         self.initUI()
-
-        if not id_:
-            if self.model.get_last_id('repas'):
-                self.id = self.model.get_last_id('repas') + 1
-            else:
-                self.id = 1
-            self.new_record = True
-            output = OutputLine(self)
-            self.outputs.append(output)
-        else:
-            self.id = id_
-            self.new_record = False
-            self.populate(id_)
         
-        self.setWindowTitle("Repas #"+str(self.id))
+        self.setWindowTitle("Repas #" + str(id_))
+        
+    def add_output_row(self):
+        if self.model.isDirty():
+            self.model.submitAll()
+        if self.output_model.isDirty():
+            self.output_model.submitAll()
+        nbr_rows = self.output_model.rowCount()
+        inserted = self.output_model.insertRow(nbr_rows)
+        logging.debug(inserted)
+
+    def del_output_row(self):
+        at_least_one_to_submit = False
+        for index in self.outputs_view.selectedIndexes():
+            if index.model().isDirty(index):
+                self.output_model.revertRow(index.row())
+            else:
+                self.output_model.removeRow(index.row())
+                at_least_one_to_submit = True
+        if at_least_one_to_submit:
+            self.output_model.submitAll()
 
     def auto_fill(self):
         date = self.date.selectedDate()
@@ -483,150 +538,35 @@ class RepasForm(Form):
         for prev_ingr in ingrs:
             reserve = self.model.get_reserve_by_products(prev_ingr[0])
             total = 0
-
-    def populate(self, id_):
-        repas = self.model.get_repas_by_id(id_)
-        self.type.setCurrentText(repas['type'])
-        self.date.setSelectedDate(QDate.fromString(repas['date'],'yyyy-MM-dd'))
-        self.comment.setPlainText(repas['comment'])
-        for output in repas['outputs']:
-            output_line = OutputLine(self, output)
-            self.outputs.append(output_line)
     
-    def get_all_used_products_ids(self):
-        result = []
-        for output in self.outputs:
-            if output.datas:
-                result.append(output.datas['product_id'])
-        return result
-    
-    def add_output(self):
-        if len(self.outputs) > 0:
-            if not self.outputs[-1].datas:
-                QMessageBox.warning(self.parent, "Erreur",\
-                    "Veuillez compléter la sortie de denrées.")
-                return False
-        output = OutputLine(self)
-        self.outputs.append(output)
-
-    def refresh_type(self):
-        self.type.clear()
-        for record in self.model.get_(['type'], 'type_repas'):
-            self.type.addItem(record['type'])
-
-    def verif_datas(self):
-        pass
-
     def submit_datas(self):
-        type_id = self.model.get_(
-            ['id'],
-            'type_repas',
-            'type = \''+self.type.currentText()+'\''
-            )[0]['id']
-        datas = {
-            'id':str(self.id),
-            'type_id':str(type_id),
-            'date':self.date.selectedDate().toString('yyyy-MM-dd'),
-            'comment':self.comment.toPlainText()
-            }
-        if self.new_record:
-            submited = self.model.set_(datas, 'repas')
-            if submited:
-                for output in self.outputs:
-                    if output.datas:
-                        self.model.set_(output.datas, 'outputs')
-        else:
-            self.model.delete('outputs', 'repas_id', str(self.id))
-            for output in self.outputs:
-                if output.datas:
-                    self.model.add_output(output.datas)
-            submited = self.model.update(datas, 'repas', 'id', str(self.id))
-        if submited:
-            self.parent.model.qt_table_reserve.select()
-            self.parent.model.qt_table_repas.select()
-            self.parent.model.qt_table_outputs.select()
-            self.close()
-        else:
-            QMessageBox.warning(self.parent, "Erreur", "La requête n'a pas fonctionnée")
-
-class OutputLine():
-    def __init__(self, parent, datas=None):
-        self.parent = parent
-        self.line_widgets = QHBoxLayout()
-        self.parent.outputs_layout.addLayout(self.line_widgets)
-        self.produit = QComboBox()
-        for product in self.parent.availables_products:
-            self.produit.addItem(product)
-        self.produit.setEditable(True)
-        self.produit.clearEditText()
-        self.produit.setCurrentIndex(-1)
-        completer = QCompleter(self.parent.availables_products)
-        self.produit.setCompleter(completer)
-        self.quantity = QDoubleSpinBox()
-        self.quantity.setEnabled(False)
-        self.unit_label = QLabel('')
-        self.suppr_button = QPushButton('Suppr')
-
-        self.line_widgets.addWidget(self.produit)
-        self.line_widgets.addWidget(self.quantity)
-        self.line_widgets.addWidget(self.unit_label)
-        self.line_widgets.addWidget(self.suppr_button)
-
-        self.produit.currentIndexChanged.connect(self.select_product)
-        self.quantity.valueChanged.connect(self.set_datas)
-        self.suppr_button.clicked.connect(self.clear_layout)
-        self.datas = False
-
-        if datas:
-            self.populate(datas)
-
-    def populate(self, datas):
-        self.produit.setCurrentText(datas['product_name'])
-        self.product_id = self.parent.model.get_product_id_by_name(
-            datas['product_name'])
-        self.quantity.setValue(datas['quantity'])
-        self.quantity.setEnabled(True)
-
-    def select_product(self):
-        self.product_id = self.parent.model.get_product_id_by_name(
-            self.produit.currentText())
-        quantity = self.parent.model.get_quantity(self.product_id)
-        unit = self.parent.model.get_product_unit(self.produit.currentText())
-        if quantity:
-            self.quantity.setMaximum(quantity)
-            self.quantity.setEnabled(True)
-            self.unit_label.setText(self.short_unit_label(unit))
-        else:
-            self.quantity.setEnabled(False)
-            self.datas = False
+        repas_submited = self.model.submitAll()
+        if repas_submited:
+            id_ = self.model.data(self.index)
+            logging.info('repas ' + str(id_) + ' submited.')
+            self.submit_output(id_)
+        if not repas_submited:
+            error = self.model.lastError()
+            logging.warning(error.text())
             QMessageBox.warning(
-                self.parent, "Rupture de stock", "Le produit n'est pas dans la reserve")
+                self, "Erreur", "L'enregistrement du repas a échoué.")
 
-    def short_unit_label(self, unit):
-        matching = {
-           'Unités':'pièces',
-           'Kilogrammes':'kilos',
-           'Litres':'litres'
-           }
-        return matching[unit]
-
-    def set_datas(self):
-        """ If Output has datas, parent will agree to commit it in db. """
-        self.datas = {
-            'product_id':self.product_id,
-            'quantity':self.quantity.value(),
-            'repas_id':self.parent.id }
-
-    def clear_layout(self):
-        while self.line_widgets.count():
-            item = self.line_widgets.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-            else:
-                self.clearLayout(item.layout())
-        self.parent.outputs.remove(self)
-        self.parent.adjustSize()
+    def submit_output(self, id_):
+        for i in range(self.output_model.rowCount()):
+            index = self.output_model.index(i, 2)
+            data_set = self.output_model.setData(index, id_)
+            if not data_set:
+                logging.warning("data '" + str(id_) + "' set failed.")
+        submited = self.output_model.submitAll()
+        if submited:
+            logging.info('outputs of repas ' + str(id_) + ' submited.')
+            self.accept()
+        if not submited:
+            error = self.output_model.lastError()
+            rec = self.output_model.record(self.output_model.rowCount() -1)
+            logging.warning(error.text())
+            QMessageBox.warning(
+                self, "Erreur", "L'enregistrement des sorties a échoué.")
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
@@ -1150,6 +1090,34 @@ class CompleterDelegate(QSqlRelationalDelegate):
             self.parent.set_auto_quantity(editor.currentText(), index.row())
             super(CompleterDelegate, self).setModelData(editor, model, index)
             self.parent.ingredients_model.submitAll()
+
+class ProductOutputDelegate(QSqlRelationalDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+
+    def createEditor(self, parent, option, index):
+        editor = QComboBox(parent)
+        #model_products = index.model().relationModel(3)
+        model_products = self.parent.inputs_model
+        logging.debug(model_products)
+        editor.setModel(model_products)
+        editor.setModelColumn(3)
+        editor.setEditable(True)
+        editor.currentIndexChanged.connect(self.sender)
+        return editor
+
+    def setModelData(self, editor, model, index):
+        output_model = model
+        input_model = editor.model()
+        product_model = input_model.relationModel(3)
+        index_input = input_model.index(editor.currentIndex(), 3)
+        name = input_model.data(index_input)
+        logging.debug(name)
+        product_model.setFilter("name = '" + name + "'")
+        value = product_model.data(product_model.index(0, 0))
+        logging.debug(value) # il faut récupéreer l'ID, pas le résultat de la relation...
+        model.setData(index, value)
 
 class FComboBox(QComboBox):
     """ not used, just for remember the focusOutEvent possibility.
