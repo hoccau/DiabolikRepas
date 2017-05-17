@@ -118,7 +118,8 @@ class MainWindow(QMainWindow):
         return action
 
     def current_tab_changed(self):
-        if self.main_widget.tabs.currentIndex() in (0, 1, 2, 3):
+        logging.info('current tab: ' + str(self.main_widget.tabs.currentIndex()))
+        if self.main_widget.tabs.currentIndex() in (1, 2, 3):
             self.db_actions['delRowAction'].setEnabled(True)
         else:
             self.db_actions['delRowAction'].setEnabled(False)
@@ -127,19 +128,26 @@ class MainWindow(QMainWindow):
         RapportDialog(self)
 
     def remove_current_row(self):
-        current_table_widget = self.tabs.currentWidget()
-        #.model().tableName()
-        logging.debug(type(current_table_widget))
-        current_tab = self.tabs.currentIndex()
-        select = self.tabs.currentWidget().selectionModel()
+        current_table_widget = self.main_widget.tabs.currentWidget()
+        select = current_table_widget.selectionModel()
         row = select.currentIndex().row()
         if row != -1:
-            if current_tab == 1:
-                self.remove_repas(row)
-            elif current_tab == 2:
-                self.remove_input(row)
-            else:
-                logging.warning(str(current_tab)+' cannot delete a row')
+            reponse = QMessageBox.question(
+                None, 'Sûr(e) ?', "Vous allez détruire définitivement "\
+                + "les données. Êtes-vous sûr(e) ?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+            if reponse == QMessageBox.Yes:
+                removed = current_table_widget.model().removeRow(row)
+                submited = current_table_widget.model().submitAll()
+                if not removed or not submited:
+                    message = 'Suppression échouée.'
+                    logging.warning(message)
+                    QMessageBox.warning(self, 'Erreur', message)
+        else:
+            QMessageBox.warning(
+                self, 'Erreur', "Veuillez d'abord sélectionner une ligne "\
+                + "dans le tableau ci-dessous.")
 
     def remove_repas(self, row):
         reponse = QMessageBox.question(
@@ -175,6 +183,7 @@ class MainWindow(QMainWindow):
         mime_db = QMimeDatabase()
         mime = mime_db.mimeTypeForFile(db_path)
         if mime.name() != 'application/x-sqlite3':
+            logging.warning("Mauvais format de fichier: " + str(mime.name))
             QMessageBox.warning(self, "Erreur", "Mauvais format de fichier")
             return False
         else:
@@ -183,6 +192,7 @@ class MainWindow(QMainWindow):
             #self._create_tables_views()
             self._create_main_view()
             self.enable_db_actions(True)
+            self.current_tab_changed() # to enable / disable remove action
             return True
 
     def create_new_db(self):

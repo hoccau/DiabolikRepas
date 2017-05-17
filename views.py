@@ -538,10 +538,9 @@ class RepasForm(Form):
             date.toString('yyyy-MM-dd'), type_id)
         logging.debug(ingrs)
         if not ingrs:
-            logging.warning(
-                "Aucun produit n'a été trouvé dans le prévisionnel")
-            QMessageBox.warning(
-                self, "Erreur", "L'enregistrement du repas a échoué.")
+            message = "Aucun produit n'a été trouvé dans le prévisionnel"
+            logging.warning(message)
+            QMessageBox.warning(self, "Erreur", message)
         for ingr in ingrs:
             self.output_model.insertRow(self.output_model.rowCount())
             idx = self.output_model.index(self.output_model.rowCount() -1, 1)
@@ -905,6 +904,9 @@ class Previsionnel(QDialog):
             index = self.ingredients_model.index(row, 3) # 3: quantity column
             logging.debug(self.ingredients_model.data(index))
             s = self.ingredients_model.setData(index, quantity)
+        submited = self.ingredients_model.submitAll()
+        if not submited:
+            logging.warning(self.ingredients_model.lastError().text())
 
 class PlatPrevisionnel(QWidget):
     """ not finished/used... """

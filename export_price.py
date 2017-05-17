@@ -9,6 +9,7 @@ from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtPrintSupport import QPrinter
 import model
 from pdf_utils import html_doc
+import logging
 
 def create_pdf(filename='prix.pdf', model=None, date='2017-05-16'):
     html = header(model) + html_price(model, date)
@@ -30,6 +31,8 @@ def html_price(model, date):
     avg_prices = model.get_all_avg_prices() # {id: [name, avg(price)]}
     # below: product_id, product.name, quantity, repas_id, repas.type_id
     outputs = model.get_all_outputs_by_date(date)
+    logging.debug(avg_prices)
+    logging.debug(outputs)
     m = model.qt_table_periodes_infos
     for row in range(m.rowCount()):
         date_start, date_stop = m.data(m.index(row, 1)), m.data(m.index(row, 2))

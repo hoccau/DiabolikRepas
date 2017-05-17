@@ -209,7 +209,7 @@ class Model(QSqlQueryModel):
 	    + "outputs.repas_id, repas.type_id as repas_type_id FROM outputs "\
             + "INNER JOIN products ON products.id = outputs.product_id "\
             + "INNER JOIN repas ON repas.id = outputs.repas_id "\
-            + "WHERE repas.date = '2017-05-16' "\
+            + "WHERE repas.date = '" + date + "' "\
             + "ORDER BY repas_type_id")
         return self._query_to_lists(5)
 
@@ -465,7 +465,14 @@ class ReserveTableModel(QAbstractTableModel):
             INNER JOIN units ON units.id = products.unit_id\
             group by products.id")
         while query.next():
-            self.inputs[query.value(0)][0] -= query.value(1)
+            try:
+                self.inputs[query.value(0)][0] -= query.value(1)
+            except KeyError:
+                logging.warning("Ce produit est en sortie sans être en entrée : "\
+                    + query.value(0))
+                self.inputs[query.value(0)] = [
+                    query.value(1) * -1, 
+                    query.value(2)]
 
         self.data_table = [[k, v[0], v[1]] for k, v in sorted(self.inputs.items())]
         logging.debug(self.data_table)
