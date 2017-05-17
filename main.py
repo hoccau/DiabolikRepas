@@ -15,7 +15,7 @@ from model import Model
 from views import (
     ProductForm, RepasForm, InfosCentreDialog, RapportDialog,
     Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
-    InputsArray, MainWidget, DateDialog)
+    InputsArray, MainWidget, DateDialog, AllProducts)
 import repas_xml_to_db
 import repas_db_to_xml
 import logging
@@ -65,6 +65,8 @@ class MainWindow(QMainWindow):
             'Rapport', self.viewRapport)
         self.db_actions['editRepasPrevAction'] = self.add_action(
             'Previsionnel', self.add_previsionnel)
+        self.db_actions['editProductsAction'] = self.add_action(
+            'Produits', self.edit_products)
         self.db_actions['import_previsionnel'] = self.add_action(
             'Importer un prévisionnel', self.import_xml_repas)
         self.db_actions['export_previsionnel'] = self.add_action(
@@ -88,6 +90,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self.db_actions['delRowAction'])
         edit_menu.addAction(self.db_actions['setInfosAction'])
         edit_menu.addAction(self.db_actions['editRepasPrevAction'])
+        edit_menu.addAction(self.db_actions['editProductsAction'])
         view_menu = menubar.addMenu('&Vue')
         view_menu.addAction(self.db_actions['ViewRapportAction'])
         addMenu = menubar.addMenu('&Ajouter')
@@ -276,6 +279,9 @@ class MainWindow(QMainWindow):
             index = index.model().index(row, 0)
             logging.debug(index)
             self.repas_window = RepasForm(self, index=index)
+
+    def edit_products(self):
+        AllProducts(self)
 
     def add_outputs(self, repas_id=None):
         self.output_view = OutputForm(self, repas_id)

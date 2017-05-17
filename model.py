@@ -705,15 +705,15 @@ class ProductsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
         super(ProductsModel, self).__init__(parent, db)
 
-        #self.setEditStrategy(QSqlTableModel.OnManualSubmit)
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("products")
         units_rel = QSqlRelation("units","id","unit")
         self.setRelation(2, units_rel)
         self.setHeaderData(1, Qt.Horizontal, "Nom")
-        self.setHeaderData(2, Qt.Horizontal, "Unité de mesure")
-        self.setHeaderData(3, Qt.Horizontal, "Quantité pour moins de 6 ans")
-        self.setHeaderData(4, Qt.Horizontal, "Quantité pour 6-12 ans")
-        self.setHeaderData(5, Qt.Horizontal, "Quantité pour plus de ans")
+        self.setHeaderData(2, Qt.Horizontal, "Unité\n de mesure")
+        self.setHeaderData(3, Qt.Horizontal, "Quantité\n pour moins de\n 6 ans")
+        self.setHeaderData(4, Qt.Horizontal, "Quantité\n pour 6-12 ans")
+        self.setHeaderData(5, Qt.Horizontal, "Quantité\n pour plus de\n 12 ans")
         self.select()
 
 class PrevisionnelModel(QStandardItemModel):

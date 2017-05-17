@@ -63,27 +63,72 @@ class BigButtons(QWidget):
         
         self.layout = QHBoxLayout()
 
+        products_button = self._create_button('products.png', 'Produits')
         previsionnel_button = self._create_button(
             'previsionnel.png', 'Prévisionnel')
         input_button = self._create_button('input.png', 'Arrivage de denrées')
         output_button = self._create_button('output.png', 'Repas')
         
-        self.layout.addWidget(previsionnel_button)
-        self.layout.addWidget(input_button)
-        self.layout.addWidget(output_button)
-
         self.setLayout(self.layout)
 
         previsionnel_button.clicked.connect(parent.add_previsionnel)
         input_button.clicked.connect(parent.add_input)
         output_button.clicked.connect(parent.add_repas)
+        products_button.clicked.connect(parent.edit_products)
 
     def _create_button(self, image, text):
         button = QPushButton()
         button.setIcon(QIcon('images/'+image))
-        button.setIconSize(QSize(127, 100))
+        button.setIconSize(QSize(100, 100))
         button.setText(text)
+        self.layout.addWidget(button)
         return button
+
+class AllProducts(QDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+
+        self.view = QTableView(self)
+        self.model = parent.model.qt_table_products
+        self.view.setModel(self.model)
+        sql_delegate = QSqlRelationalDelegate(self.view)
+        self.view.setItemDelegate(sql_delegate)
+        self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.view.doubleClicked.connect(self.edit_product)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.add_button = QPushButton('Nouveau')
+        save_button = QPushButton('Enregistrer')
+        close_button = QPushButton('Fermer')
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.view)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.add_button)
+        buttons_layout.addWidget(save_button)
+        buttons_layout.addWidget(close_button)
+        layout.addLayout(buttons_layout)
+        self.setLayout(layout)
+
+        save_button.clicked.connect(self.model.submitAll)
+        close_button.clicked.connect(self.revert_and_close)
+        self.add_button.clicked.connect(parent.add_product)
+        
+        self.view.horizontalHeader().setMinimumHeight(50)
+        self.resize(642, 376)
+
+        self.exec_()
+        
+    def revert_and_close(self):
+        self.model.revertAll()
+        self.close()
+
+    def add_product(self):
+        ProductForm(self.parent)
+
+    def edit_product(self, index):
+        ProductForm(self.parent, index.row())
 
 class Form(QDialog):
     """Abstract class"""
@@ -116,6 +161,11 @@ class Form(QDialog):
         self.submitButton.clicked.connect(self.submit_datas)
         self.quitButton.clicked.connect(self.reject)
         self.show()
+    
+    def resizeEvent(self, size):
+        pass
+        #logging.debug(size.size())
+
 
 class ProductForm(QDialog):
     def __init__(self, parent=None, index=None, name=""):
@@ -192,13 +242,14 @@ class ProductForm(QDialog):
         
         self.units.currentTextChanged.connect(self.change_units)
         self.ok_button.clicked.connect(self.submit)
-        self.cancel_button.clicked.connect(self.reject)
+        self.cancel_button.clicked.connect(self.revert_and_close)
 
         self.exec_()
 
     def submit(self):
-        s = self.mapper.submit()
-        if s:
+        mapper_submited = self.mapper.submit()
+        model_submited = self.model.submitAll()
+        if mapper_submited and model_submited:
             logging.info('Produit ' + self.name.text() + ' ajouté.')
             self.accept()
             return self.name.text()
@@ -212,6 +263,10 @@ class ProductForm(QDialog):
                 QMessageBox.warning(
                     self, "Erreur", "Le produit n'a pas pu être enregistré.\n"\
                     + "Détail:" + error.text())
+
+    def revert_and_close(self):
+        self.model.revertAll()
+        self.close()
     
     def change_units(self, unit):
         matching = {
