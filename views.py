@@ -247,9 +247,9 @@ class ProductForm(QDialog):
         self.exec_()
 
     def submit(self):
-        mapper_submited = self.mapper.submit()
+        #mapper_submited = self.mapper.submit()
         model_submited = self.model.submitAll()
-        if mapper_submited and model_submited:
+        if model_submited:
             logging.info('Produit ' + self.name.text() + ' ajouté.')
             self.accept()
             return self.name.text()
@@ -470,7 +470,7 @@ class InputsArray(QDialog):
             record.setValue(1, fournisseur_id) # fournisseur_id
             record.setValue(2, date) # date
             record.setValue(3, product_id) # product_id
-            record.setValue(4, 0) # prix
+            record.setValue(4, 0.0) # prix
             record.setValue(5, quantity) # quantité
             record.setGenerated('id', False)
             record_is_set = self.model.setRecord(
@@ -905,11 +905,18 @@ class Previsionnel(QDialog):
         repas_type_id = self.repas_buttons_group.checkedId() * -1 - 1
         date = self.calendar.selectedDate().toString('yyyy-MM-dd')
         repas_id = self.repas_model.get_id(date, repas_type_id)
+        plat_type_by_default = {
+            1: 4, # petit déj: autre
+            2: 1, # déjeuner: entrée
+            3: 4, # goûter: autre
+            4: 1, # dîner: entrée
+            5: 2, # picnique: plat
+            6: 4} # autre: autre
         # Add repas if not exist
         if not repas_id:
             self.repas_model.add_row(date, type_id = repas_type_id)
             repas_id = self.repas_model.get_id(date, repas_type_id)
-        self.plats_model.add_row(repas_id, repas_type_id)
+        self.plats_model.add_row(repas_id, plat_type_by_default[repas_type_id])
 
     def add_ingredient(self):
         inserted = self.ingredients_model.insertRow(self.ingredients_model.rowCount())

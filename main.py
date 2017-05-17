@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
         self.db_actions['exportPdfPriceAction'] = self.add_action(
             '&Prix de journée', self.export_pdf_price)
         self.db_actions['delRowAction'] = self.add_action(
-            '&Supprimer la ligne', self.remove_current_row)
+            '&Supprimer la ligne', self.remove_current_row, 'Del')
         self.db_actions['addFormAction'] = self.add_action(
             '&Denrées', self.add_input)
         self.db_actions['addFournisseurAction'] = self.add_action(

@@ -689,7 +689,6 @@ class InputsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
         super(InputsModel, self).__init__(parent, db)
 
-        #self.setEditStrategy(QSqlRelationalTableModel.OnFieldChange)
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("inputs")
         fournisseur_rel = QSqlRelation("fournisseurs","id","nom")
