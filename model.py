@@ -360,12 +360,15 @@ class Model(QSqlQueryModel):
             + "WHERE name = '" + product + "'")
         if self.query.first():
             recommends = [self.query.value(x) for x in range(3)]
+            # below: prevent null values
+            recommends = [0 if isinstance(x, str) else x for x in recommends]
             unit_id = self.query.value(3)
         else:
             logging.warning('Pas de produit trouvé')
             return False
         total = 0
         res = [x * recommends[i] for i, x in enumerate(nbr_enfants)]
+        logging.debug(res)
         res = sum(res)
         logging.info('result for ' + product + ': ' + str(res))
         if unit_id in (2, 3): # if Kilogrammes or litres

@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         helpmenu = menubar.addMenu('&Aide')
         helpmenu.addAction(aboutAction)
 
-        self.statusBar().showMessage('Ready')
+        self.statusBar().showMessage('')
         self.setMinimumSize(850, 300)
         self.show()
         
@@ -122,7 +122,7 @@ class MainWindow(QMainWindow):
 
     def current_tab_changed(self):
         logging.info('current tab: ' + str(self.main_widget.tabs.currentIndex()))
-        if self.main_widget.tabs.currentIndex() in (1, 2, 3):
+        if self.main_widget.tabs.currentIndex() in (1, 2):
             self.db_actions['delRowAction'].setEnabled(True)
         else:
             self.db_actions['delRowAction'].setEnabled(False)
@@ -192,7 +192,7 @@ class MainWindow(QMainWindow):
         else:
             self.model.connect_db(db_path)
             self.config.setValue("lastdbpath", db_path)
-            #self._create_tables_views()
+            self.statusBar().showMessage('Connecté sur ' + db_path)
             self._create_main_view()
             self.enable_db_actions(True)
             self.current_tab_changed() # to enable / disable remove action

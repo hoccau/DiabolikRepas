@@ -32,12 +32,10 @@ class MainWidget(QWidget):
         self.tables = {
             'reserve': self._add_table_model(
                 self.parent.model.qt_table_reserve, 'reserve'),
-            'repas': self._add_table_model(
-                self.parent.model.qt_table_repas, 'repas consommés'),
             'arrivages': self._add_table_model(
                 self.parent.model.qt_table_inputs, 'arrivages'),
-            'sorties': self._add_table_model(
-                self.parent.model.qt_table_outputs, 'sorties')
+            'repas': self._add_table_model(
+                self.parent.model.qt_table_repas, 'repas consommés')
             }
         #self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
         self.tabs.currentChanged.connect(self.parent.current_tab_changed)
@@ -45,6 +43,9 @@ class MainWidget(QWidget):
         # Repas table must be selected by row for editing
         self.tables['repas'].setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tables['repas'].doubleClicked.connect(self.parent.edit_repas)
+        self.tables['repas'].hideColumn(3) # hide repas_prev_id (not used...)
+        date_delegate = DateDelegate(self)
+        self.tables['repas'].setItemDelegateForColumn(1, date_delegate)
         # Autorize Edit for 'arrivages'
         self.tables['arrivages'].setEditTriggers(QAbstractItemView.DoubleClicked)
         self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
@@ -54,6 +55,7 @@ class MainWidget(QWidget):
         table.setModel(model)
         table.setItemDelegate(QSqlRelationalDelegate())
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        table.setSortingEnabled(True)
         self.tabs.addTab(table, name)
         return table
 
@@ -99,20 +101,17 @@ class AllProducts(QDialog):
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.add_button = QPushButton('Nouveau')
-        save_button = QPushButton('Enregistrer')
         close_button = QPushButton('Fermer')
 
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         buttons_layout = QHBoxLayout()
         buttons_layout.addWidget(self.add_button)
-        buttons_layout.addWidget(save_button)
         buttons_layout.addWidget(close_button)
         layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
-        save_button.clicked.connect(self.model.submitAll)
-        close_button.clicked.connect(self.revert_and_close)
+        close_button.clicked.connect(self.close)
         self.add_button.clicked.connect(parent.add_product)
         
         self.view.horizontalHeader().setMinimumHeight(50)
@@ -120,9 +119,9 @@ class AllProducts(QDialog):
 
         self.exec_()
         
-    def revert_and_close(self):
+    def reject(self):
         self.model.revertAll()
-        self.close()
+        super().reject()
 
     def add_product(self):
         ProductForm(self.parent)
@@ -242,7 +241,7 @@ class ProductForm(QDialog):
         
         self.units.currentTextChanged.connect(self.change_units)
         self.ok_button.clicked.connect(self.submit)
-        self.cancel_button.clicked.connect(self.revert_and_close)
+        self.cancel_button.clicked.connect(self.close)
 
         self.exec_()
 
@@ -264,9 +263,9 @@ class ProductForm(QDialog):
                     self, "Erreur", "Le produit n'a pas pu être enregistré.\n"\
                     + "Détail:" + error.text())
 
-    def revert_and_close(self):
+    def reject(self):
         self.model.revertAll()
-        self.close()
+        super().reject()
     
     def change_units(self, unit):
         matching = {
@@ -414,6 +413,7 @@ class InputsArray(QDialog):
         self.add_button = QPushButton('+')
         self.del_button = QPushButton('-')
         save_button = QPushButton('Enregistrer')
+        close_button = QPushButton('Fermer')
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -423,12 +423,16 @@ class InputsArray(QDialog):
         layout.addWidget(import_button)
         layout.addWidget(self.view)
         layout.addLayout(buttons_layout)
-        layout.addWidget(save_button)
+        buttons_layout2 = QHBoxLayout()
+        buttons_layout2.addWidget(save_button)
+        buttons_layout2.addWidget(close_button)
+        layout.addLayout(buttons_layout2)
 
         self.add_button.clicked.connect(self.add_row)
         self.del_button.clicked.connect(self.del_row)
         import_button.clicked.connect(self.import_prev)
         save_button.clicked.connect(self.save_and_close)
+        close_button.clicked.connect(self.close)
 
         self.resize(660, 360)
         self.exec_()
@@ -481,6 +485,10 @@ class InputsArray(QDialog):
     def save_and_close(self):
         self.model.submitAll()
         self.close()
+
+    def reject(self):
+        self.model.revertAll()
+        super().reject()
 
 class RepasForm(Form):
     """ Form to add or modify an effective repas (with product outputs) """
@@ -631,6 +639,11 @@ class RepasForm(Form):
             logging.warning(error.text())
             QMessageBox.warning(
                 self, "Erreur", "L'enregistrement des sorties a échoué.")
+
+    def reject(self):
+        self.model.revertAll()
+        self.output_model.revertAll()
+        super().reject()
 
 class InfosCentreDialog(QDialog):
     def __init__(self, parent=None):
@@ -843,6 +856,7 @@ class Previsionnel(QDialog):
         self.plats_prev_view.setColumnHidden(2, True)  #hide repas_prev
 
         self.ingredients_prev_view.setModel(self.ingredients_model)
+        self.ingredients_model.relationModel(1).select()
         self.ingredients_prev_view.setColumnHidden(0, True) #hide id
         self.ingredients_prev_view.setColumnHidden(2, True) #hide dish parent
         self.select_repas()
@@ -1103,6 +1117,9 @@ class SelectFournisseur(QDialog):
         super(SelectFournisseur, self).__init__(parent)
         self.parent = parent
 
+        info = QLabel("Sélectionnez un fournisseur dans la liste "\
+            + "ou ajoutez-en un nouveau.")
+
         self.combobox = QComboBox()
         self.combobox.setModel(model)
         self.combobox.setModelColumn(1)
@@ -1110,8 +1127,9 @@ class SelectFournisseur(QDialog):
         add_button = QPushButton('+')
         layout = QVBoxLayout()
         f_layout = QHBoxLayout()
-        f_layout.addWidget(self.combobox)
+        f_layout.addWidget(self.combobox, 1)
         f_layout.addWidget(add_button)
+        layout.addWidget(info)
         layout.addLayout(f_layout)
         layout.addWidget(ok_button)
         self.setLayout(layout)
@@ -1158,8 +1176,9 @@ class CompleterDelegate(QSqlRelationalDelegate):
     
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
-        model_p = index.model().relationModel(1)
-        editor.setModel(model_p)
+        self.model_p = index.model().relationModel(1)
+        #model_p = index.model().products
+        editor.setModel(self.model_p)
         editor.setModelColumn(1)
         editor.setEditable(True)
         editor.currentIndexChanged.connect(self.sender)
@@ -1167,6 +1186,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
     
     def setModelData(self, editor, model, index):
         m = model.products
+        logging.debug(m)
         products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
         
         if not editor.currentText().rstrip(' '):
