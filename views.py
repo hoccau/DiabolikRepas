@@ -175,7 +175,7 @@ class ProductForm(QDialog):
 
         self.warning_label = QLabel(
             "Assurez-vous que le produit que vous allez entrer\n"
-            +"n'existe pas déjà sous un autre nom.")
+            +" n'existe pas déjà sous un autre nom.")
         self.name = QLineEdit()
         self.name.setToolTip("Avec les accents, en minuscule")
         self.units = QComboBox()
@@ -189,6 +189,7 @@ class ProductForm(QDialog):
         self.fournisseur.setModel(fournisseur_model)
         self.fournisseur.setModelColumn(1)
 
+        add_fournisseur = QPushButton('+')
         self.ok_button = QPushButton('OK')
         self.cancel_button = QPushButton('Annuler')
         
@@ -218,26 +219,33 @@ class ProductForm(QDialog):
         layout.addRow('Nom du produit', self.name)
         layout.addRow('Unité de mesure', self.units)
         recommend_layout = QGridLayout()
+        recommends_box = QGroupBox()
+        recommends_box.setTitle('Quantités recommandées')
         recommend_layout.addWidget(
-            QLabel('Quantité recommandée pour\n un enfant de moins de 6 ans'),
+            QLabel('Pour un enfant de moins de 6 ans'),
             0, 0)
         recommend_layout.addWidget(self.recommends[0], 0, 1)
         recommend_layout.addWidget(
-            QLabel('Quantité recommandée pour\n un enfant entre 6 et 12 ans'),
+            QLabel('Pour un enfant entre 6 et 12 ans'),
             1, 0)
         recommend_layout.addWidget(self.recommends[1], 1, 1)
         recommend_layout.addWidget(
-            QLabel('Quantité recommandée pour\n un enfant de plus de 12 ans (ou adulte)'),
+            QLabel('Pour un enfant de plus de 12 ans (ou adulte)'),
             2, 0)
         recommend_layout.addWidget(self.recommends[2], 2, 1)
         self.units_labels = [QLabel('Pièces') for x in range(3)]
         [recommend_layout.addWidget(label, x, 2)\
             for x, label in enumerate(self.units_labels)]
+        recommends_box.setLayout(recommend_layout)
         g_layout = QVBoxLayout()
         g_layout.addWidget(self.warning_label)
         g_layout.addLayout(layout)
-        g_layout.addLayout(recommend_layout)
-        g_layout.addWidget(self.fournisseur)
+        g_layout.addWidget(recommends_box)
+        fournisseur_layout = QHBoxLayout()
+        fournisseur_layout.addWidget(QLabel("Fournisseur par défaut"))
+        fournisseur_layout.addWidget(self.fournisseur, 2)
+        fournisseur_layout.addWidget(add_fournisseur)
+        g_layout.addLayout(fournisseur_layout)
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
@@ -245,6 +253,7 @@ class ProductForm(QDialog):
         self.setLayout(g_layout)
         
         self.units.currentTextChanged.connect(self.change_units)
+        add_fournisseur.clicked.connect(parent.add_fournisseur)
         self.ok_button.clicked.connect(self.submit)
         self.cancel_button.clicked.connect(self.close)
 

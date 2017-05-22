@@ -711,7 +711,7 @@ class ProductsModel(QSqlRelationalTableModel):
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("products")
         units_rel = QSqlRelation("units","id","unit")
-        fournisseur_rel = QSqlRelation("fournisseur","id","nom")
+        fournisseur_rel = QSqlRelation("fournisseurs","id","nom")
         self.setRelation(2, units_rel)
         self.setRelation(6, fournisseur_rel)
         self.setHeaderData(1, Qt.Horizontal, "Nom")
