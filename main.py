@@ -15,7 +15,7 @@ from model import Model
 from views import (
     ProductForm, RepasForm, InfosCentreDialog, RapportDialog,
     Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
-    InputsArray, MainWidget, DateDialog, AllProducts)
+    InputsArray, MainWidget, DateDialog, AllProducts, FournisseurForm)
 import repas_xml_to_db
 import repas_db_to_xml
 import logging
@@ -287,16 +287,7 @@ class MainWindow(QMainWindow):
         self.output_view = OutputForm(self, repas_id)
 
     def add_fournisseur(self):
-        name, ok = QInputDialog.getText(self, 'Ajouter un fournisseur',
-            'Nom du fournisseur:')
-        if ok and name != "":
-            res = self.model.add_fournisseur(name)
-            if res:
-                return True
-            elif res == "UNIQUE constraint failed: fournisseurs.NOM":
-                QMessageBox.warning(self, "Erreur", "Ce nom existe déjà.")
-            else:
-                QMessageBox.warning(self, "Erreur", "Erreur de requette inconnue!")
+        FournisseurForm(self)
 
     def export_pdf_liste(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()

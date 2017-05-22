@@ -53,6 +53,7 @@ class Model(QSqlQueryModel):
     def _create_models(self):
         self.query = QSqlQuery()
         self.qt_table_products = ProductsModel(self, self.db)
+        self.qt_table_fournisseurs = FournisseurModel(self, self.db)
         self.qt_table_reserve = ReserveTableModel()
         self.qt_table_infos = InfosModel(self, self.db)
         self.qt_table_periodes_infos = PeriodesModel(self, self.db)
@@ -700,7 +701,7 @@ class InputsModel(QSqlRelationalTableModel):
         self.setRelation(3, product_rel)
         self.setHeaderData(1, Qt.Horizontal, "Fournisseur")
         self.setHeaderData(3, Qt.Horizontal, "Produit")
-        self.setHeaderData(5, Qt.Horizontal, "Quantité")
+        self.setHeaderData(6, Qt.Horizontal, "Quantité")
         self.select()
     
 class ProductsModel(QSqlRelationalTableModel):
@@ -710,7 +711,9 @@ class ProductsModel(QSqlRelationalTableModel):
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("products")
         units_rel = QSqlRelation("units","id","unit")
+        fournisseur_rel = QSqlRelation("fournisseur","id","nom")
         self.setRelation(2, units_rel)
+        self.setRelation(6, fournisseur_rel)
         self.setHeaderData(1, Qt.Horizontal, "Nom")
         self.setHeaderData(2, Qt.Horizontal, "Unité\n de mesure")
         self.setHeaderData(3, Qt.Horizontal, "Quantité\n pour moins de\n 6 ans")

@@ -10,7 +10,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray
 from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
-from model import FournisseurModel
 import logging
 
 class MainWidget(QWidget):
@@ -185,6 +184,10 @@ class ProductForm(QDialog):
         self.units.setModelColumn(1)
         self.recommends = [QDoubleSpinBox() for i in range(3)]
         [spin.setMaximum(999) for spin in self.recommends]
+        self.fournisseur = QComboBox()
+        fournisseur_model = parent.model.qt_table_fournisseurs
+        self.fournisseur.setModel(fournisseur_model)
+        self.fournisseur.setModelColumn(1)
 
         self.ok_button = QPushButton('OK')
         self.cancel_button = QPushButton('Annuler')
@@ -195,6 +198,7 @@ class ProductForm(QDialog):
         self.mapper.addMapping(self.recommends[0], 3)
         self.mapper.addMapping(self.recommends[1], 4)
         self.mapper.addMapping(self.recommends[2], 5)
+        self.mapper.addMapping(self.fournisseur, 6)
         
         for widget in [self.name, self.units] + self.recommends:
             if self.mapper.mappedSection(widget) == -1:
@@ -215,15 +219,15 @@ class ProductForm(QDialog):
         layout.addRow('Unité de mesure', self.units)
         recommend_layout = QGridLayout()
         recommend_layout.addWidget(
-            QLabel('Quantité recommandée pour un enfant de moins de 6 ans'),
+            QLabel('Quantité recommandée pour\n un enfant de moins de 6 ans'),
             0, 0)
         recommend_layout.addWidget(self.recommends[0], 0, 1)
         recommend_layout.addWidget(
-            QLabel('Quantité recommandée pour un enfant entre 6 et 12 ans'),
+            QLabel('Quantité recommandée pour\n un enfant entre 6 et 12 ans'),
             1, 0)
         recommend_layout.addWidget(self.recommends[1], 1, 1)
         recommend_layout.addWidget(
-            QLabel('Quantité recommandée pour un enfant de plus de 12 ans (ou adulte)'),
+            QLabel('Quantité recommandée pour\n un enfant de plus de 12 ans (ou adulte)'),
             2, 0)
         recommend_layout.addWidget(self.recommends[2], 2, 1)
         self.units_labels = [QLabel('Pièces') for x in range(3)]
@@ -233,6 +237,7 @@ class ProductForm(QDialog):
         g_layout.addWidget(self.warning_label)
         g_layout.addLayout(layout)
         g_layout.addLayout(recommend_layout)
+        g_layout.addWidget(self.fournisseur)
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
@@ -246,7 +251,7 @@ class ProductForm(QDialog):
         self.exec_()
 
     def submit(self):
-        #mapper_submited = self.mapper.submit()
+        mapper_submited = self.mapper.submit() # to init widget default value
         model_submited = self.model.submitAll()
         if model_submited:
             logging.info('Produit ' + self.name.text() + ' ajouté.')
@@ -274,6 +279,55 @@ class ProductForm(QDialog):
            'Litres':'millilitres'
            }
         [label.setText(matching[unit]) for label in self.units_labels]
+
+class FournisseurForm(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        self.model = parent.model.qt_table_fournisseurs
+        self.mapper = QDataWidgetMapper(self)
+        self.mapper.setModel(self.model)
+
+        self.name = QLineEdit()
+        
+        self.ok_button = QPushButton('OK')
+        self.cancel_button = QPushButton('Annuler')
+
+        self.mapper.addMapping(self.name, 1)
+        inserted = self.model.insertRow(self.model.rowCount())
+        self.mapper.toLast()
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        layout = QVBoxLayout()
+        layout.addWidget(self.name)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+        self.ok_button.clicked.connect(self.submit)
+        self.cancel_button.clicked.connect(self.close)
+
+        self.exec_()
+
+    def submit(self):
+        self.mapper.submit()
+        submited = self.model.submitAll()
+        if submited:
+            self.close()
+        if not submited:
+            error = self.model.lastError()
+            
+            logging.warning(error.text())
+            logging.warning(error.nativeErrorCode())
+            if error.nativeErrorCode() == "19":
+                QMessageBox.warning(self, "Erreur", "Ce nom semble déjà exister.")
+            else:
+                QMessageBox.warning(self, "Erreur", error.text())
+
+    def reject(self):
+        self.model.revertAll()
+        super().reject()
 
 class InputForm(Form):
     def __init__(self, parent=None):
@@ -452,7 +506,7 @@ class InputsArray(QDialog):
     def import_prev(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
         logging.debug(date_start)
-        fournisseur_model = FournisseurModel(self, self.parent.model.db)
+        fournisseur_model = self.parent.model.qt_table_fournisseurs
         fournisseur = SelectFournisseur(self.parent, fournisseur_model).get_()
         logging.debug(fournisseur)
         if fournisseur:

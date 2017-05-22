@@ -33,7 +33,9 @@ unit_id integer NOT NULL,
 recommended_6 real,
 recommended_6_12 real,
 recommended_12 real,
+fournisseur_id integer,
 FOREIGN KEY (unit_id) REFERENCES units(id)
+FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id)
 );
 CREATE UNIQUE INDEX idx_name ON products (name);
 
@@ -42,10 +44,12 @@ id integer PRIMARY KEY,
 Fournisseur_id integer NOT NULL,
 Date varchar(10),
 product_id INTEGER NOT NULL,
+ingredients_prev_id INTEGER,
 Prix real NOT NULL,
 quantity real NOT NULL,
 FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)
 FOREIGN KEY (product_id) REFERENCES products(id)
+FOREIGN KEY (ingredients_prev_id) REFERENCES ingredients_prev(id)
 );
 
 CREATE TABLE units(
