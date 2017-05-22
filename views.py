@@ -462,6 +462,8 @@ class InputsArray(QDialog):
         self.model = model
         self.parent = parent
 
+        self.calendar = QCalendarWidget()
+        self.calendar.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
         self.view = QTableView(self)
         self.view.setModel(model)
         self.view.setSortingEnabled(True)
@@ -471,6 +473,8 @@ class InputsArray(QDialog):
         date_delegate = DateDelegate()
         self.view.setItemDelegateForColumn(2, date_delegate)
         self.view.hideColumn(0) # hide id
+        self.view.hideColumn(2) # hide date
+        self.view.hideColumn(4) # hide ingredient_prev_id
 
         import_button = QPushButton('Importer le prévisionnel')
         self.add_button = QPushButton('+')
@@ -478,19 +482,23 @@ class InputsArray(QDialog):
         save_button = QPushButton('Enregistrer')
         close_button = QPushButton('Fermer')
 
+        config_layout = QGridLayout()
         layout = QVBoxLayout()
         self.setLayout(layout)
         buttons_layout = QHBoxLayout()
         buttons_layout.addWidget(self.add_button)
         buttons_layout.addWidget(self.del_button)
-        layout.addWidget(import_button)
-        layout.addWidget(self.view)
+        config_layout.addWidget(self.calendar, 0, 0)
+        config_layout.addWidget(import_button, 0, 1)
+        layout.addLayout(config_layout)
+        layout.addWidget(self.view, 10)
         layout.addLayout(buttons_layout)
         buttons_layout2 = QHBoxLayout()
         buttons_layout2.addWidget(save_button)
         buttons_layout2.addWidget(close_button)
         layout.addLayout(buttons_layout2)
 
+        self.calendar.selectionChanged.connect(self.set_day_filter)
         self.add_button.clicked.connect(self.add_row)
         self.del_button.clicked.connect(self.del_row)
         import_button.clicked.connect(self.import_prev)
@@ -499,6 +507,11 @@ class InputsArray(QDialog):
 
         self.resize(660, 360)
         self.exec_()
+
+    def set_day_filter(self):
+        self.date = self.calendar.selectedDate()
+        self.model.setFilter(
+            "date = '" + self.date.toString('yyyy-MM-dd') + "'")
 
     def add_row(self):
         if self.model.isDirty():
@@ -514,39 +527,47 @@ class InputsArray(QDialog):
 
     def import_prev(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
-        logging.debug(date_start)
-        fournisseur_model = self.parent.model.qt_table_fournisseurs
-        fournisseur = SelectFournisseur(self.parent, fournisseur_model).get_()
-        logging.debug(fournisseur)
-        if fournisseur:
-            fournisseur_id = self.parent.model.get_(
-                ['id'], 'fournisseurs', "nom='" + fournisseur + "'")[0]['id']
-        else:
-            return False
-        logging.debug(fournisseur_id)
         products = self.parent.model.get_prev_products_by_dates(
             date_start, date_stop)
-        logging.debug(products)
+        prev_ids = []
+        for i in range(self.model.rowCount()):
+            idx = self.model.index(i, 4)
+            prev_ids.append(self.model.data(idx))
+        logging.debug(prev_ids)
+        already_set_products = []
+        if not products:
+            QMessageBox.warning(self, "Erreur", "Aucun produit trouvé.")
         for product in products:
-            product_id = product[0]
-            quantity = product[2]
-            date = QDate.currentDate().toString('yyyy-MM-dd')
-            logging.debug(date)
-            inserted = self.model.insertRow(self.model.rowCount())
-            record = self.model.record()
-            record.setValue(1, fournisseur_id) # fournisseur_id
-            record.setValue(2, date) # date
-            record.setValue(3, product_id) # product_id
-            record.setValue(4, 0.0) # prix
-            record.setValue(5, quantity) # quantité
-            record.setGenerated('id', False)
-            record_is_set = self.model.setRecord(
-                self.model.rowCount() -1, record)
-            logging.debug(record_is_set)
-            logging.warning(self.model.lastError().text())
+            if product[0] not in prev_ids:
+                product_id = product[1]
+                quantity = product[3]
+                fournisseur_id = product[5]
+                ingr_prev_id = product[0]
+                date = self.calendar.selectedDate().toString('yyyy-MM-dd')
+                inserted = self.model.insertRow(self.model.rowCount())
+                record = self.model.record()
+                record.setValue(1, fournisseur_id) # fournisseur_id
+                record.setValue(2, date) # date
+                record.setValue(3, product_id) # product_id
+                record.setValue(4, ingr_prev_id) # product_id
+                record.setValue(5, 0.0) # prix
+                record.setValue(6, quantity) # quantité
+                record.setGenerated('id', False)
+                record_is_set = self.model.setRecord(
+                    self.model.rowCount() -1, record)
+                logging.debug(record_is_set)
+                logging.warning(self.model.lastError().text())
+            else:
+                already_set_products.append(product[2])
+        if already_set_products:
+            QMessageBox.warning(self, "Erreur", "Ces produits ont déjà été "
+                + "importés : " + ', '.join(already_set_products))
 
     def save_and_close(self):
-        self.model.submitAll()
+        submited = self.model.submitAll()
+        if not submited:
+            error = self.model.lastError()
+            logging.warning(error.text())
         self.close()
 
     def reject(self):

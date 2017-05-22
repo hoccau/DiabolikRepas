@@ -51,6 +51,7 @@ FOREIGN KEY (Fournisseur_id) REFERENCES fournisseurs(id)
 FOREIGN KEY (product_id) REFERENCES products(id)
 FOREIGN KEY (ingredients_prev_id) REFERENCES ingredients_prev(id)
 );
+CREATE UNIQUE INDEX idx_ingredients_prev_id ON inputs (ingredients_prev_id);
 
 CREATE TABLE units(
 id integer PRIMARY KEY,

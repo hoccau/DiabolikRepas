@@ -97,14 +97,15 @@ class Model(QSqlQueryModel):
 
     def get_prev_products_by_dates(self, date_start, date_stop):
         self.exec_(
-            "SELECT products.id, products.name, quantity, units.unit "\
+            "SELECT ingredients_prev.id, products.id, products.name, quantity, "
+            + "units.unit, products.fournisseur_id "\
             + "FROM ingredients_prev\
             INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
             INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id\
             INNER JOIN products ON products.id = ingredients_prev.product_id\
             INNER JOIN units ON units.id = products.unit_id\
             WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
-        return self._query_to_lists(4)
+        return self._query_to_lists(6)
 
     def get_prev_ingrs(self, date, repas_type_id):
         self.exec_(
