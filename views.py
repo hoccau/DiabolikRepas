@@ -180,6 +180,9 @@ class ProductForm(QDialog):
         self.name.setToolTip("Avec les accents, en minuscule")
         self.units = QComboBox()
         self.units_model = self.model.relationModel(2)
+        logging.debug(self.units_model)
+        for row in range(self.units_model.rowCount()):
+            logging.debug(self.units_model.data(self.units_model.index(row, 1)))
         self.units.setModel(self.units_model)
         self.units.setModelColumn(1)
         self.recommends = [QDoubleSpinBox() for i in range(3)]
@@ -261,6 +264,10 @@ class ProductForm(QDialog):
 
     def submit(self):
         mapper_submited = self.mapper.submit() # to init widget default value
+        if not mapper_submited:
+            logging.warning('product mapper not submited.')
+        logging.debug(self.units.currentText())
+        logging.debug(self.mapper.mappedWidgetAt(2))
         model_submited = self.model.submitAll()
         if model_submited:
             logging.info('Produit ' + self.name.text() + ' ajouté.')
@@ -923,8 +930,8 @@ class Previsionnel(QDialog):
         self.layout.addWidget(self.calendar)
         self.layout.addLayout(self.repas_buttons_layout)
         plats_ingrs_layout = QHBoxLayout()
-        plats_ingrs_layout.addWidget(self.plats_box)
-        plats_ingrs_layout.addWidget(self.ingredients_box)
+        plats_ingrs_layout.addWidget(self.plats_box, 2)
+        plats_ingrs_layout.addWidget(self.ingredients_box, 3)
         self.layout.addLayout(plats_ingrs_layout)
         self.setLayout(self.layout)
         
@@ -940,9 +947,9 @@ class Previsionnel(QDialog):
         self.plats_prev_view.setColumnHidden(2, True)  #hide repas_prev
 
         self.ingredients_prev_view.setModel(self.ingredients_model)
-        self.ingredients_model.relationModel(1).select()
+        #self.ingredients_model.relationModel(1).select()
         self.ingredients_prev_view.setColumnHidden(0, True) #hide id
-        self.ingredients_prev_view.setColumnHidden(2, True) #hide dish parent
+        #self.ingredients_prev_view.setColumnHidden(2, True) #hide dish parent
         self.select_repas()
         
         self.add_repas_button.clicked.connect(self.add_repas)
@@ -952,7 +959,7 @@ class Previsionnel(QDialog):
         self.del_plat_button.clicked.connect(self.del_plat)
         self.del_ingredient_button.clicked.connect(self.del_ingredient)
         
-        self.setMinimumSize(377, 500)
+        self.setMinimumSize(480, 500)
         self.exec_()
 
     def _create_view(self, box_name, buttons):
@@ -1001,30 +1008,44 @@ class Previsionnel(QDialog):
     
     def add_plat(self):
         repas_type_id = self.repas_buttons_group.checkedId() * -1 - 1
-        date = self.calendar.selectedDate().toString('yyyy-MM-dd')
-        repas_id = self.repas_model.get_id(date, repas_type_id)
-        plat_type_by_default = {
-            1: 4, # petit déj: autre
-            2: 1, # déjeuner: entrée
-            3: 4, # goûter: autre
-            4: 1, # dîner: entrée
-            5: 2, # picnique: plat
-            6: 4} # autre: autre
-        # Add repas if not exist
-        if not repas_id:
-            self.repas_model.add_row(date, type_id = repas_type_id)
+        if repas_type_id:
+            date = self.calendar.selectedDate().toString('yyyy-MM-dd')
             repas_id = self.repas_model.get_id(date, repas_type_id)
-        self.plats_model.add_row(repas_id, plat_type_by_default[repas_type_id])
+            plat_type_by_default = {
+                1: 4, # petit déj: autre
+                2: 1, # déjeuner: entrée
+                3: 4, # goûter: autre
+                4: 1, # dîner: entrée
+                5: 2, # picnique: plat
+                6: 4} # autre: autre
+            # Add repas if not exist
+            if not repas_id:
+                self.repas_model.add_row(date, type_id = repas_type_id)
+                repas_id = self.repas_model.get_id(date, repas_type_id)
+            self.plats_model.add_row(
+                repas_id, plat_type_by_default[repas_type_id])
+        else:
+            QMessageBox.warning(self, 'Erreur', "Veuillez choisir un repas")
 
     def add_ingredient(self):
-        inserted = self.ingredients_model.insertRow(self.ingredients_model.rowCount())
-        record = self.ingredients_model.record()
-        record.setValue(2, self.current_plat_id)
-        record.setValue(3, 0) # quantité
-        record_is_set = self.ingredients_model.setRecord(
-                self.ingredients_model.rowCount() -1, record)
-        logging.debug(record_is_set)
-        logging.debug(self.ingredients_model.lastError().text())
+        #inserted = self.ingredients_model.insertRow(self.ingredients_model.rowCount())
+        #record = self.ingredients_model.record()
+        #record.setValue(2, self.current_plat_id)
+        #record.setValue(3, 0) # quantité
+        #record_is_set = self.ingredients_model.setRecord(
+        #        self.ingredients_model.rowCount() -1, record)
+        #logging.debug(record_is_set)
+        #logging.debug(self.ingredients_model.lastError().text())
+        inserted = self.ingredients_model.add_row(self.current_plat_id)
+        if not inserted:
+            if self.parent.model.qt_table_products.rowCount() == 0:
+                reponse = QMessageBox.question(None, 'Ajouter un produit ?',
+                    "Il semble n'y avoir aucun produit dans la base de donnée. "\
+                    + "En ajouter un nouveau ?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No)
+                if reponse == QMessageBox.Yes:
+                    p = ProductForm(self.parent)
 
     def del_repas(self):
         reponse = QMessageBox.question(
@@ -1053,17 +1074,18 @@ class Previsionnel(QDialog):
                 QMessageBox.No)
         if reponse == QMessageBox.Yes:
             row = self.ingredients_prev_view.selectionModel().currentIndex().row()
-            id_ = self.ingredients_prev_view.model().record(row).value(0)
-            self.ingredients_model.del_row(id=id_)
+            m = self.ingredients_prev_view.model()
+            id_ = m.data(m.index(row, 0))
+            self.ingredients_model.del_row(id_=id_)
 
     def set_auto_quantity(self, product, row):
         date = self.calendar.selectedDate().toString('yyyy-MM-dd')
         quantity = self.parent.model.get_recommended_quantity(
             date, product)
         if quantity is not None:
-            index = self.ingredients_model.index(row, 3) # 3: quantity column
+            index = self.ingredients_model.index(row, 2) # 3: quantity column
             logging.debug(self.ingredients_model.data(index))
-            s = self.ingredients_model.setData(index, quantity)
+            s = self.ingredients_model.setData(index, quantity, None)
         submited = self.ingredients_model.submitAll()
         if not submited:
             logging.warning(self.ingredients_model.lastError().text())
@@ -1260,8 +1282,8 @@ class CompleterDelegate(QSqlRelationalDelegate):
     
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
-        self.model_p = index.model().relationModel(1)
-        #model_p = index.model().products
+        #self.model_p = index.model().relationModel(1)
+        self.model_p = index.model().parent.qt_table_products
         editor.setModel(self.model_p)
         editor.setModelColumn(1)
         editor.setEditable(True)
@@ -1269,27 +1291,38 @@ class CompleterDelegate(QSqlRelationalDelegate):
         return editor
     
     def setModelData(self, editor, model, index):
-        m = model.products
+        logging.debug(index.data())
+        m = self.model_p
         logging.debug(m)
-        products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
+        #products = [model.data(model.index(i, 1)) for i in range(model.rowCount())]
+        #logging.debug(products)
+        #logging.debug(editor.currentText())
+        product_idx = editor.currentIndex()
+        logging.debug(product_idx)
+
+        logging.debug(m.isDirty(m.index(product_idx, 1)))
         
         if not editor.currentText().rstrip(' '):
-            pass
-        elif editor.currentText() not in products:
+            logging.warning('Champs produit vide')
+        elif m.isDirty(m.index(product_idx, 1)):
             reponse = QMessageBox.question(
                 None, 'Produit inexistant', 
                 "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
             if reponse == QMessageBox.Yes:
+                logging.debug(self.parent.parent)
                 p = ProductForm(
-                    self.parent.parent, name=editor.currentText()).submit()
+                    self.parent.parent, index = product_idx)
                 if p:
-                    index.model().relationModel(1).select()
-                    editor.setCurrentText(p)
+                    #index.model().relationModel(1).select()
+                    #editor.setCurrentText(p)
+                    pass
         else:
             self.parent.set_auto_quantity(editor.currentText(), index.row())
-            super(CompleterDelegate, self).setModelData(editor, model, index)
+            idx_product = m.index(editor.currentIndex(), 0)
+            model.setData(index, m.data(idx_product), None)
+            #super(CompleterDelegate, self).setModelData(editor, model, index)
             self.parent.ingredients_model.submitAll()
 
 class ProductOutputDelegate(QSqlRelationalDelegate):

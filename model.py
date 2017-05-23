@@ -64,7 +64,7 @@ class Model(QSqlQueryModel):
         self.previsionnel_model = PrevisionnelModel()
         self.repas_prev_model = RepasPrevModel(self, self.db)
         self.plat_prev_model = PlatPrevModel(self, self.db)
-        self.ingredient_prev_model = IngredientPrevModel(self, self.db)
+        self.ingredient_prev_model = IngredientPrevQueryModel(self)
 
     def get_fournisseurs(self):
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
@@ -637,33 +637,86 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         self.select()
 
 class IngredientPrevQueryModel(QSqlQueryModel):
-    def __init__(self):
+    def __init__(self, parent):
         super(IngredientPrevQueryModel, self).__init__()
-        self.q = "SELECT products.name, quantity, units.unit FROM ingredients_prev\
-            INNER JOIN products ON products.id = ingredients_prev.product_id\
-            INNER JOIN units ON units.id = products.unit_id"
+        self.parent = parent
         self.filter = ""
         self.select()
 
+    def flags(self, index):
+        flags = super().flags(index)
+
+        if index.column() in (1, 2):
+            flags |= Qt.ItemIsEditable
+
+        return flags
+
+    def setData(self, index, value, role):
+        if index.column() not in (1, 2):
+            return False
+
+        id_idx = self.index(index.row(), 0)
+        id_ = self.data(id_idx)
+
+        #self.clear()
+
+        if index.column() == 1:
+            logging.debug(id_)
+            logging.debug(value)
+            ok = self.set_product(id_, value)
+        elif index.column() == 2:
+            ok = self.set_quantity(id_, value)
+
+        self.select()
+        return ok
+
     def select(self):
-        self.setQuery(self.q + self.filter)
-        if self.lastError().text().rstrip(' '):
-            logging.warning(self.lastError().text())
+        q = "SELECT ingredients_prev.id, products.name, quantity, units.unit "\
+            + "FROM ingredients_prev "\
+            + "INNER JOIN products ON products.id = ingredients_prev.product_id " \
+            + "INNER JOIN units ON units.id = products.unit_id "
+        if self.filter:
+            q += self.filter 
+        self.setQuery(q)
+
+    def set_product(self, id_, product_id):
+        query = QSqlQuery()
+        query.prepare('UPDATE ingredients_prev SET product_id = ? where id = ?')
+        query.addBindValue(product_id)
+        query.addBindValue(id_)
+        return query.exec_()
+
+    def set_quantity(self, id_, quantity):
+        query = QSqlQuery()
+        query.prepare('UPDATE ingredients_prev SET quantity = ? where id = ?')
+        query.addBindValue(quantity)
+        query.addBindValue(id_)
+        return query.exec_()
 
     def setFilter(self, filter_):
         self.filter = ' WHERE '+filter_
         self.select()
     
     def add_row(self, plat_id):
+        logging.debug(plat_id)
         query = QSqlQuery("INSERT INTO ingredients_prev(\
                 product_id, dishes_prev_id, quantity)\
                 VALUES(1, "+str(plat_id)+", 0)")
-        self.select()
+        if query.lastError().text().rstrip(' '):
+            logging.warning(query.lastError().text())
+            return False
+        else:
+            self.select()
+            return True
     
     def del_row(self, id_=None):
         if id_:
             query = QSqlQuery("DELETE FROM ingredients_prev WHERE id ="+str(id_))
             self.select()
+
+    def submitAll(self):
+        logging.debug('submitAll')
+
 
 class OutputsReadModel(QSqlQueryModel):
     def __init__(self):
