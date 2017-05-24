@@ -173,6 +173,7 @@ class ProductForm(QDialog):
     def __init__(self, parent=None, index=None, name=""):
         super(ProductForm, self).__init__(parent)
         self.model = parent.model.qt_table_products
+        self.parent = parent
 
         self.mapper = QDataWidgetMapper(self)
         self.mapper.setModel(self.model)
@@ -260,18 +261,24 @@ class ProductForm(QDialog):
         self.setLayout(g_layout)
         
         self.units.currentTextChanged.connect(self.change_units)
-        add_fournisseur.clicked.connect(parent.add_fournisseur)
+        add_fournisseur.clicked.connect(self.add_fournisseur)
         self.ok_button.clicked.connect(self.submit)
         self.cancel_button.clicked.connect(self.close)
 
         self.exec_()
+
+    def add_fournisseur(self):
+        FournisseurForm(self.parent)
+        # below : we need to refresh the relation model because it's other
+        # instance than qt_fournisseur_model
+        self.model.relationModel(6).select() 
 
     def submit(self):
         mapper_submited = self.mapper.submit() # to init widget default value
         if not mapper_submited:
             logging.warning('product mapper not submited.')
         logging.debug(self.units.currentText())
-        logging.debug(self.mapper.mappedWidgetAt(2))
+        logging.debug(self.mapper.mappedWidgetAt(6))
         model_submited = self.model.submitAll()
         if model_submited:
             logging.info('Produit ' + self.name.text() + ' ajouté.')
@@ -348,123 +355,6 @@ class FournisseurForm(QDialog):
     def reject(self):
         self.model.revertAll()
         super().reject()
-
-class InputForm(Form):
-    def __init__(self, parent=None):
-        super(InputForm, self).__init__(parent)
-
-        self.setWindowTitle("Denrées")
-        self.all_products_names = parent.model.get_all_products_names()
-
-        self.fournisseur = QComboBox()
-        add_fournisseur = QPushButton('Ajouter')
-        self.refresh_fournisseurs()
-        self.product = QLineEdit()
-        self.product_completer = QCompleter(self.all_products_names)
-        self.product.setCompleter(self.product_completer)
-
-        self.price = QLineEdit()
-        regexp = QRegExp('\d[\d\,\.]+')
-        self.price.setValidator(QRegExpValidator(regexp))
-        self.quantity = QLineEdit()
-        self.unit = QLabel()
-        self.date = QCalendarWidget()
-
-        self.add_field("Fournisseur:", self.fournisseur)
-        self.grid.addWidget(add_fournisseur, self.field_index, 2)
-        self.add_field("Date:", self.date)
-        self.add_field("Produit", self.product)
-        self.add_field("quantité:", self.quantity)
-        self.grid.addWidget(self.unit, self.field_index, 2)
-        self.unit_label = QLabel("par pièce")
-        self.add_field("Prix (€):", self.price)
-        self.grid.addWidget(self.unit_label, self.field_index, 2)
-        self.total = QLabel("")
-        self.add_field("Prix total:", self.total)
-
-        self.product.editingFinished.connect(self.verif_product)
-        self.price.editingFinished.connect(self.refresh_total)
-        self.quantity.textChanged.connect(self.refresh_total)
-        add_fournisseur.clicked.connect(self.add_fournisseur)
-        
-        self.initUI()
-
-    def verif_product(self):
-        if self.product.text() not in self.all_products_names\
-                and self.product.text() != '':
-            reponse = QMessageBox.question(
-                    None, 'Produit inexistant',
-                    "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No)
-            if reponse == QMessageBox.No:
-                self.product.clear()
-                return False
-            if reponse == QMessageBox.Yes:
-                new_product = ProductForm(self, name=self.product.text())
-                self.all_products_names = self.parent.model.get_all_products_names()
-                self.product_completer.setModel(QStringListModel(self.all_products_names))
-                self.product.setText(new_product.name.text())
-        if self.product.text() != '':
-            unit = self.model.get_product_unit(self.product.text())
-            self.product_id = self.model.get_product_id_by_name(self.product.text())
-            self.refresh_unit_label(unit)
-            self.unit.setText(unit)
-            return True
-
-    def add_fournisseur(self):
-        f = self.parent.add_fournisseur()
-        if f:
-            self.refresh_fournisseurs()
-
-    def refresh_total(self):
-        if self.quantity.text() and self.price.text():
-            price = float(self.price.text())
-            quantity = float(self.quantity.text())
-            total = round(price * quantity, 2)
-            self.total.setText(str(total))
-
-    def refresh_unit_label(self, unit):
-        matching = {
-           'Unités':'par pièce',
-           'Kilogrammes':'le kilo',
-           'Litres':'le litre'
-           }
-        unit = matching[unit]
-        self.unit_label.setText(unit)
-
-    def clear_all(self):
-        self.quantity.clear()
-        self.product.clear()
-        self.price.clear()
-
-    def submit_datas(self):
-        if self.fournisseur.currentText() == "":
-            QMessageBox.warning(self, "Erreur", "Il faut entrer un nom de fournisseur")
-        elif self.product.text() == "":
-            QMessageBox.warning(self, "Erreur", "Il faut entrer un nom de désignation")
-        elif self.price.text() == "":
-            QMessageBox.warning(self, "Erreur", "Il faut entrer un Prix")
-        elif self.quantity.text() == "":
-            QMessageBox.warning(self, "Erreur", "Il faut entrer une quantité")
-        else:
-            record = {}
-            #below : can be improved for faster ?
-            f_id = self.model.get_fournisseurs()[self.fournisseur.currentText()]
-            record["fournisseur_id"] = f_id
-            record["date"] = self.date.selectedDate().toString('yyyy-MM-dd')
-            record["product_id"] = self.product_id
-            record["prix"] = self.price.text()
-            record["quantity"] = self.quantity.text()
-            self.model.add_input(record)
-            self.model.qt_table_reserve.select()
-            self.model.qt_table_inputs.select()
-            self.clear_all()
-
-    def refresh_fournisseurs(self):
-        self.fournisseur.clear()
-        for fournisseur, id_ in list(self.model.get_fournisseurs().items()):
-            self.fournisseur.addItem(fournisseur)
 
 class InputsArray(QDialog):
     def __init__(self, parent, model):

@@ -265,6 +265,9 @@ class MainWindow(QMainWindow):
     def add_product(self):
         self.product_form = ProductForm(self)
     
+    def add_fournisseur(self):
+        FournisseurForm(self)
+
     def add_repas(self):
         self.repas_window = RepasForm(self)
 
@@ -281,9 +284,6 @@ class MainWindow(QMainWindow):
 
     def edit_products(self):
         AllProducts(self)
-
-    def add_fournisseur(self):
-        FournisseurForm(self)
 
     def export_pdf_liste(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()

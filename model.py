@@ -802,6 +802,7 @@ class FournisseurModel(QSqlTableModel):
         super(FournisseurModel, self).__init__(parent, db)
 
         self.setTable('fournisseurs')
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.select()
 
 class PiqueniqueConfModel(QSqlTableModel):
