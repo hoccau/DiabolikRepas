@@ -466,6 +466,8 @@ class InputsArray(QDialog):
 
     def save_and_close(self):
         submited = self.model.submitAll()
+        if submited:
+            self.parent.model.qt_table_reserve.select()
         if not submited:
             error = self.model.lastError()
             logging.warning(error.text())
@@ -480,6 +482,7 @@ class RepasForm(Form):
     def __init__(self, parent=None, index=None):
         super(RepasForm, self).__init__(parent)
 
+        self.parent = parent
         self.model = parent.model.qt_table_repas
         self.type_model = self.model.relationModel(2)
         self.inputs_model = parent.model.qt_table_inputs
@@ -617,6 +620,7 @@ class RepasForm(Form):
         submited = self.output_model.submitAll()
         if submited:
             logging.info('outputs of repas ' + str(id_) + ' submited.')
+            self.parent.model.qt_table_reserve.select()
             self.accept()
         if not submited:
             error = self.output_model.lastError()
