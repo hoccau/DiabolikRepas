@@ -65,6 +65,7 @@ class Model(QSqlQueryModel):
         self.repas_prev_model = RepasPrevModel(self, self.db)
         self.plat_prev_model = PlatPrevModel(self, self.db)
         self.ingredient_prev_model = IngredientPrevQueryModel(self)
+        self.piquenique_conf_model = PiqueniqueConfModel(self, self.db)
 
     def get_fournisseurs(self):
         self.query.exec_("SELECT NOM, ID FROM fournisseurs")
@@ -843,6 +844,13 @@ class FournisseurModel(QSqlTableModel):
         super(FournisseurModel, self).__init__(parent, db)
 
         self.setTable('fournisseurs')
+        self.select()
+
+class PiqueniqueConfModel(QSqlTableModel):
+    def __init__(self, parent, db):
+        super().__init__(parent, db)
+
+        self.setTable('piquenique_conf')
         self.select()
 
 if '__main__' == __name__:

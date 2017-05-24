@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QCalendarWidget, QTableView, QComboBox, QTextEdit, QLabel, QVBoxLayout,
     QHBoxLayout, QCompleter, QDoubleSpinBox, QButtonGroup, QLineEdit, 
     QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit,
-    QAbstractItemView, QTabWidget)
+    QAbstractItemView, QTabWidget, QCheckBox, QSpinBox)
 from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray
 from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
@@ -888,10 +888,15 @@ class Previsionnel(QDialog):
     def __init__(self, parent):
         super(Previsionnel, self).__init__(parent)
 
+        self.current_repas_id = 1
         self.calendar = QCalendarWidget()
         self.calendar.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
         self.layout = QVBoxLayout()
         self.parent = parent
+        
+        self.repas_model = parent.model.repas_prev_model
+        self.plats_model = parent.model.plat_prev_model
+        self.ingredients_model = parent.model.ingredient_prev_model
 
         btn_names = [
             'petit déjeuner',
@@ -911,6 +916,8 @@ class Previsionnel(QDialog):
             self.repas_buttons_group.addButton(self.repas_buttons[name])
             self.repas_buttons_layout.addWidget(self.repas_buttons[name])
 
+        self.piquenique_box = PiqueniqueBox(self)
+
         self.add_repas_button = QPushButton('+')
         self.add_plat_button = QPushButton('+')
         self.add_ingredient_button = QPushButton('+')
@@ -929,15 +936,12 @@ class Previsionnel(QDialog):
 
         self.layout.addWidget(self.calendar)
         self.layout.addLayout(self.repas_buttons_layout)
+        self.layout.addWidget(self.piquenique_box)
         plats_ingrs_layout = QHBoxLayout()
         plats_ingrs_layout.addWidget(self.plats_box, 2)
         plats_ingrs_layout.addWidget(self.ingredients_box, 3)
         self.layout.addLayout(plats_ingrs_layout)
         self.setLayout(self.layout)
-        
-        self.repas_model = parent.model.repas_prev_model
-        self.plats_model = parent.model.plat_prev_model
-        self.ingredients_model = parent.model.ingredient_prev_model
         
         self.calendar.selectionChanged.connect(self.select_repas)
         self.plats_prev_view.clicked.connect(self.select_ingredient)
@@ -986,7 +990,31 @@ class Previsionnel(QDialog):
     def select_plat(self):
         # below: buttons must be in same order than db table
         id_ = self.repas_buttons_group.checkedId() * -1 -1
-        self.current_repas_id = id_
+        if id_ == 5: # piquenique
+            self.piquenique_box.model.revertAll()
+            self.piquenique_box.setVisible(True)
+            date = self.calendar.selectedDate()
+            self.repas_model.setFilter(
+                "date = '" + date.toString('yyyy-MM-dd') + "' AND type_id = "\
+                + str(id_))
+            logging.debug('repas:'+str(self.repas_model.rowCount()))
+            self.current_repas_id = self.repas_model.data(
+                self.repas_model.index(0, 0))
+            logging.debug('repas_id:'+str(self.current_repas_id))
+            if not self.current_repas_id:
+                self.current_repas_id = 0
+            self.piquenique_box.model.setFilter(
+                'repas_prev_id = ' + str(self.current_repas_id))
+            logging.debug(self.piquenique_box.model.lastError().text())
+            logging.debug(self.piquenique_box.model.query().lastQuery())
+            logging.debug(self.piquenique_box.model.rowCount())
+            if self.piquenique_box.model.rowCount() == 0:
+                self.piquenique_box.add_row()
+            self.piquenique_box.mapper.toLast()
+                
+        else:
+            self.piquenique_box.setVisible(False)
+
         self.plats_model.setFilter("relTblAl_2.type_id = " + str(id_)
             + " AND relTblAl_2.date = '" + str(
                 self.date.toString('yyyy-MM-dd') + "'"))
@@ -1089,6 +1117,72 @@ class Previsionnel(QDialog):
         submited = self.ingredients_model.submitAll()
         if not submited:
             logging.warning(self.ingredients_model.lastError().text())
+        
+class PiqueniqueBox(QGroupBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.model = parent.parent.model.piquenique_conf_model
+        
+        self.age6 = QSpinBox()
+        self.age6_12 = QSpinBox()
+        self.age12 = QSpinBox()
+        self.compute_button = QPushButton('(re)calculer')
+        self.submit_button = QPushButton('Enregistrer')
+        check_petit_dej = QCheckBox()
+        check_dej = QCheckBox()
+        check_gouter = QCheckBox()
+        check_diner = QCheckBox()
+        
+        self.mapper = QDataWidgetMapper()
+        self.mapper.setModel(self.model)
+        #self.mapper.addMapping(parent.current_repas_id, 1)
+        self.mapper.addMapping(self.age6, 2)
+        self.mapper.addMapping(self.age6_12, 3)
+        self.mapper.addMapping(self.age12, 4)
+        self.mapper.addMapping(check_petit_dej, 5)
+        self.mapper.addMapping(check_dej, 6)
+        self.mapper.addMapping(check_gouter, 7)
+        self.mapper.addMapping(check_diner, 8)
+        self.mapper.toLast()
+
+        h_layout = QHBoxLayout()
+        piquenique_layout = QFormLayout()
+        piquenique_layout.addRow('6', self.age6)
+        piquenique_layout.addRow('6-12', self.age6_12)
+        piquenique_layout.addRow('12', self.age12)
+        h_layout.addLayout(piquenique_layout)
+        p_repas_layout = QFormLayout()
+        p_repas_layout.addRow('petit déjeuner', check_petit_dej)
+        p_repas_layout.addRow('déjeuner', check_dej)
+        p_repas_layout.addRow('goûter', check_gouter)
+        p_repas_layout.addRow('diner', check_diner)
+        h_layout.addLayout(p_repas_layout)
+        h_layout.addWidget(self.compute_button)
+        h_layout.addWidget(self.submit_button)
+        self.setLayout(h_layout)
+
+        self.submit_button.clicked.connect(self.submit)
+
+    def add_row(self):
+        self.model.insertRow(self.model.rowCount())
+        for i in range(5, 9): # because checkboxes are not init
+            self.model.setData(
+                self.model.index(self.model.rowCount() -1, i), 0)
+        self.mapper.toLast()
+
+    def submit(self):
+        repas_id = self.parent.repas_model.data(
+                self.parent.repas_model.index(0, 0))
+        if not repas_id:
+            QMessageBox.warning(self, 'Erreur', 'Veuillez créer un plat')
+        self.model.setData(self.model.index(
+            self.model.rowCount() -1, 1), repas_id)
+        self.mapper.submit()
+        submited = self.model.submitAll()
+        if not submited:
+            error = self.model.lastError()
+            logging.warning(error.text())
 
 class PlatPrevisionnel(QWidget):
     """ not finished/used... """

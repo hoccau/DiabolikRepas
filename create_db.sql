@@ -113,6 +113,20 @@ INSERT INTO type_repas(type) VALUES ('dîner');
 INSERT INTO type_repas(type) VALUES ('piquenique');
 INSERT INTO type_repas(type) VALUES ('autre');
 
+CREATE TABLE piquenique_conf(
+    id INTEGER PRIMARY KEY,
+    repas_prev_id INTEGER,
+    nombre_enfants_6 int,
+    nombre_enfants_6_12 int,
+    nombre_enfants_12 int,
+    petit_dej int,
+    dej int,
+    gouter int,
+    diner int,
+    FOREIGN KEY (repas_prev_id) REFERENCES repas_prev(id) ON DELETE CASCADE
+    );
+CREATE UNIQUE INDEX idx_piquenique_conf ON piquenique_conf (repas_prev_id);
+
 CREATE TABLE outputs(
 id integer PRIMARY KEY,
 quantity real,
