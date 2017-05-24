@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
     def add_input(self):
         InputsArray(self, self.model.qt_table_inputs)
 
-    def add_product(self, name=None):
+    def add_product(self, name=''):
         self.product_form = ProductForm(self, name=name)
     
     def add_repas(self):

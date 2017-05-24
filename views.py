@@ -111,7 +111,7 @@ class AllProducts(QDialog):
         self.setLayout(layout)
 
         close_button.clicked.connect(self.close)
-        self.add_button.clicked.connect(parent.add_product)
+        self.add_button.clicked.connect(self.add_product)
         
         self.view.horizontalHeader().setMinimumHeight(50)
         self.resize(642, 376)
@@ -123,7 +123,7 @@ class AllProducts(QDialog):
         super().reject()
 
     def add_product(self):
-        ProductForm(self.parent)
+        ProductForm(self.parent, name='')
 
     def edit_product(self, index):
         ProductForm(self.parent, index.row())
@@ -397,7 +397,7 @@ class InputForm(Form):
                 self.product.clear()
                 return False
             if reponse == QMessageBox.Yes:
-                new_product = ProductForm(self, self.product.text())
+                new_product = ProductForm(self, name=self.product.text())
                 self.all_products_names = self.parent.model.get_all_products_names()
                 self.product_completer.setModel(QStringListModel(self.all_products_names))
                 self.product.setText(new_product.name.text())
@@ -997,21 +997,15 @@ class Previsionnel(QDialog):
             self.repas_model.setFilter(
                 "date = '" + date.toString('yyyy-MM-dd') + "' AND type_id = "\
                 + str(id_))
-            logging.debug('repas:'+str(self.repas_model.rowCount()))
             self.current_repas_id = self.repas_model.data(
                 self.repas_model.index(0, 0))
-            logging.debug('repas_id:'+str(self.current_repas_id))
             if not self.current_repas_id:
                 self.current_repas_id = 0
             self.piquenique_box.model.setFilter(
                 'repas_prev_id = ' + str(self.current_repas_id))
-            logging.debug(self.piquenique_box.model.lastError().text())
-            logging.debug(self.piquenique_box.model.query().lastQuery())
-            logging.debug(self.piquenique_box.model.rowCount())
             if self.piquenique_box.model.rowCount() == 0:
                 self.piquenique_box.add_row()
             self.piquenique_box.mapper.toLast()
-                
         else:
             self.piquenique_box.setVisible(False)
 
@@ -1106,10 +1100,9 @@ class Previsionnel(QDialog):
             id_ = m.data(m.index(row, 0))
             self.ingredients_model.del_row(id_=id_)
 
-    def set_auto_quantity(self, product, row):
+    def set_auto_q_fast(self, product, row):
         date = self.calendar.selectedDate().toString('yyyy-MM-dd')
-        quantity = self.parent.model.get_recommended_quantity(
-            date, product)
+        quantity = self.get_recommend_quantity(product, date)
         if quantity is not None:
             index = self.ingredients_model.index(row, 2) # 3: quantity column
             logging.debug(self.ingredients_model.data(index))
@@ -1117,6 +1110,39 @@ class Previsionnel(QDialog):
         submited = self.ingredients_model.submitAll()
         if not submited:
             logging.warning(self.ingredients_model.lastError().text())
+
+    def get_recommend_quantity(self, product, date, piquenique=None):
+        periodes_model = self.parent.model.qt_table_periodes_infos
+        products_model = self.parent.model.qt_table_products
+        enfants = periodes_model.get_enfants_by_date(date)
+        if not enfants:
+            QMessageBox.warning(self, "Erreur",
+                "Pas d'enfants trouvés pour cette période")
+            return False
+        if piquenique:
+            enfants = [x - piquenique[i] for i, x in enumerate(enfants)]
+        logging.debug(enfants)
+        recommends = products_model.get_recommends(product)
+        quantities = [x * recommends[i] for i, x in enumerate(enfants)]
+        return sum(quantities)
+
+    def compute_all_quantities(self):
+        piquenique_m = self.parent.model.piquenique_conf_model
+        enfants_piquenique = [piquenique_m.data(
+            piquenique_m.index(0, i)) for i in range(2, 5)]
+        logging.debug(enfants_piquenique)
+        sub_dishes = [i for i in range(1, 5) \
+            if piquenique_m.data(piquenique_m.index(0, i + 4)) == 1]
+        date = self.calendar.selectedDate().toString('yyyy-MM-dd')
+        ingrs = self.ingredients_model.get_all_by_date(date)
+        logging.debug(ingrs)
+        self.ingredients_model.setFilter('')
+        for id_, product, repas_type_id in ingrs:
+            has_enfants = None
+            if repas_type_id in sub_dishes:
+                has_enfants = enfants_piquenique
+            quantity = self.get_recommend_quantity(product, date, has_enfants)
+            self.ingredients_model.set_quantity(id_, quantity)
         
 class PiqueniqueBox(QGroupBox):
     def __init__(self, parent):
@@ -1136,7 +1162,6 @@ class PiqueniqueBox(QGroupBox):
         
         self.mapper = QDataWidgetMapper()
         self.mapper.setModel(self.model)
-        #self.mapper.addMapping(parent.current_repas_id, 1)
         self.mapper.addMapping(self.age6, 2)
         self.mapper.addMapping(self.age6_12, 3)
         self.mapper.addMapping(self.age12, 4)
@@ -1144,7 +1169,6 @@ class PiqueniqueBox(QGroupBox):
         self.mapper.addMapping(check_dej, 6)
         self.mapper.addMapping(check_gouter, 7)
         self.mapper.addMapping(check_diner, 8)
-        self.mapper.toLast()
 
         h_layout = QHBoxLayout()
         piquenique_layout = QFormLayout()
@@ -1183,6 +1207,8 @@ class PiqueniqueBox(QGroupBox):
         if not submited:
             error = self.model.lastError()
             logging.warning(error.text())
+        if submited:
+            self.parent.compute_all_quantities()
 
 class PlatPrevisionnel(QWidget):
     """ not finished/used... """
@@ -1381,6 +1407,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
         editor.setModel(self.model_p)
         editor.setModelColumn(1)
         editor.setEditable(True)
+        logging.debug(self.model_p.rowCount())
         editor.currentIndexChanged.connect(self.sender)
         return editor
     
@@ -1388,17 +1415,17 @@ class CompleterDelegate(QSqlRelationalDelegate):
         logging.debug(index.data())
         m = self.model_p
         logging.debug(m)
-        #products = [model.data(model.index(i, 1)) for i in range(model.rowCount())]
-        #logging.debug(products)
-        #logging.debug(editor.currentText())
+        products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
+        logging.debug(products)
         product_idx = editor.currentIndex()
         logging.debug(product_idx)
 
-        logging.debug(m.isDirty(m.index(product_idx, 1)))
+        #logging.debug(m.isDirty(m.index(product_idx, 1)))
+        logging.debug(editor.currentText())
         
         if not editor.currentText().rstrip(' '):
             logging.warning('Champs produit vide')
-        elif m.isDirty(m.index(product_idx, 1)):
+        elif m.isDirty(m.get_index_by_name(editor.currentText())):
             reponse = QMessageBox.question(
                 None, 'Produit inexistant', 
                 "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
@@ -1413,7 +1440,8 @@ class CompleterDelegate(QSqlRelationalDelegate):
                     #editor.setCurrentText(p)
                     pass
         else:
-            self.parent.set_auto_quantity(editor.currentText(), index.row())
+            #self.parent.set_auto_quantity(editor.currentText(), index.row())
+            self.parent.set_auto_q_fast(editor.currentText(), index.row())
             idx_product = m.index(editor.currentIndex(), 0)
             model.setData(index, m.data(idx_product), None)
             #super(CompleterDelegate, self).setModelData(editor, model, index)

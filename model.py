@@ -427,6 +427,14 @@ class PeriodesModel(QSqlTableModel):
             5, Qt.Horizontal, "Enfants de\n plus de 12 ans\n & adultes")
         self.select()
 
+    def get_enfants_by_date(self, date):
+        for row in range(self.rowCount()):
+            date_start = self.data(self.index(row, 1))
+            date_stop = self.data(self.index(row, 2))
+            if date_start <= date and date_stop >= date:
+                return [self.data(self.index(row, i)) for i in range(3, 6)]
+
+
 class ReserveModel(QSqlQueryModel):
     def __init__(self):
         super(ReserveModel, self).__init__()
@@ -662,8 +670,6 @@ class IngredientPrevQueryModel(QSqlQueryModel):
         #self.clear()
 
         if index.column() == 1:
-            logging.debug(id_)
-            logging.debug(value)
             ok = self.set_product(id_, value)
         elif index.column() == 2:
             ok = self.set_quantity(id_, value)
@@ -709,6 +715,26 @@ class IngredientPrevQueryModel(QSqlQueryModel):
         else:
             self.select()
             return True
+
+    def get_all_by_date(self, date):
+        """ id, product - without piquenique """
+        query = QSqlQuery("SELECT ingredients_prev.id, products.name, "\
+            + "repas_prev.type_id "\
+            + "FROM ingredients_prev "\
+            + "INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id "\
+            + "INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id "\
+            + "INNER JOIN products ON products.id = ingredients_prev.product_id "\
+            + "WHERE repas_prev.date = '" + date + "' "\
+            + "AND repas_prev.type_id != 5")
+            #(" + ', '.join([str(i) for i in type_ids]) + ')' )
+        if query.lastError().text().rstrip(' '):
+            logging.warning(query.lastError().text())
+            return False
+        else:
+            res = []
+            while query.next():
+                res.append([query.value(0), query.value(1), query.value(2)])
+            return res
     
     def del_row(self, id_=None):
         if id_:
@@ -775,6 +801,20 @@ class ProductsModel(QSqlRelationalTableModel):
         self.setHeaderData(4, Qt.Horizontal, "Quantité\n pour 6-12 ans")
         self.setHeaderData(5, Qt.Horizontal, "Quantité\n pour plus de\n 12 ans")
         self.select()
+        logging.debug(self.lastError().text())
+
+    def get_recommends(self, product):
+        for row in range(self.rowCount()):
+            if self.data(self.index(row, 1)) == product:
+                r = [self.data(self.index(row, i)) for i in range(3, 6)]
+                if self.data(self.index(row, 2)) in ('Litres', 'Kilogrammes'):
+                    r = [x / 1000. for x in r]
+                return r
+
+    def get_index_by_name(self, name):
+        for row in range(self.rowCount()):
+            if self.data(self.index(row, 1)) == name:
+                return self.index(row, 0)
 
 class PrevisionnelModel(QStandardItemModel):
     """ Used for QColumnView in tab"""
