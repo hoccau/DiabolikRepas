@@ -110,6 +110,19 @@ class Model(QSqlQueryModel):
             WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
         return self._query_to_lists(6)
 
+    def get_prev_products_for_export(self):
+        self.exec_(
+            "SELECT repas_prev.date, type_repas.type, dishes_prev.name, "\
+            + "products.name, quantity, units.unit, products.fournisseur_id "\
+            + "FROM ingredients_prev "\
+            + "INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id "\
+            + "INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id "\
+            + "INNER JOIN products ON products.id = ingredients_prev.product_id "\
+            + "INNER JOIN type_repas ON type_repas.id = repas_prev.type_id "\
+            + "INNER JOIN units ON units.id = products.unit_id "\
+            + "ORDER BY repas_prev.date")
+        return self._query_to_lists(6)
+
     def get_prev_ingrs(self, date, repas_type_id):
         self.exec_(
             "SELECT ingredients_prev.product_id, "\
@@ -781,6 +794,7 @@ class ProductsModel(QSqlRelationalTableModel):
         self.setHeaderData(3, Qt.Horizontal, "Quantité\n pour moins de\n 6 ans")
         self.setHeaderData(4, Qt.Horizontal, "Quantité\n pour 6-12 ans")
         self.setHeaderData(5, Qt.Horizontal, "Quantité\n pour plus de\n 12 ans")
+        self.setHeaderData(6, Qt.Horizontal, "Fournisseur")
         self.select()
         logging.debug(self.lastError().text())
 

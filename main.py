@@ -41,13 +41,15 @@ class MainWindow(QMainWindow):
         
         self.db_actions = {}
         self.db_actions['exportPdfListeAction'] = self.add_action(
-            '&Exporter la liste des courses', self.export_pdf_liste)
+            '&Liste des courses', self.export_pdf_liste)
         self.db_actions['exportPdfMenuAction'] = self.add_action(
-            '&Exporter les menus', self.export_pdf_menu)
+            '&Menus', self.export_pdf_menu)
         self.db_actions['exportPdfStockAction'] = self.add_action(
-            '&Exporter le stock', self.export_pdf_stock)
+            '&Stock', self.export_pdf_stock)
         self.db_actions['exportPdfPriceAction'] = self.add_action(
             '&Prix de journée', self.export_pdf_price)
+        self.db_actions['exportPdfPrevisionnelAction'] = self.add_action(
+            '&Prévisionnel', self.export_pdf_previsionnel)
         self.db_actions['delRowAction'] = self.add_action(
             '&Supprimer la ligne', self.remove_current_row, 'Del')
         self.db_actions['addFormAction'] = self.add_action(
@@ -83,6 +85,7 @@ class MainWindow(QMainWindow):
         export_menu.addAction(self.db_actions['exportPdfListeAction'])
         export_menu.addAction(self.db_actions['exportPdfMenuAction'])
         export_menu.addAction(self.db_actions['exportPdfStockAction'])
+        export_menu.addAction(self.db_actions['exportPdfPrevisionnelAction'])
         export_menu.addAction(self.db_actions['exportPdfPriceAction'])
         file_menu.addAction(exitAction)
         edit_menu = menubar.addMenu('&Édition')
@@ -323,6 +326,15 @@ class MainWindow(QMainWindow):
                 filename += '.pdf'
             import export_price
             export_price.create_pdf(filename, self.model, date)
+            
+    def export_pdf_previsionnel(self):
+        filename, _format = QFileDialog.getSaveFileName(
+            self, "Exporter le prévisionnel en PDF", None, 'PDF(*.pdf)')
+        if filename:
+            if filename[-4:] != '.pdf':
+                filename += '.pdf'
+            import export_previsionnel
+            export_previsionnel.create_pdf(filename, self.model)
 
     def init_prev_by_xml_repas(self):
         reponse = QMessageBox.question(
