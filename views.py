@@ -988,7 +988,10 @@ class Previsionnel(QDialog):
 
     def set_auto_q_fast(self, product, row):
         date = self.calendar.selectedDate().toString('yyyy-MM-dd')
-        quantity = self.get_recommend_quantity(product, date)
+        if self.repas_model.data(self.repas_model.index(0, 2)) == 'piquenique':
+            quantity = self.get_recommend_quantity_piquenique(product)
+        else:
+            quantity = self.get_recommend_quantity(product, date)
         if quantity is not None:
             index = self.ingredients_model.index(row, 2) # 3: quantity column
             logging.debug(self.ingredients_model.data(index))
@@ -1008,6 +1011,18 @@ class Previsionnel(QDialog):
         if piquenique:
             enfants = [x - piquenique[i] for i, x in enumerate(enfants)]
         logging.debug(enfants)
+        recommends = products_model.get_recommends(product)
+        quantities = [x * recommends[i] for i, x in enumerate(enfants)]
+        return sum(quantities)
+
+    def get_recommend_quantity_piquenique(self, product):
+        products_model = self.parent.model.qt_table_products
+        m = self.parent.model.piquenique_conf_model
+        enfants = [m.data(m.index(0, i)) for i in range(2, 5)]
+        if not enfants:
+            QMessageBox.warning(self, "Erreur",
+                "Pas d'enfants trouvés pour ce piquenique")
+            return False
         recommends = products_model.get_recommends(product)
         quantities = [x * recommends[i] for i, x in enumerate(enfants)]
         return sum(quantities)
