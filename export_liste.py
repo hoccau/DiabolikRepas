@@ -8,6 +8,7 @@ Export courses list as pdf file
 from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtGui import QTextDocument
 from PyQt5.QtPrintSupport import QPrinter
+from collections import OrderedDict
 import model
 
 def create_infos_table(model):
@@ -37,22 +38,31 @@ def create_about():
     return html
 
 def create_liste(products):
-    html = '<table border="1"><tr>'
-    html += '<th>Produit</th>'
-    html += '<th>quantité</th>'
-    html += '<th>unité de mesure</th>'
-    html += "</tr>"
-    for p in products:
-        html += '<tr><th>'\
-            +p[1]+'</th>'\
-            +'<th>'+str(round(p[2], 2))+'</th>'\
-            +'<th>'+p[3]+'</th></tr>'
-    html += '</table>'
+    fournisseurs = list(set([i[0] for i in products]))
+    dic = OrderedDict()
+    for fournisseur in fournisseurs:
+        dic[fournisseur] = []
+    for product in products:
+        dic[product[0]].append(product[1:])
+    html = ''
+    for fournisseur, product in dic.items():
+        html += '<h3>' + fournisseur + '</h3>'
+        html += '<table border="1"><tr>'
+        html += '<th>Produit</th>'
+        html += '<th>quantité</th>'
+        html += '<th>unité de mesure</th>'
+        html += "</tr>"
+        for p in product:
+            html += '<tr><th>'\
+            +p[0]+'</th>'\
+            +'<th>'+str(round(p[1], 2))+'</th>'\
+            +'<th>'+p[2]+'</th></tr>'
+        html += '</table>'
     return html
 
 def create_pdf(filename='foo.pdf', model=None, date_start=None, date_stop=None):
     infos_centre = model.get_infos()
-    products = model.get_prev_products_by_dates(date_start, date_stop)
+    products = model.get_prev_products_by_dates_for_courses(date_start, date_stop)
     
     #create header infos
     qdate_start = QDate.fromString(date_start,'yyyy-MM-dd')
@@ -82,4 +92,4 @@ if __name__ == '__main__':
     sqlmodel = model.Model()
     sqlmodel.connect_db(sys.argv[1])
     app = QApplication(sys.argv)
-    create_pdf(model=sqlmodel, date_start='2017-04-05', date_stop='2017-04-08')
+    create_pdf(model=sqlmodel, date_start='2017-05-24', date_stop='2017-05-25')

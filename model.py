@@ -99,6 +99,7 @@ class Model(QSqlQueryModel):
         return result
 
     def get_prev_products_by_dates(self, date_start, date_stop):
+        """ used for inputs -> import previsionnel """
         self.exec_(
             "SELECT ingredients_prev.id, products.id, products.name, quantity, "
             + "units.unit, products.fournisseur_id "\
@@ -110,7 +111,23 @@ class Model(QSqlQueryModel):
             WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
         return self._query_to_lists(6)
 
+    def get_prev_products_by_dates_for_courses(self, date_start, date_stop):
+        """ Almost the same request, but for liste PDF export """
+        self.exec_(
+            "SELECT fournisseurs.nom, products.name, total(quantity), units.unit "\
+            + "FROM ingredients_prev\
+            INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
+            INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id\
+            INNER JOIN products ON products.id = ingredients_prev.product_id\
+            INNER JOIN units ON units.id = products.unit_id\
+            INNER JOIN fournisseurs ON fournisseurs.id = products.fournisseur_id\
+            WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"' "\
+            + "GROUP BY products.id "\
+            + "ORDER BY fournisseurs.nom")
+        return self._query_to_lists(4)
+
     def get_prev_products_for_export(self):
+        """ Used for 'export previsionnel' """
         self.exec_(
             "SELECT repas_prev.date, type_repas.type, dishes_prev.name, "\
             + "products.name, quantity, units.unit, products.fournisseur_id "\
