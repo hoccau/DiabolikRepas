@@ -6,19 +6,18 @@ Diabolik Repas
 Logiciel d'économat léger pour centre de vacances
 """
 
+import logging
 from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, qApp, QAction, QTableView, 
-    QInputDialog, QMessageBox, QFileDialog)
+    QMainWindow, QApplication, qApp, QAction, QInputDialog, QMessageBox, 
+    QFileDialog)
 from PyQt5.QtCore import QSettings, QMimeDatabase
-from PyQt5.QtSql import QSqlRelationalDelegate
 from model import Model
 from views import (
-    ProductForm, RepasForm, InfosCentreDialog, RapportDialog,
-    Previsionnel, DatesRangeDialog, PrevisionnelColumnView, DateDelegate,
-    InputsArray, MainWidget, DateDialog, AllProducts, FournisseurForm)
+    ProductForm, RepasForm, InfosCentreDialog, RapportDialog, Previsionnel, 
+    DatesRangeDialog, InputsArray, MainWidget, DateDialog, AllProducts, 
+    FournisseurForm)
 import repas_xml_to_db
 import repas_db_to_xml
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -250,8 +249,8 @@ class MainWindow(QMainWindow):
                 return False
 
     def input_db_name(self):
-        name, ok = QInputDialog.getText(self, 'Input Dialog', 
-            'Entrez le nom de la base:')
+        name, ok = QInputDialog.getText(
+            self, 'Input Dialog', 'Entrez le nom de la base:')
         if ok and name != "":
             if name.split('.')[-1] != 'db':
                 name = name + '.db'
@@ -263,8 +262,8 @@ class MainWindow(QMainWindow):
     def add_input(self):
         InputsArray(self, self.model.qt_table_inputs)
 
-    def add_product(self, name=''):
-        self.product_form = ProductForm(self, name=name)
+    def add_product(self):
+        self.product_form = ProductForm(self)
     
     def add_repas(self):
         self.repas_window = RepasForm(self)
@@ -282,9 +281,6 @@ class MainWindow(QMainWindow):
 
     def edit_products(self):
         AllProducts(self)
-
-    def add_outputs(self, repas_id=None):
-        self.output_view = OutputForm(self, repas_id)
 
     def add_fournisseur(self):
         FournisseurForm(self)

@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*- 
 
+"""
+contains QT views and delegates
+"""
+
+import logging
 from PyQt5.QtWidgets import (
     QWidget, QDialog, QGroupBox, QStyledItemDelegate, QGridLayout, QPushButton,
     QCalendarWidget, QTableView, QComboBox, QTextEdit, QLabel, QVBoxLayout,
@@ -10,7 +15,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray
 from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
-import logging
 
 class MainWidget(QWidget):
     def __init__(self, parent):
@@ -804,7 +808,7 @@ class InfosCentreDialog(QDialog):
             date_start = QDate().fromString(last_date_stop, 'yyyy-MM-dd')
             date_start = date_start.addDays(1)
         if model.isDirty():
-            submited = model.submitAll()
+            model.submitAll()
         inserted = model.insertRow(nbr_rows)
         record = model.record()
         record.setValue('date_start', date_start.toString('yyyy-MM-dd'))
@@ -1050,14 +1054,6 @@ class Previsionnel(QDialog):
             QMessageBox.warning(self, 'Erreur', "Veuillez choisir un repas")
 
     def add_ingredient(self):
-        #inserted = self.ingredients_model.insertRow(self.ingredients_model.rowCount())
-        #record = self.ingredients_model.record()
-        #record.setValue(2, self.current_plat_id)
-        #record.setValue(3, 0) # quantité
-        #record_is_set = self.ingredients_model.setRecord(
-        #        self.ingredients_model.rowCount() -1, record)
-        #logging.debug(record_is_set)
-        #logging.debug(self.ingredients_model.lastError().text())
         inserted = self.ingredients_model.add_row(self.current_plat_id)
         if not inserted:
             if self.parent.model.qt_table_products.rowCount() == 0:
@@ -1067,7 +1063,7 @@ class Previsionnel(QDialog):
                     QMessageBox.Yes | QMessageBox.No,
                     QMessageBox.No)
                 if reponse == QMessageBox.Yes:
-                    p = ProductForm(self.parent)
+                    ProductForm(self.parent)
 
     def del_repas(self):
         reponse = QMessageBox.question(
@@ -1106,7 +1102,7 @@ class Previsionnel(QDialog):
         if quantity is not None:
             index = self.ingredients_model.index(row, 2) # 3: quantity column
             logging.debug(self.ingredients_model.data(index))
-            s = self.ingredients_model.setData(index, quantity, None)
+            self.ingredients_model.setData(index, quantity, None)
         submited = self.ingredients_model.submitAll()
         if not submited:
             logging.warning(self.ingredients_model.lastError().text())
@@ -1153,7 +1149,6 @@ class PiqueniqueBox(QGroupBox):
         self.age6 = QSpinBox()
         self.age6_12 = QSpinBox()
         self.age12 = QSpinBox()
-        self.compute_button = QPushButton('(re)calculer')
         self.submit_button = QPushButton('Enregistrer')
         check_petit_dej = QCheckBox()
         check_dej = QCheckBox()
@@ -1182,7 +1177,6 @@ class PiqueniqueBox(QGroupBox):
         p_repas_layout.addRow('goûter', check_gouter)
         p_repas_layout.addRow('diner', check_diner)
         h_layout.addLayout(p_repas_layout)
-        h_layout.addWidget(self.compute_button)
         h_layout.addWidget(self.submit_button)
         self.setLayout(h_layout)
 
@@ -1210,83 +1204,6 @@ class PiqueniqueBox(QGroupBox):
         if submited:
             self.parent.compute_all_quantities()
 
-class PlatPrevisionnel(QWidget):
-    """ not finished/used... """
-    def __init__(self, parent):
-        super(PlatPrevisionnel, self).__init__(parent)
-        self.model = parent.model.plat_prev_model
-        self.box = QGroupBox('Plat', self)
-
-        self.ingredients = []
-        self.type = QComboBox()
-        self.name = QLineEdit()
-        
-        vbox = QVBoxLayout(self)
-        vbox.addWidget(self.type)
-        vbox.addWidget(self.name)
-
-        self.box.setLayout(vbox)
-        layout = QBoxLayout()
-        layout.addWidget(self.box)
-        self.setLayout(layout)
-
-    def add_ingredient(self):
-        self.ingredients.append(IngredientPrevisionnel(self))
-
-    def refresh_type(self):
-        pass
-
-class IngredientPrevisionnel(QWidget):
-    """ not finished/used... """
-    def __init__(self, parent):
-        super(IngredientPrevisionnel, self).__init__(parent)
-        self.model = parent.model
-        self.box = QGroupBox('Ingredient', self)
-
-        self.name = QComboBox()
-        self.quantity = QDoubleSpinBox()
-        self.unit = QComboBox()
-        
-        self.name.setModel(self.model.rel_name)
-        self.name.setModelColumn(self.model.rel_type.fieldIndex('name'))
-        
-        vbox = QVBoxLayout(self)
-        vbox.addWidget(self.quantity)
-        vbox.addWidget(self.unit)
-
-        self.box.setLayout(vbox)
-        layout = QVBoxLayout()
-        layout.addWidget(self.box)
-        self.setLayout(layout)
-
-        mapper = QDataWidgetMapper(self)
-        mapper.setModel(self.model)
-        mapper.addMapping(self.name, self.model.fieldIndex("product_id"))
-        mapper.addMapping(self.quantity, self.model.fieldIndex("quantity"))
-        mapper.addMapping(self.unit, self.model.fieldIndex("unit"))
-
-class PrevisionnelColumnView(QGroupBox):
-    def __init__(self, parent):
-        super(PrevisionnelColumnView, self).__init__(parent)
-
-        self.previsionnel_model = parent.model.previsionnel_model
-        self.calendar = QCalendarWidget()
-        self.column_view = QColumnView()
-        self.column_view.setModel(self.previsionnel_model)
-        self.column_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.calendar)
-        layout.addWidget(self.column_view)
-        self.setLayout(layout)
-
-        self.calendar.selectionChanged.connect(self.select_repas)
-        self.select_repas()
-    
-    def select_repas(self):
-        self.date = self.calendar.selectedDate()
-        self.previsionnel_model.query_for_day(self.date.toString('yyyy-MM-dd'))
-
 class DateDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
@@ -1311,7 +1228,7 @@ class DateDialog(QDialog):
         return self.date.date().toString('yyyy-MM-dd')
 
 class DatesRangeDialog(QDialog):
-    def __init__(self, parent=None, name=""):
+    def __init__(self, parent=None):
         super(DatesRangeDialog, self).__init__(parent)
         
         self.date_start = QDateEdit()
@@ -1418,11 +1335,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
         products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
         logging.debug(products)
         product_idx = editor.currentIndex()
-        logging.debug(product_idx)
 
-        #logging.debug(m.isDirty(m.index(product_idx, 1)))
-        logging.debug(editor.currentText())
-        
         if not editor.currentText().rstrip(' '):
             logging.warning('Champs produit vide')
         elif m.isDirty(m.get_index_by_name(editor.currentText())):

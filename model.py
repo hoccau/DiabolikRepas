@@ -1,11 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*- 
 
+"""
+This file contains SQL queries and QT models
+"""
+
 from PyQt5.QtSql import (
-        QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, 
-        QSqlRelation, QSqlTableModel)
+    QSqlQueryModel, QSqlDatabase, QSqlQuery, QSqlRelationalTableModel, 
+    QSqlRelation, QSqlTableModel)
 from PyQt5.QtCore import Qt, QModelIndex, QAbstractTableModel, QVariant
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
 import logging
 
 DEBUG_SQL = True
@@ -22,7 +25,7 @@ class Model(QSqlQueryModel):
         if connected:
             with open('create_db.sql', 'r', encoding='utf-8') as create_db_file:
                 r = create_db_file.read()
-                r = r.replace('\n',' ')
+                r = r.replace('\n', ' ')
                 requests = r.split(';')[:-1] #remove the last because empty
             for req in requests:
                 self.exec_(req)
@@ -36,7 +39,7 @@ class Model(QSqlQueryModel):
             req = self.query.exec_()
         logging.debug(str(req) + ':' + self.query.lastQuery())
         if req == False:
-            logging.warning('SQL ERROR:', self.query.lastError().text())
+            logging.warning(self.query.lastError().text())
         return req
 
     def connect_db(self, db_name):
@@ -61,7 +64,6 @@ class Model(QSqlQueryModel):
         self.qt_table_outputs = OutputsModel(self, self.db)
         self.qt_table_inputs = InputsModel(self, self.db)
 
-        self.previsionnel_model = PrevisionnelModel()
         self.repas_prev_model = RepasPrevModel(self, self.db)
         self.plat_prev_model = PlatPrevModel(self, self.db)
         self.ingredient_prev_model = IngredientPrevQueryModel(self)
@@ -152,7 +154,7 @@ class Model(QSqlQueryModel):
         while self.query.next():
             dic = {}
             for i, value in enumerate(values):
-                dic[value] = self.query.value(i) 
+                dic[value] = self.query.value(i)
             records.append(dic)
         return records
 
@@ -183,7 +185,7 @@ class Model(QSqlQueryModel):
             FROM outputs\
             INNER JOIN products ON outputs.product_id = products.id\
             WHERE outputs.repas_id = "+str(id_)
-                )
+            )
         datas['outputs'] = []
         while self.query.next():
             datas['outputs'].append({
@@ -247,7 +249,7 @@ class Model(QSqlQueryModel):
             WHERE products.name = '"+product_name+"'")
         if self.query.first():
             return self.query.value(0)
-    
+
     def get_total(self):
         self.exec_("SELECT SUM(quantity * prix) FROM inputs")
         while self.query.next():
@@ -262,7 +264,7 @@ class Model(QSqlQueryModel):
         self.query.prepare(
             "INSERT INTO "+table+"("+",".join(dic.keys())+")\
             VALUES ("\
-            +','.join([':'+x for x in list(dic.keys()) ])+")"
+            + ','.join([':'+x for x in list(dic.keys())]) + ")"
             )
         for k, v in dic.items():
             self.query.bindValue(':'+k, v)
@@ -280,16 +282,16 @@ class Model(QSqlQueryModel):
             return req
 
     def add_output(self, datas):
-        logging.debug('outputs datas', datas)
+        logging.debug('outputs datas : ' + str(datas))
         self.query.prepare("INSERT INTO outputs(quantity, repas_id, product_id)"\
             +" VALUES("+str(datas['quantity'])+', '+str(datas['repas_id'])+', '+\
             str(datas['product_id'])+")")
 
     def add_product(self, product, unit_id, recommends):
         self.query.prepare(
-                "INSERT INTO products (name, unit_id, "\
-                + " recommended_6, recommended_6_12, recommended_12)"\
-                + " VALUES (:name, :unit_id, :r_6, :r_6_12, :r_12)")
+            "INSERT INTO products (name, unit_id, "\
+            + " recommended_6, recommended_6_12, recommended_12)"\
+            + " VALUES (:name, :unit_id, :r_6, :r_6_12, :r_12)")
         self.query.bindValue(':name', product)
         self.query.bindValue(':unit_id', unit_id)
         self.query.bindValue(':r_6', recommends[0])
@@ -318,23 +320,23 @@ class Model(QSqlQueryModel):
             l += [str(k) + "='" + str(v)+"'"]
         success = self.exec_("UPDATE "+table+" SET "+', '.join(l)+\
         ' WHERE '+qfilter_key+" = '"+qfilter_value+"'")
-        logging.info('update success', success)
+        logging.info('update success : ' + str(success))
         return success
 
     def auto_fill_query(self, date, type_):
         self.exec_(
-                "SELECT products.name,\
-                ingredients_prev.quantity,\
-                units.unit FROM ingredients_prev\
-                INNER JOIN units on units.id = ingredients_prev.unit_id\
-                INNER JOIN products ON products.id = ingredients_prev.product_id\
-                INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
-                INNER JOIN repas_prev on repas_prev.id = dishes_prev.repas_prev_id\
-                WHERE repas_prev.date = '"+date+"'\
-                AND repas_prev.type_id = \
-                (SELECT id from type_repas WHERE type_repas.type = '"+type_+"')")
+            "SELECT products.name,\
+            ingredients_prev.quantity,\
+            units.unit FROM ingredients_prev\
+            INNER JOIN units on units.id = ingredients_prev.unit_id\
+            INNER JOIN products ON products.id = ingredients_prev.product_id\
+            INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
+            INNER JOIN repas_prev on repas_prev.id = dishes_prev.repas_prev_id\
+            WHERE repas_prev.date = '"+date+"'\
+            AND repas_prev.type_id = \
+            (SELECT id from type_repas WHERE type_repas.type = '"+type_+"')")
         return self._query_to_lists(3)
-    
+
     def delete(self, table, qfilter_key, qfilter_value):
         self.exec_('DELETE FROM '+table+' WHERE '+qfilter_key+' = '+"'"+qfilter_value+"'")
 
@@ -369,7 +371,6 @@ class Model(QSqlQueryModel):
         else:
             logging.warning('Pas de produit trouvé')
             return False
-        total = 0
         res = [x * recommends[i] for i, x in enumerate(nbr_enfants)]
         logging.debug(res)
         res = sum(res)
@@ -434,7 +435,6 @@ class PeriodesModel(QSqlTableModel):
             if date_start <= date and date_stop >= date:
                 return [self.data(self.index(row, i)) for i in range(3, 6)]
 
-
 class ReserveModel(QSqlQueryModel):
     def __init__(self):
         super(ReserveModel, self).__init__()
@@ -455,18 +455,18 @@ class ReserveTableModel(QAbstractTableModel):
     def __init__(self, parent=None):
         super(ReserveTableModel, self).__init__(parent)
         self.select()
-    
+ 
     # not sure that it is the more efficient way, but it's work. 
     def select(self):
         self.inputs = {}
         query = QSqlQuery(
-                "SELECT products.name as produit,\
-                sum(inputs.quantity),\
-                units.unit\
-                FROM inputs\
-                INNER JOIN products ON inputs.product_id = products.id\
-                INNER JOIN units ON units.id = products.unit_id\
-                GROUP BY products.id")
+            "SELECT products.name as produit,\
+            sum(inputs.quantity),\
+            units.unit\
+            FROM inputs\
+            INNER JOIN products ON inputs.product_id = products.id\
+            INNER JOIN units ON units.id = products.unit_id\
+            GROUP BY products.id")
         query.exec_()
         while query.next():
             self.inputs[query.value(0)] = [query.value(1), query.value(2)]
@@ -485,7 +485,7 @@ class ReserveTableModel(QAbstractTableModel):
                 logging.warning("Ce produit est en sortie sans être en entrée : "\
                     + query.value(0))
                 self.inputs[query.value(0)] = [
-                    query.value(1) * -1, 
+                    query.value(1) * -1,
                     query.value(2)]
 
         self.data_table = [[k, v[0], v[1]] for k, v in sorted(self.inputs.items())]
@@ -526,7 +526,7 @@ class RepasModel(QSqlRelationalTableModel):
 
         self.setTable("repas")
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
-        f_rel = QSqlRelation("type_repas","id","type")
+        f_rel = QSqlRelation("type_repas", "id", "type")
         self.setRelation(2, f_rel)
         self.setHeaderData(0, Qt.Horizontal, "Identification")
         self.setHeaderData(2, Qt.Horizontal, "Type")
@@ -546,7 +546,7 @@ class RepasPrevModel(AbstractPrevisionnelModel):
         super(RepasPrevModel, self).__init__(parent, db)
 
         self.setTable("repas_prev")
-        f_rel = QSqlRelation("type_repas","id","type")
+        f_rel = QSqlRelation("type_repas", "id", "type")
         self.setRelation(2, f_rel)
         self.rel_type = self.relationModel(2) #QsqlTable for combo box
         #self.setHeaderData(2, Qt.Horizontal, "Type")
@@ -581,10 +581,10 @@ class RepasPrevModel(AbstractPrevisionnelModel):
 class PlatPrevModel(AbstractPrevisionnelModel):
     def __init__(self, parent, db):
         super(PlatPrevModel, self).__init__(parent, db)
-        
+
         self.setTable("dishes_prev")
-        rel2 = QSqlRelation("repas_prev","id","date")
-        rel3 = QSqlRelation("dishes_types","id","type")
+        rel2 = QSqlRelation("repas_prev", "id", "date")
+        rel3 = QSqlRelation("dishes_types", "id", "type")
         self.setRelation(2, rel2)
         self.setRelation(3, rel3)
         self.type_repas_model = self.relationModel(3) #QsqlTable for combo box
@@ -600,7 +600,7 @@ class PlatPrevModel(AbstractPrevisionnelModel):
             logging.warning(query.lastQuery())
             logging.warning(query.lastError().text())
         self.select()
-    
+
     def del_row(self, id=None):
         if id:
             query = QSqlQuery("DELETE FROM dishes_prev WHERE id ="+str(id))
@@ -613,9 +613,9 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
 
         self.setTable('ingredients_prev')
         self.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
-        rel1 = QSqlRelation("products","id","name")
-        rel2 = QSqlRelation("dishes_prev","id","name")
-        rel4 = QSqlRelation("units","id","unit")
+        rel1 = QSqlRelation("products", "id", "name")
+        rel2 = QSqlRelation("dishes_prev", "id", "name")
+        rel4 = QSqlRelation("units", "id", "unit")
         self.setRelation(1, rel1)
         self.setRelation(2, rel2)
         self.setRelation(4, rel4)
@@ -625,8 +625,6 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
         self.rel_name.sort(1, Qt.SortOrder(0))
         self.rel_name.setEditStrategy(QSqlTableModel.OnFieldChange)
         self.rel_unit = self.relationModel(4) #QsqlTable for combo box
-        
-        #self.dataChanged.connect(self.rel_name.select)
 
         self.setHeaderData(1, Qt.Horizontal, "produit")
         self.setHeaderData(2, Qt.Horizontal, "repas")
@@ -639,7 +637,7 @@ class IngredientPrevModel(AbstractPrevisionnelModel):
                 product_id, dishes_prev_id, quantity)\
                 VALUES(1, "+str(plat_id)+", 0)")
         self.select()
-    
+
     def del_row(self, id=None):
         if id:
             query = QSqlQuery("DELETE FROM ingredients_prev WHERE id ="+str(id))
@@ -683,7 +681,7 @@ class IngredientPrevQueryModel(QSqlQueryModel):
             + "INNER JOIN products ON products.id = ingredients_prev.product_id " \
             + "INNER JOIN units ON units.id = products.unit_id "
         if self.filter:
-            q += self.filter 
+            q += self.filter
         self.setQuery(q)
 
     def set_product(self, id_, product_id):
@@ -703,7 +701,7 @@ class IngredientPrevQueryModel(QSqlQueryModel):
     def setFilter(self, filter_):
         self.filter = ' WHERE '+filter_
         self.select()
-    
+
     def add_row(self, plat_id):
         logging.debug(plat_id)
         query = QSqlQuery("INSERT INTO ingredients_prev(\
@@ -735,7 +733,7 @@ class IngredientPrevQueryModel(QSqlQueryModel):
             while query.next():
                 res.append([query.value(0), query.value(1), query.value(2)])
             return res
-    
+
     def del_row(self, id_=None):
         if id_:
             query = QSqlQuery("DELETE FROM ingredients_prev WHERE id ="+str(id_))
@@ -743,23 +741,6 @@ class IngredientPrevQueryModel(QSqlQueryModel):
 
     def submitAll(self):
         logging.debug('submitAll')
-
-
-class OutputsReadModel(QSqlQueryModel):
-    def __init__(self):
-        super(OutputsModel, self).__init__()
-        self.select()
-    
-    def select(self):
-        self.setQuery("SELECT\
-        products.name, outputs.quantity, repas.date, type_repas.type AS 'pour le'\
-        FROM outputs\
-        INNER JOIN repas ON outputs.repas_id = repas.id\
-        INNER JOIN type_repas ON repas.type_id = type_repas.id\
-        INNER JOIN products ON outputs.product_id = products.id\
-        ")
-        self.setHeaderData(0, Qt.Horizontal, "Nom")
-        self.setHeaderData(1, Qt.Horizontal, "quantité")
 
 class OutputsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
@@ -776,23 +757,23 @@ class InputsModel(QSqlRelationalTableModel):
 
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("inputs")
-        fournisseur_rel = QSqlRelation("fournisseurs","id","nom")
-        product_rel = QSqlRelation("products","id","name")
+        fournisseur_rel = QSqlRelation("fournisseurs", "id", "nom")
+        product_rel = QSqlRelation("products", "id", "name")
         self.setRelation(1, fournisseur_rel)
         self.setRelation(3, product_rel)
         self.setHeaderData(1, Qt.Horizontal, "Fournisseur")
         self.setHeaderData(3, Qt.Horizontal, "Produit")
         self.setHeaderData(6, Qt.Horizontal, "Quantité")
         self.select()
-    
+
 class ProductsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
         super(ProductsModel, self).__init__(parent, db)
 
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("products")
-        units_rel = QSqlRelation("units","id","unit")
-        fournisseur_rel = QSqlRelation("fournisseurs","id","nom")
+        units_rel = QSqlRelation("units", "id", "unit")
+        fournisseur_rel = QSqlRelation("fournisseurs", "id", "nom")
         self.setRelation(2, units_rel)
         self.setRelation(6, fournisseur_rel)
         self.setHeaderData(1, Qt.Horizontal, "Nom")
@@ -816,69 +797,6 @@ class ProductsModel(QSqlRelationalTableModel):
             if self.data(self.index(row, 1)) == name:
                 return self.index(row, 0)
 
-class PrevisionnelModel(QStandardItemModel):
-    """ Used for QColumnView in tab"""
-    def __init__(self):
-        super(PrevisionnelModel, self).__init__()
-        query_all = QSqlQuery(
-            "SELECT repas_prev.name as repas, repas_prev.date, dishes_prev.name as plat, products.name as ingredient, ingredients_prev.quantity, units.unit FROM repas_prev\
-            INNER JOIN dishes_prev ON dishes_prev.repas_prev_id = repas_prev.id\
-            INNER JOIN ingredients_prev ON ingredients_prev.dishes_prev_id = dishes_prev.id\
-            INNER JOIN products ON ingredients_prev.product_id = products.id\
-            INNER JOIN units ON ingredients_prev.unit_id = units.id\
-            WHERE repas_prev.date = '2017-04-01'")
-        self.query_for_day('2017-31-03')
-
-    def query_for_day(self, date):
-        self.clear()
-        self.setColumnCount(2)
-        self.root = self.invisibleRootItem()
-        query = QSqlQuery(
-            "SELECT repas_prev.id, repas_prev.name, type_repas.type FROM repas_prev\
-            INNER JOIN type_repas ON type_repas.id = repas_prev.type_id\
-            WHERE repas_prev.date = '"+date+"'")
-        repas_items = {}
-        while query.next():
-            repas_items[query.value(0)] =\
-                QStandardItem(query.value(1)+' ('+query.value(2)+')')
-        for repas_id, repas_item in repas_items.items():
-            self.root.appendRow(repas_item) # ......
-            query = QSqlQuery(
-                "SELECT dishes_prev.id, name as plat, dishes_types.type\
-                FROM dishes_prev\
-                INNER JOIN dishes_types ON dishes_prev.type_id = dishes_types.id\
-                WHERE repas_prev_id = "+str(repas_id))
-            plats_items = {}
-            while query.next():
-                plats_items[query.value(0)] =\
-                        QStandardItem(query.value(1)+' ('+query.value(2)+')')
-            for plat_id, plat_item in plats_items.items():
-                repas_items[repas_id].appendRow(plat_item)
-                query = QSqlQuery(
-                    "SELECT ingredients_prev.id,\
-                    products.name as ingredient,\
-                    ingredients_prev.quantity,\
-                    units.unit\
-                    FROM ingredients_prev\
-                    INNER JOIN products ON products.id = ingredients_prev.product_id\
-                    INNER JOIN units ON products.unit_id = units.id\
-                    WHERE dishes_prev_id = "+str(plat_id))
-                if query.lastError().text().rstrip(' '):
-                    logging.warning(query.lastError().text())
-                ingredients_items = {}
-                while query.next():
-                    ingredients_items[query.value(0)] =\
-                        QStandardItem(query.value(1)\
-                        +' ('+str(round(query.value(2),2))+' '+query.value(3)+')')
-                for ingr_id, ingr_item in ingredients_items.items():
-                    plats_items[plat_id].appendRow(ingr_item)
-        
-    def prepareRow(self, array):
-        items = [QStandardItem(item) for item in array]
-        items_row = QStandardItem()
-        items_row.appendRow(items)
-        return items_row
-
 class FournisseurModel(QSqlTableModel):
     def __init__(self, parent, db):
         super(FournisseurModel, self).__init__(parent, db)
@@ -893,6 +811,6 @@ class PiqueniqueConfModel(QSqlTableModel):
         self.setTable('piquenique_conf')
         self.select()
 
-if '__main__' == __name__:
-    m = Model()
-    m.create_db('aa.db')
+if __name__ == '__main__':
+    model = Model()
+    model.create_db('aa.db')
