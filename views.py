@@ -369,6 +369,7 @@ class InputsArray(QDialog):
 
         self.calendar = QCalendarWidget()
         self.calendar.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
+        self.date = self.calendar.selectedDate()
         self.view = QTableView(self)
         self.view.setModel(model)
         self.view.setSortingEnabled(True)
@@ -377,6 +378,8 @@ class InputsArray(QDialog):
         self.view.setItemDelegate(sql_delegate)
         date_delegate = DateDelegate()
         self.view.setItemDelegateForColumn(2, date_delegate)
+        products_delegate = ProductInputDelegate(self) 
+        self.view.setItemDelegateForColumn(3, products_delegate)
         self.view.hideColumn(0) # hide id
         self.view.hideColumn(2) # hide date
         self.view.hideColumn(4) # hide ingredient_prev_id
@@ -412,6 +415,7 @@ class InputsArray(QDialog):
 
         self.resize(660, 360)
         self.exec_()
+        self.set_day_filter()
 
     def set_day_filter(self):
         self.date = self.calendar.selectedDate()
@@ -422,6 +426,10 @@ class InputsArray(QDialog):
         if self.model.isDirty():
             submited = self.model.submitAll()
         inserted = self.model.insertRow(self.model.rowCount())
+        if inserted:
+            self.model.setData(
+                self.model.index(self.model.rowCount() -1, 2),
+                self.date.toString('yyyy-MM-dd'))
         logging.debug(inserted)
     
     def del_row(self):
@@ -1310,6 +1318,18 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
         #logging.debug(value) # il faut récupéreer l'ID, pas le résultat de la relation...o
         logging.debug(product_id)
         model.setData(index, product_id)
+
+class ProductInputDelegate(QSqlRelationalDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+
+    def createEditor(self, parent, option, index):
+        editor = QComboBox(parent)
+        model_products = self.parent.parent.model.qt_table_products
+        editor.setModel(model_products)
+        editor.setModelColumn(1)
+        return editor
 
 class FComboBox(QComboBox):
     """ not used, just for remember the focusOutEvent possibility.
