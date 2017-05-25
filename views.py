@@ -1296,10 +1296,10 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
         #model_products = index.model().relationModel(3)
-        model_products = self.parent.inputs_proxy
+        model_products = self.parent.parent.model.qt_table_products
         logging.debug(model_products)
         editor.setModel(model_products)
-        editor.setModelColumn(3)
+        editor.setModelColumn(1)
         editor.setEditable(True)
         #editor.currentIndexChanged.connect(self.sender)
         return editor
