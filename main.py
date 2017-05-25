@@ -144,8 +144,9 @@ class MainWindow(QMainWindow):
                 QMessageBox.No)
             if reponse == QMessageBox.Yes:
                 removed = current_table_widget.model().removeRow(row)
-                submited = current_table_widget.model().submitAll()
-                if not removed or not submited:
+                self.model.qt_table_inputs.submitAll()
+                self.model.qt_table_repas.submitAll()
+                if not removed:
                     message = 'Suppression échouée.'
                     logging.warning(message)
                     QMessageBox.warning(self, 'Erreur', message)
