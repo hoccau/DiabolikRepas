@@ -12,7 +12,9 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QCompleter, QDoubleSpinBox, QButtonGroup, QLineEdit, 
     QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit,
     QAbstractItemView, QTabWidget, QCheckBox, QSpinBox)
-from PyQt5.QtCore import QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray
+from PyQt5.QtCore import (
+    QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray, 
+    QSortFilterProxyModel)
 from PyQt5.QtGui import QRegExpValidator, QPen, QPalette, QIcon
 from PyQt5.QtSql import QSqlRelationalDelegate
 
@@ -55,7 +57,9 @@ class MainWidget(QWidget):
     
     def _add_table_model(self, model, name, size=None):
         table = QTableView(self)
-        table.setModel(model)
+        proxy = QSortFilterProxyModel()
+        proxy.setSourceModel(model)
+        table.setModel(proxy)
         table.setItemDelegate(QSqlRelationalDelegate())
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table.setSortingEnabled(True)
@@ -484,8 +488,10 @@ class RepasForm(Form):
 
         self.parent = parent
         self.model = parent.model.qt_table_repas
+        self.products_model = parent.model.qt_table_products
         self.type_model = self.model.relationModel(2)
-        self.inputs_model = parent.model.qt_table_inputs
+        self.inputs_proxy = QSortFilterProxyModel()
+        self.inputs_proxy.setSourceModel(parent.model.qt_table_inputs)
 
         self.mapper = QDataWidgetMapper(self)
         self.mapper.setModel(self.model)
@@ -568,6 +574,11 @@ class RepasForm(Form):
             self.output_model.submitAll()
         nbr_rows = self.output_model.rowCount()
         inserted = self.output_model.insertRow(nbr_rows)
+        if inserted:
+            id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
+            self.output_model.setData(
+                self.output_model.index(self.output_model.rowCount() - 1, 2),
+                id_)
         logging.debug(inserted)
 
     def del_output_row(self):
@@ -602,7 +613,7 @@ class RepasForm(Form):
     def submit_datas(self):
         repas_submited = self.model.submitAll()
         if repas_submited:
-            id_ = self.model.data(self.index)
+            id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
             logging.info('repas ' + str(id_) + ' submited.')
             self.submit_output(id_)
         if not repas_submited:
@@ -1277,25 +1288,28 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
         #model_products = index.model().relationModel(3)
-        model_products = self.parent.inputs_model
+        model_products = self.parent.inputs_proxy
         logging.debug(model_products)
         editor.setModel(model_products)
         editor.setModelColumn(3)
         editor.setEditable(True)
-        editor.currentIndexChanged.connect(self.sender)
+        #editor.currentIndexChanged.connect(self.sender)
         return editor
 
     def setModelData(self, editor, model, index):
-        output_model = model
-        input_model = editor.model()
-        product_model = input_model.relationModel(3)
-        index_input = input_model.index(editor.currentIndex(), 3)
-        name = input_model.data(index_input)
-        if name:
-            product_model.setFilter("name = '" + name + "'")
-        value = product_model.data(product_model.index(0, 0))
-        logging.debug(value) # il faut récupéreer l'ID, pas le résultat de la relation...
-        model.setData(index, value)
+        #output_model = model
+        #input_model = editor.model()
+        #product_model = input_model.relationModel(3)
+        #index_input = input_model.index(editor.currentIndex(), 3)
+        product_id = self.parent.products_model.get_index_by_name(
+            editor.currentText()).data()
+        #name = input_model.data(index_input)
+        #if name:
+        #    product_model.setFilter("name = '" + name + "'")
+        #value = product_model.data(product_model.index(0, 0))
+        #logging.debug(value) # il faut récupéreer l'ID, pas le résultat de la relation...o
+        logging.debug(product_id)
+        model.setData(index, product_id)
 
 class FComboBox(QComboBox):
     """ not used, just for remember the focusOutEvent possibility.
