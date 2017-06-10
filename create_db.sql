@@ -157,3 +157,19 @@ ingredient_id INTEGER NOT NULL,
 FOREIGN KEY (dish_id) REFERENCES dishes(id)
 FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
 );
+
+CREATE VIEW `xml_export` AS
+SELECT repas_prev.id, repas_prev.date, type_repas.type, 
+dishes_prev.id, dishes_prev.name, dishes_types.type,
+ingredients_prev.id, products.name, products.recommended_6, products.recommended_6_12, 
+products.recommended_12, quantity, units.unit, 
+infos_periodes.nombre_enfants_6, infos_periodes.nombre_enfants_6_12, infos_periodes.nombre_enfants_12 
+FROM ingredients_prev 
+INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id
+INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id 
+INNER JOIN products ON products.id = ingredients_prev.product_id 
+INNER JOIN type_repas ON type_repas.id = repas_prev.type_id 
+INNER JOIN dishes_types ON dishes_prev.type_id = dishes_types.id
+INNER JOIN units ON units.id = products.unit_id 
+INNER JOIN infos_periodes ON repas_prev.date >= infos_periodes.date_start 
+AND repas_prev.date <=infos_periodes.date_stop ORDER BY repas_prev.date;
