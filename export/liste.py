@@ -5,31 +5,13 @@
 Export courses list as pdf file
 """
 
+import logging
 from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtGui import QTextDocument
 from PyQt5.QtPrintSupport import QPrinter
 from collections import OrderedDict
 import model
-
-def create_infos_table(model):
-    infos = model.get_infos()
-    html = '<table border="1"><tr>'
-    html += '<th> Nom du directeur</th>'
-    html += '<th> Lieu</th>'
-    html += "<th> Enfants de moins de 6 ans</th>"
-    html += "<th> Enfants entre 6 ans et 12 ans</th>"
-    html += "<th> Enfants de plus de 12 ans</th>"
-    html += "<th> Début du séjour</th>"
-    html += "<th> Fin du séjour</th>"
-    html += "</tr><tr>"
-    html += "<th>"+infos['directeur_nom']+"</th>"
-    html += "<th>"+infos['place']+"</th>"
-    #start_date = QDate.fromString(infos['startdate'],'yyyy-MM-dd')
-    #end_date = QDate.fromString(infos['enddate'],'yyyy-MM-dd')
-    #html += "<th>"+start_date.toString('dd/MM/yyyy')+"</th>"
-    #html += "<th>"+end_date.toString('dd/MM/yyyy')+"</th>"
-    html += '</tr></table>'
-    return html
+from .utils import create_infos_table
 
 def create_about():
     html = 'Généré par Diabolik Repas le <span id="date">'
@@ -39,6 +21,7 @@ def create_about():
 
 def create_liste(products):
     fournisseurs = list(set([i[0] for i in products]))
+    logging.debug('fournisseurs:' + str(fournisseurs))
     dic = OrderedDict()
     for fournisseur in fournisseurs:
         dic[fournisseur] = []
@@ -62,7 +45,8 @@ def create_liste(products):
 
 def create_pdf(filename='foo.pdf', model=None, date_start=None, date_stop=None):
     infos_centre = model.get_infos()
-    products = model.get_prev_products_by_dates_for_courses(date_start, date_stop)
+    products = model.get_prev_products_by_dates_for_courses(
+        date_start, date_stop)
     
     #create header infos
     qdate_start = QDate.fromString(date_start,'yyyy-MM-dd')

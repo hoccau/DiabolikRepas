@@ -112,18 +112,11 @@ class Model(QSqlQueryModel):
         return self._query_to_lists(6)
 
     def get_prev_products_by_dates_for_courses(self, date_start, date_stop):
-        """ Almost the same request, but for liste PDF export """
+        """ Almost the same request, but for liste PDF export. liste_courses
+        is a view. """
         self.exec_(
-            "SELECT fournisseurs.nom, products.name, total(quantity), units.unit "\
-            + "FROM ingredients_prev\
-            INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id\
-            INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id\
-            INNER JOIN products ON products.id = ingredients_prev.product_id\
-            INNER JOIN units ON units.id = products.unit_id\
-            INNER JOIN fournisseurs ON fournisseurs.id = products.fournisseur_id\
-            WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"' "\
-            + "GROUP BY products.id "\
-            + "ORDER BY fournisseurs.nom")
+            "SELECT * FROM liste_courses "\
+            + "WHERE date BETWEEN '" + date_start + "' AND '" + date_stop + "'")
         return self._query_to_lists(4)
 
     def get_prev_products_for_export(self):
@@ -802,6 +795,7 @@ class ProductsModel(QSqlRelationalTableModel):
 
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.setTable("products")
+        self.setJoinMode(QSqlRelationalTableModel.LeftJoin)
         units_rel = QSqlRelation("units", "id", "unit")
         fournisseur_rel = QSqlRelation("fournisseurs", "id", "nom")
         self.setRelation(2, units_rel)

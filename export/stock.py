@@ -8,7 +8,7 @@ Export Stock as pdf file
 from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtPrintSupport import QPrinter
 import model
-from pdf_utils import html_doc
+from .utils import html_doc
 
 def create_pdf(filename='stock.pdf', model=None):
     html = header(model) + html_stock(model)

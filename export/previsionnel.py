@@ -8,7 +8,7 @@ Export Previsionnel for chef as pdf file
 from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtPrintSupport import QPrinter
 import model
-from pdf_utils import html_doc
+from .utils import html_doc, create_infos_table
 from collections import OrderedDict
 
 def create_pdf(filename='previsionnel.pdf', model=None):
@@ -29,7 +29,7 @@ def html_stock(model):
     nbr_rows = model.qt_table_reserve.rowCount()
     nbr_cols = model.qt_table_reserve.columnCount()
     datas = model.get_prev_products_for_export()
-    dates = list(set([i[0] for i in datas]))
+    dates = sorted(list(set([i[0] for i in datas])))
     dic = OrderedDict()
     for date in dates:
         dic[date] = OrderedDict([

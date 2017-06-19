@@ -296,8 +296,8 @@ class MainWindow(QMainWindow):
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
-            import export_liste
-            export_liste.create_pdf(filename, self.model, date_start, date_stop)
+            from export import liste
+            liste.create_pdf(filename, self.model, date_start, date_stop)
 
     def export_pdf_stock(self):
         filename, _format = QFileDialog.getSaveFileName(
@@ -305,7 +305,7 @@ class MainWindow(QMainWindow):
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
-            import export_stock
+            from export import stock
             export_stock.create_pdf(filename, self.model)
 
     def export_pdf_menu(self):
@@ -315,8 +315,8 @@ class MainWindow(QMainWindow):
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
-            import export_menus
-            export_menus.create_pdf(filename, self.model, date_start, date_stop)
+            from export import menu
+            menu.create_pdf(filename, self.model, date_start, date_stop)
 
     def export_pdf_price(self):
         date = DateDialog(self).get_date()
@@ -325,8 +325,8 @@ class MainWindow(QMainWindow):
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
-            import export_price
-            export_price.create_pdf(filename, self.model, date)
+            from export import price
+            price.create_pdf(filename, self.model, date)
             
     def export_pdf_previsionnel(self):
         filename, _format = QFileDialog.getSaveFileName(
@@ -334,8 +334,8 @@ class MainWindow(QMainWindow):
         if filename:
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
-            import export_previsionnel
-            export_previsionnel.create_pdf(filename, self.model)
+            from export import previsionnel
+            previsionnel.create_pdf(filename, self.model)
 
     def init_prev_by_xml_repas(self):
         reponse = QMessageBox.question(

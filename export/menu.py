@@ -10,12 +10,12 @@ from PyQt5.QtPrintSupport import QPrinter
 from PyQt5.QtGui import QPageLayout
 from collections import OrderedDict
 import model
-from pdf_utils import html_doc
+from .utils import html_doc, create_infos_table
 
 def create_pdf(filename='menu.pdf', model=None, date_start=None, date_stop=None):
     menu = get_menu_dict(model, date_start, date_stop)
-    html = html_menu(menu)
-    doc = html_doc(html, 'menu.css')
+    html = create_infos_table(model) + html_menu(menu)
+    doc = html_doc(html)
     printer = QPrinter()
     printer.setOutputFileName(filename)
     printer.setOutputFormat(QPrinter.PdfFormat)

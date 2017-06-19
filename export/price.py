@@ -8,7 +8,7 @@ Export "prix de journée" as pdf file
 from PyQt5.QtCore import QDateTime, QDate
 from PyQt5.QtPrintSupport import QPrinter
 import model
-from pdf_utils import html_doc
+from .utils import html_doc, create_infos_table
 import logging
 
 def create_pdf(filename='prix.pdf', model=None, date='2017-05-16'):
