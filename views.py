@@ -99,8 +99,10 @@ class AllProducts(QDialog):
         self.parent = parent
 
         self.view = QTableView(self)
-        self.model = parent.model.qt_table_products
-        self.view.setModel(self.model)
+        self.proxy = QSortFilterProxyModel()
+        self.proxy.setSourceModel(parent.model.qt_table_products)
+        self.view.setModel(self.proxy)
+        self.view.setSortingEnabled(True)
         sql_delegate = QSqlRelationalDelegate(self.view)
         self.view.setItemDelegate(sql_delegate)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -122,7 +124,7 @@ class AllProducts(QDialog):
         self.add_button.clicked.connect(self.add_product)
         
         self.view.horizontalHeader().setMinimumHeight(50)
-        self.resize(642, 376)
+        self.resize(780, 376)
 
         self.exec_()
         
