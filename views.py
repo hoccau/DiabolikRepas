@@ -853,13 +853,13 @@ class Previsionnel(QDialog):
         self.ingredients_prev_view.setItemDelegateForColumn(
             1, completer_delegate)
 
-        self.layout.addWidget(self.calendar)
+        self.layout.addWidget(self.calendar, stretch=0)
         self.layout.addLayout(self.repas_buttons_layout)
         self.layout.addWidget(self.piquenique_box)
         plats_ingrs_layout = QHBoxLayout()
         plats_ingrs_layout.addWidget(self.plats_box, 2)
         plats_ingrs_layout.addWidget(self.ingredients_box, 3)
-        self.layout.addLayout(plats_ingrs_layout)
+        self.layout.addLayout(plats_ingrs_layout, stretch=10)
         self.setLayout(self.layout)
         
         self.calendar.selectionChanged.connect(self.select_repas)
@@ -882,7 +882,7 @@ class Previsionnel(QDialog):
         self.del_plat_button.clicked.connect(self.del_plat)
         self.del_ingredient_button.clicked.connect(self.del_ingredient)
         
-        self.setMinimumSize(480, 500)
+        self.setMinimumSize(700, 650)
         self.exec_()
 
     def _create_view(self, box_name, buttons):
