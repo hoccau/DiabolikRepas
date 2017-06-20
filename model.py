@@ -90,12 +90,19 @@ class Model(QSqlQueryModel):
             return self.query.value(0)
 
     def get_infos(self):
-        values = ['centre', 'directeur_nom', 'place', 'startdate', 'enddate']
+        values = ['centre', 'directeur_nom', 'place']
         self.exec_("SELECT " + ", ".join(values) + " FROM infos")
         result = {}
         while self.query.next():
             for i, value in enumerate(values):
                 result[value] = self.query.value(i)
+        self.exec_(
+            "SELECT date_start, date_stop "\
+            + "FROM infos_periodes ORDER BY date_start")
+        if self.query.first():
+            result['date_start'] = self.query.value(0)
+        if self.query.last():
+            result['date_stop'] = self.query.value(1)
         return result
 
     def get_prev_products_by_dates(self, date_start, date_stop):

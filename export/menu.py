@@ -45,14 +45,12 @@ def html_menu(menu={}):
     html += "<table border=1><tbody><tr>"
     for date, repas in menu.items():
         html += "<th><H1>" + human_date(date) + '</H1>\n'
-        for rep in ['déjeuner', 'dîner']:
+        for rep in ['petit déjeuner', 'déjeuner', 'goûter', 'dîner', 'piquenique']:
             if rep in repas.keys():
                 html += "<div class='repas'><H2>" + rep + "</H2></div>\n"
                 for plat in ['entrée', 'plat', 'dessert']:
                     if plat in repas[rep].keys():
-                        #html += "<div class='plat'><H3>" + plat + '</H3>\n'
                         html += '<p>' + repas[rep][plat] + '</p>\n'
-                        #html += '</div>\n'
 
         html += '</th>\n' #EOF date
     
