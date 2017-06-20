@@ -12,7 +12,7 @@ from .utils import html_doc, create_infos_table
 from collections import OrderedDict
 
 def create_pdf(filename='previsionnel.pdf', model=None):
-    html = header(model) + html_stock(model)
+    html = header(model) + create_infos_table(model) + html_stock(model)
     doc = html_doc(html)
     printer = QPrinter()
     printer.setOutputFileName(filename)
