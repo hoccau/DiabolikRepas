@@ -129,7 +129,6 @@ class AllProducts(QDialog):
         self.exec_()
         
     def reject(self):
-        self.model.revertAll()
         super().reject()
 
     def add_product(self):

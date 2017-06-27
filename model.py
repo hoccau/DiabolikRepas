@@ -124,7 +124,29 @@ class Model(QSqlQueryModel):
         self.exec_(
             "SELECT * FROM liste_courses "\
             + "WHERE date BETWEEN '" + date_start + "' AND '" + date_stop + "'")
-        return self._query_to_lists(4)
+        liste = self._query_to_lists(4)
+        self.exec_(
+            "SELECT product_id, products.name, total(quantity) FROM ( "\
+	    + "SELECT inputs.product_id, inputs.quantity "\
+	    + "FROM inputs "\
+	    + "INNER JOIN products ON products.id = inputs.product_id "\
+	    + "LEFT JOIN ingredients_prev ON ingredients_prev.id = inputs.ingredients_prev_id "\
+	    + "LEFT JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id "\
+	    + "LEFT JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id "\
+	    + "WHERE inputs.ingredients_prev_id is NULL "\
+	    + "OR '" + date_start + "' >= repas_prev.date <= '" + date_stop + "' "\
+	    + "UNION "
+	    + "SELECT outputs.product_id, - outputs.quantity "\
+	    + "FROM outputs) "\
+	    + "INNER JOIN products ON products.id = product_id "\
+	    + "GROUP BY product_id")
+        stock = self._query_to_lists(3)
+        logging.debug(stock)
+        for line in liste:
+            # if product is in stock
+            if line[1] in [i[1] for i in stock]:
+                line[2] = line[2] - [i[2] for i in stock if i[1] == line[1]][0]
+        return liste
 
     def get_prev_products_for_export(self):
         """ Used for 'export previsionnel' """
