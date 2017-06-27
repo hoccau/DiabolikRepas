@@ -480,46 +480,29 @@ class ReserveModel(QSqlQueryModel):
             GROUP BY inputs.id")
 
 class ReserveTableModel(QAbstractTableModel):
-    """ Because SQLite doesn't implement FULL OUTER JOIN, we do the job with
-    Python."""
+    """ Simple difference between inputs and outputs to know which product 
+    is in stock. Because SQLite doesn't implement FULL OUTER JOIN, 
+    we do the job with UNION clause."""
     def __init__(self, parent=None):
         super(ReserveTableModel, self).__init__(parent)
         self.select()
  
-    # not sure that it is the more efficient way, but it's work. 
     def select(self):
-        self.inputs = {}
+        self.data_table = []
         query = QSqlQuery(
-            "SELECT products.name as produit,\
-            sum(inputs.quantity),\
-            units.unit\
-            FROM inputs\
-            INNER JOIN products ON inputs.product_id = products.id\
-            INNER JOIN units ON units.id = products.unit_id\
-            GROUP BY products.id")
+	    "SELECT product_id, products.name, total(quantity) FROM ( "\
+		+ "SELECT inputs.product_id, inputs.quantity "\
+		+ "FROM inputs "\
+		+ "INNER JOIN products ON products.id = inputs.product_id "\
+		+ "UNION "\
+		+ "SELECT outputs.product_id, - outputs.quantity "\
+		+ "FROM outputs) "\
+	    + "INNER JOIN products ON products.id = product_id "\
+            + "GROUP BY product_id "\
+            + "ORDER BY products.name")
         query.exec_()
         while query.next():
-            self.inputs[query.value(0)] = [query.value(1), query.value(2)]
-        query = QSqlQuery(
-            "SELECT products.name as produit,\
-            total(outputs.quantity),\
-            units.unit\
-            FROM outputs\
-            INNER JOIN products ON outputs.product_id = products.id\
-            INNER JOIN units ON units.id = products.unit_id\
-            group by products.id")
-        while query.next():
-            try:
-                self.inputs[query.value(0)][0] -= query.value(1)
-            except KeyError:
-                logging.warning("Ce produit est en sortie sans être en entrée : "\
-                    + query.value(0))
-                self.inputs[query.value(0)] = [
-                    query.value(1) * -1,
-                    query.value(2)]
-
-        self.data_table = [[k, v[0], v[1]] for k, v in sorted(self.inputs.items())]
-        logging.debug(self.data_table)
+            self.data_table.append([query.value(1), query.value(2)])
         self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role):
