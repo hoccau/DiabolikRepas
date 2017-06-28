@@ -873,6 +873,7 @@ class Previsionnel(QDialog):
         #self.ingredients_model.relationModel(1).select()
         self.ingredients_prev_view.setColumnHidden(0, True) #hide id
         #self.ingredients_prev_view.setColumnHidden(2, True) #hide dish parent
+        self.ingredients_prev_view.setColumnWidth(1, 150)
         self.select_repas()
         
         self.add_repas_button.clicked.connect(self.add_repas)
@@ -1331,12 +1332,17 @@ class ProductInputDelegate(QSqlRelationalDelegate):
 
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
-        proxy = QSortFilterProxyModel()
-        proxy.setSourceModel(self.parent.parent.model.qt_table_products)
-        proxy.sort(1)
-        editor.setModel(proxy)
+        self.proxy = QSortFilterProxyModel()
+        self.proxy.setSourceModel(self.parent.parent.model.qt_table_products)
+        self.proxy.sort(1)
+        editor.setModel(self.proxy)
         editor.setModelColumn(1)
         return editor
+
+    def setModelData(self, editor, model, index):
+        id_ = self.proxy.data(self.proxy.index(editor.currentIndex(), 0))
+        model.setData(index, id_)
+
 
 class FComboBox(QComboBox):
     """ not used, just for remember the focusOutEvent possibility.

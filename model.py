@@ -784,6 +784,8 @@ class OutputsModel(QSqlRelationalTableModel):
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         product_rel = QSqlRelation("products", 'id', 'name')
         self.setRelation(3, product_rel)
+        self.setHeaderData(1, Qt.Horizontal, "Quantité")
+        self.setHeaderData(3, Qt.Horizontal, "Produit")
         self.select()
 
 class InputsModel(QSqlRelationalTableModel):
