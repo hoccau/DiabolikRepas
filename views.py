@@ -221,6 +221,7 @@ class ProductForm(QDialog):
         if index is not None:
             self.mapper.setCurrentIndex(index)
         else:
+            logging.debug("this is a new product")
             inserted = self.model.insertRow(self.model.rowCount())
             if not inserted:
                 logging.warning(
@@ -1248,26 +1249,27 @@ class CompleterDelegate(QSqlRelationalDelegate):
     
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
-        #self.model_p = index.model().relationModel(1)
+        editor.setInsertPolicy(QComboBox.NoInsert)
+        self.proxy = QSortFilterProxyModel()
+        self.proxy.setSourceModel(index.model().parent.qt_table_products)
+        self.proxy.sort(1)
         self.model_p = index.model().parent.qt_table_products
-        editor.setModel(self.model_p)
+        editor.setModel(self.proxy)
         editor.setModelColumn(1)
         editor.setEditable(True)
-        logging.debug(self.model_p.rowCount())
         editor.currentIndexChanged.connect(self.sender)
         return editor
+
+    def setEditorData(self, editor, index):
+        m = self.model_p
+        self.initial_products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
     
     def setModelData(self, editor, model, index):
-        logging.debug(index.data())
-        m = self.model_p
-        logging.debug(m)
-        products = [m.data(m.index(i, 1)) for i in range(m.rowCount())]
-        logging.debug(products)
         product_idx = editor.currentIndex()
-
+        products_model = index.model().parent.qt_table_products
         if not editor.currentText().rstrip(' '):
             logging.warning('Champs produit vide')
-        elif m.isDirty(m.get_index_by_name(editor.currentText())):
+        elif editor.currentText() not in self.initial_products:
             reponse = QMessageBox.question(
                 None, 'Produit inexistant', 
                 "Ce produit n'existe pas. Voulez-vous l'ajouter ?",
@@ -1276,7 +1278,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
             if reponse == QMessageBox.Yes:
                 logging.debug(self.parent.parent)
                 p = ProductForm(
-                    self.parent.parent, index = product_idx)
+                    self.parent.parent, index=None, name=editor.currentText())
                 if p:
                     #index.model().relationModel(1).select()
                     #editor.setCurrentText(p)
@@ -1284,6 +1286,7 @@ class CompleterDelegate(QSqlRelationalDelegate):
         else:
             #self.parent.set_auto_quantity(editor.currentText(), index.row())
             self.parent.set_auto_q_fast(editor.currentText(), index.row())
+            m = self.proxy
             idx_product = m.index(editor.currentIndex(), 0)
             model.setData(index, m.data(idx_product), None)
             #super(CompleterDelegate, self).setModelData(editor, model, index)
@@ -1297,9 +1300,10 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
         #model_products = index.model().relationModel(3)
-        model_products = self.parent.parent.model.qt_table_products
-        logging.debug(model_products)
-        editor.setModel(model_products)
+        proxy = QSortFilterProxyModel()
+        proxy.setSourceModel(self.parent.parent.model.qt_table_products)
+        proxy.sort(1)
+        editor.setModel(proxy)
         editor.setModelColumn(1)
         editor.setEditable(True)
         #editor.currentIndexChanged.connect(self.sender)
@@ -1327,8 +1331,10 @@ class ProductInputDelegate(QSqlRelationalDelegate):
 
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
-        model_products = self.parent.parent.model.qt_table_products
-        editor.setModel(model_products)
+        proxy = QSortFilterProxyModel()
+        proxy.setSourceModel(self.parent.parent.model.qt_table_products)
+        proxy.sort(1)
+        editor.setModel(proxy)
         editor.setModelColumn(1)
         return editor
 
