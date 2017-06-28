@@ -135,7 +135,7 @@ class AllProducts(QDialog):
         ProductForm(self.parent, name='')
 
     def edit_product(self, index):
-        ProductForm(self.parent, index.row())
+        ProductForm(self.parent, self.proxy.mapToSource(index).row())
 
 class Form(QDialog):
     """Abstract class"""
