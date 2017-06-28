@@ -373,7 +373,7 @@ class MainWindow(QMainWindow):
             repas.write_file(filename)
 
     def about_d(self):
-        QMessageBox.information(self, "Diabolik Repas", "version 0.0.2")
+        QMessageBox.information(self, "Diabolik Repas", "version 0.0.3")
 
 if __name__ == '__main__':
     import sys, os

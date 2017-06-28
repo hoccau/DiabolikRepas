@@ -1,7 +1,7 @@
 import sys, os
 from cx_Freeze import setup, Executable
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 if sys.platform == "win32":
 	base = "Win32GUI"
@@ -28,7 +28,7 @@ msi_data = {'Shortcut':shortcut_table}
 options = {'build_exe': {
         "excludes": [],
         "includes": [],
-        "include_files": ['design', 'create_db.sql', 'repas_previsionnels', 'repas.xsd'],
+        "include_files": ['design', 'create_db.sql', 'images', 'repas.xsd'],
         "optimize": 2},
 		'bdist_msi':{'data': msi_data}
          }
