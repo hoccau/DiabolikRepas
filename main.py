@@ -306,7 +306,7 @@ class MainWindow(QMainWindow):
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
             from export import stock
-            export_stock.create_pdf(filename, self.model)
+            stock.create_pdf(filename, self.model)
 
     def export_pdf_menu(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
