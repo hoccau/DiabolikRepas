@@ -6,7 +6,7 @@
 <ul>
 <li>Python3.5+</li>
 <li>pyqt5</li>
-<ul>
+</ul>
 
 ## Installation 
 
@@ -16,19 +16,19 @@
 
 ### Linux (Debian Stretch)
 
-<ol>
-<li>Install Python3 and dependencies<li>
+1. Install Python3 and dependencies
+
 ```bash
 sudo apt install python3 python3-pip
 sudo pip3 install PyQt5
 ```
-<li>Clone this repository</li>
+2. Clone this repository
+
 ```bash
 git clone https://github.com/hoccau/DiabolikRepas 
 ```
-<li>Start the app</li>
+3. Start the app
 
 ```bash
 cd DiabolikRepas/ && ./main.py
 ```
-</ol>
