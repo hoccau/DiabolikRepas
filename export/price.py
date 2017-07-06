@@ -12,6 +12,14 @@ from .utils import html_doc, create_infos_table
 import logging
 
 def create_pdf(filename='prix.pdf', model=None, date='2017-05-16'):
+    """ 
+    Return (False, "ErrorName") if it is not possible to calculate price. If  
+    PDF is correctly exported, return (True, '')
+    """
+    res = html_price(model, date)
+    if not res[0]:
+        logging.warning(res[1])
+        return res
     html = header(model) + html_price(model, date)
     print(html)
     doc = html_doc(html)
@@ -20,6 +28,7 @@ def create_pdf(filename='prix.pdf', model=None, date='2017-05-16'):
     printer.setOutputFormat(QPrinter.PdfFormat)
     printer.setPageSize(QPrinter.A4)
     doc.print_(printer)
+    return (True, '')
 
 def header(model):
     infos = model.get_infos()
@@ -34,12 +43,17 @@ def html_price(model, date):
     logging.debug(avg_prices)
     logging.debug(outputs)
     m = model.qt_table_periodes_infos
+    if m.rowCount() < 1:
+        return False, "Pas de periode définie."
+    enfants = False
     for row in range(m.rowCount()):
         date_start, date_stop = m.data(m.index(row, 1)), m.data(m.index(row, 2))
         if date >= date_start and date <= date_stop:
             enfants = [m.data(m.index(row, i)) for i in range(3, 6)]
-            print(enfants)
+            logging.debug(enfants)
             break
+    if not enfants:
+        return False, "Pas d'enfants sur la période demandée"
     repas_type = {1:'petit déjeuner',
             2:'déjeuner',
             3:'dîner',
@@ -61,7 +75,11 @@ def html_price(model, date):
         html += '<th>' + repas_type[output[4]] + '</th>'
         html += '<th>' + output[1] + '</th>'
         html += '<th>' + str(output[2]) + '</th>'
-        html += '<th>' + str(avg_prices[output[0]]) + '</th>'
+        try:
+            html += '<th>' + str(avg_prices[output[0]]) + '</th>'
+        except KeyError:
+            logging.warning("Erreur: un produit n'a pas été entré")
+            return False, "Un produit n'a pas été entré en arrivage de denrées"
         total_price = avg_prices[output[0]] * output[2]
         total_day += total_price
         html += '<th>' + str(round(total_price, 2)) + '</th>'

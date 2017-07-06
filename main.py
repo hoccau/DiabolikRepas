@@ -326,7 +326,9 @@ class MainWindow(QMainWindow):
             if filename[-4:] != '.pdf':
                 filename += '.pdf'
             from export import price
-            price.create_pdf(filename, self.model, date)
+            res = price.create_pdf(filename, self.model, date)
+            if not res[0]:
+                QMessageBox.warning(self, 'Erreur', res[1])
             
     def export_pdf_previsionnel(self):
         filename, _format = QFileDialog.getSaveFileName(
