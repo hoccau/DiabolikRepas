@@ -845,6 +845,9 @@ class Previsionnel(QDialog):
         self.del_plat_button = QPushButton('-')
         self.del_ingredient_button = QPushButton('-')
         
+        self.compute_quantities_button = QPushButton(
+            'Recalculer toutes les quantités')
+
         self.plats_prev_view, self.plats_box = self._create_view(
                 'Plats', [self.add_plat_button, self.del_plat_button])
         self.ingredients_prev_view, self.ingredients_box = self._create_view(
@@ -876,12 +879,16 @@ class Previsionnel(QDialog):
         self.ingredients_prev_view.setColumnWidth(1, 150)
         self.select_repas()
         
+        self.layout.addWidget(self.compute_quantities_button)
+        
         self.add_repas_button.clicked.connect(self.add_repas)
         self.add_plat_button.clicked.connect(self.add_plat)
         self.add_ingredient_button.clicked.connect(self.add_ingredient)
         self.del_repas_button.clicked.connect(self.del_repas)
         self.del_plat_button.clicked.connect(self.del_plat)
         self.del_ingredient_button.clicked.connect(self.del_ingredient)
+        self.compute_quantities_button.clicked.connect(
+            self.compute_q_for_periode)
         
         self.setMinimumSize(700, 650)
         self.exec_()
@@ -1053,7 +1060,23 @@ class Previsionnel(QDialog):
         quantities = [x * recommends[i] for i, x in enumerate(enfants)]
         return sum(quantities)
 
+    def compute_q_for_periode(self):
+        reponse = QMessageBox.question(
+                None, 'Sûr(e) ?', "Vous allez écraser définitivement toutes les"\
+                + " quantités sur une péride donnée. "\
+                + "Êtes-vous sûr(e) ?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No)
+        if reponse == QMessageBox.Yes:
+            date_start, date_stop = DatesRangeDialog(self).get_dates()
+            logging.debug(date_start)
+            logging.debug(date_stop)
+            for l in self.parent.model.get_auto_q_all(date_start, date_stop):
+                self.parent.model.update_ingredient_prev(l[0], l[2])
+        self.ingredients_model.select()
+
     def compute_all_quantities(self):
+        """ substract quantities from piquenique datas """
         piquenique_m = self.parent.model.piquenique_conf_model
         enfants_piquenique = [piquenique_m.data(
             piquenique_m.index(0, i)) for i in range(2, 5)]
@@ -1063,7 +1086,7 @@ class Previsionnel(QDialog):
         date = self.calendar.selectedDate().toString('yyyy-MM-dd')
         ingrs = self.ingredients_model.get_all_by_date(date)
         logging.debug(ingrs)
-        self.ingredients_model.setFilter('')
+        #self.ingredients_model.setFilter('')
         for id_, product, repas_type_id in ingrs:
             has_enfants = None
             if repas_type_id in sub_dishes:
@@ -1080,7 +1103,7 @@ class PiqueniqueBox(QGroupBox):
         self.age6 = QSpinBox()
         self.age6_12 = QSpinBox()
         self.age12 = QSpinBox()
-        self.submit_button = QPushButton('Enregistrer')
+        self.submit_button = QPushButton('Re-calculer les quantités')
         check_petit_dej = QCheckBox()
         check_dej = QCheckBox()
         check_gouter = QCheckBox()
