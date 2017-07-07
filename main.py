@@ -22,6 +22,8 @@ import repas_db_to_xml
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+VERSION = "0.0.4"
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -375,7 +377,7 @@ class MainWindow(QMainWindow):
             repas.write_file(filename)
 
     def about_d(self):
-        QMessageBox.information(self, "Diabolik Repas", "version 0.0.3")
+        QMessageBox.information(self, "Diabolik Repas", "version " + VERSION)
 
 if __name__ == '__main__':
     import sys, os

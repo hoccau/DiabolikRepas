@@ -1,7 +1,6 @@
 import sys, os
 from cx_Freeze import setup, Executable
-
-VERSION = "0.0.3"
+import main
 
 if sys.platform == "win32":
 	base = "Win32GUI"
@@ -34,7 +33,7 @@ options = {'build_exe': {
          }
 
 setup(  name = "DiabolikRepas",
-        version = VERSION,
+        version = main.VERSION,
         description = "Diabolik Repas",
         options = options,
         executables = [Executable("main.py",
