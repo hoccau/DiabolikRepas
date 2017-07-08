@@ -318,16 +318,12 @@ class Model(QSqlQueryModel):
             SELECT 
             ingredients_prev.id, 
             products.id, 
-            recommended_6 * (
-                infos_periodes.nombre_enfants_6 - IFNULL(
-                    piquenique_conf.nombre_enfants_6, 0)) as age6,
-            recommended_6_12 * (
-                infos_periodes.nombre_enfants_6_12 - IFNULL(
-                    piquenique_conf.nombre_enfants_6_12, 0)) as age6_12,
-            recommended_12 * (
-                infos_periodes.nombre_enfants_12 - IFNULL(
-                    piquenique_conf.nombre_enfants_12, 0)) as age12,
-            products.unit_id
+            recommended_6 * infos_periodes.nombre_enfants_6 as age6,
+            recommended_6_12 * infos_periodes.nombre_enfants_6_12 as age6_12,
+            recommended_12 * infos_periodes.nombre_enfants_12 as age12,
+            products.unit_id,
+            repas_prev.date,
+            piquenique_conf.id
             FROM ingredients_prev
             INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id 
             INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id 
@@ -336,13 +332,14 @@ class Model(QSqlQueryModel):
             LEFT JOIN infos_periodes ON repas_prev.date 
             BETWEEN infos_periodes.date_start AND infos_periodes.date_stop """
             + "WHERE repas_prev.date BETWEEN '"+date_start+"' AND '"+date_stop+"'")
-        res = self._query_to_lists(6)
+        res = self._query_to_lists(8)
         res_ret = []
+        logging.debug(res)
         for l in res:
             total = sum(l[2:5])
             if l[5] in (2, 3): #if unit is litres or kilogrammes
                 total = total / 1000.
-            res_ret.append([l[0], l[1], total, l[5]])
+            res_ret.append([l[0], l[1], total, l[6], l[7]])
         return res_ret
 
     def set_(self, dic, table):

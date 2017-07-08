@@ -1073,9 +1073,12 @@ class Previsionnel(QDialog):
             logging.debug(date_stop)
             for l in self.parent.model.get_auto_q_all(date_start, date_stop):
                 self.parent.model.update_ingredient_prev(l[0], l[2])
+                if l[4]:
+                    self.compute_all_quantities(l[3])
+                logging.debug(l)
         self.ingredients_model.select()
 
-    def compute_all_quantities(self):
+    def compute_all_quantities(self, date=None):
         """ substract quantities from piquenique datas """
         piquenique_m = self.parent.model.piquenique_conf_model
         enfants_piquenique = [piquenique_m.data(
@@ -1083,7 +1086,8 @@ class Previsionnel(QDialog):
         logging.debug(enfants_piquenique)
         sub_dishes = [i for i in range(1, 5) \
             if piquenique_m.data(piquenique_m.index(0, i + 4)) == 1]
-        date = self.calendar.selectedDate().toString('yyyy-MM-dd')
+        if not date:
+            date = self.calendar.selectedDate().toString('yyyy-MM-dd')
         ingrs = self.ingredients_model.get_all_by_date(date)
         logging.debug(ingrs)
         #self.ingredients_model.setFilter('')
