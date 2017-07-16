@@ -76,7 +76,7 @@ def html_price(model, date):
         html += '<th>' + output[1] + '</th>'
         html += '<th>' + str(output[2]) + '</th>'
         try:
-            html += '<th>' + str(avg_prices[output[0]]) + '</th>'
+            html += '<th>' + str(round(avg_prices[output[0]]), 2) + '</th>'
         except KeyError:
             logging.warning("Erreur: un produit n'a pas été entré")
             return False, "Un produit n'a pas été entré en arrivage de denrées"
@@ -91,7 +91,7 @@ def html_price(model, date):
     html += "<th><H3>Nombre de personnes</H3></th>"
     html += '<th><H3>Prix par personne</H3></th>'
     html += '</tr><tr>'
-    html +=  '<th>' + str(total_day) + '</th>'
+    html +=  '<th>' + str(round(total_day)) + '</th>'
     html +=  '<th>' + str(round(sum(enfants), 2)) + '</th>'
     if sum(enfants) > 0:
         html +=  '<th>' + str(round(total_day / sum(enfants), 2)) + '</th>'

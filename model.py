@@ -249,13 +249,13 @@ class Model(QSqlQueryModel):
         return datas
 
     def get_avg_price(self, product_id):
-        self.exec_("SELECT AVG(prix) FROM inputs WHERE product_id = "+str(product_id))
+        self.exec_("SELECT AVG(prix / quantity) FROM inputs WHERE product_id = "+str(product_id))
         if self.query.first():
             return self.query.value(0)
 
     def get_all_avg_prices(self):
         self.exec_(
-            "SELECT inputs.product_id, AVG(prix) FROM inputs "\
+            "SELECT inputs.product_id, AVG(prix / quantity) FROM inputs "\
 	    + "INNER JOIN products ON products.id = inputs.product_id "\
             + "GROUP BY inputs.product_id")
         return self._query_to_dic()
@@ -273,7 +273,7 @@ class Model(QSqlQueryModel):
     def get_price_by_repas(self, repas_id):
         self.exec_(
             "SELECT\
-            outputs.quantity * AVG(inputs.prix) as prix_total\
+            outputs.quantity * AVG(inputs.prix / inputs.quantity) as prix_total\
             FROM outputs\
             INNER JOIN products ON products.id = outputs.product_id\
             INNER JOIN inputs ON inputs.product_id = products.id\
