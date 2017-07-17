@@ -177,6 +177,15 @@ class Model(QSqlQueryModel):
             + "AND repas_prev.type_id = " + str(repas_type_id) +")")
         return self._query_to_lists(3)
 
+    def get_plats_prev(self):
+        self.exec_("SELECT name, id FROM dishes_prev")
+        return self._query_to_dic()
+
+    def get_ingrs_prev_by_plat(self, plat_prev_id):
+        self.exec_("SELECT product_id, quantity FROM ingredients_prev "\
+        + "WHERE dishes_prev_id = " + str(plat_prev_id))
+        return self._query_to_lists(2)
+
     def get_plats_by_dates(self, date_start, date_stop):
         plats = []
         self.exec_(

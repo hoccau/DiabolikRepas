@@ -871,6 +871,8 @@ class Previsionnel(QDialog):
         self.plats_prev_view.setModel(self.plats_model)
         self.plats_prev_view.setColumnHidden(0, True)  #hide id
         self.plats_prev_view.setColumnHidden(2, True)  #hide repas_prev
+        plat_delegate = PlatPrevNameDelegate(self)
+        self.plats_prev_view.setItemDelegateForColumn(1, plat_delegate)
 
         self.ingredients_prev_view.setModel(self.ingredients_model)
         #self.ingredients_model.relationModel(1).select()
@@ -1370,6 +1372,34 @@ class ProductInputDelegate(QSqlRelationalDelegate):
         id_ = self.proxy.data(self.proxy.index(editor.currentIndex(), 0))
         model.setData(index, id_)
 
+class PlatPrevNameDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.model_db = parent.parent.model
+        self.parent = parent
+
+    def setModelData(self, editor, model, index):
+        plats_prev = self.model_db.get_plats_prev()
+        super().setModelData(editor, model, index)
+        if editor.text() in plats_prev.keys():
+            reponse = QMessageBox.question(
+                    None, "Copier l'existant ?", "Voulez-vous copier le plat "\
+                    + "du même nom ?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes)
+            if reponse == QMessageBox.Yes:
+                id_source = plats_prev[editor.text()]
+                id_dest = model.data(model.index(index.row(), 0))
+                ingrs = self.model_db.get_ingrs_prev_by_plat(id_source)
+                for ingr in ingrs:
+                    self.model_db.set_(
+                        {
+                        'product_id':ingr[0],
+                        'dishes_prev_id':id_dest,
+                        'quantity':ingr[1]
+                        },
+                        'ingredients_prev')
+                self.parent.select_ingredient()
 
 class FComboBox(QComboBox):
     """ not used, just for remember the focusOutEvent possibility.
