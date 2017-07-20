@@ -22,7 +22,7 @@ import repas_db_to_xml
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-VERSION = "0.0.6"
+VERSION = "0.0.7"
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -284,8 +284,8 @@ class MainWindow(QMainWindow):
         row = index.row()
         if row != -1:
             #id_ = self.tabs.currentWidget().model().record(row).value(0)
-            index = index.model().index(row, 0)
-            logging.debug(index)
+            #index = index.model().index(row, 0)
+            logging.debug(index.row())
             self.repas_window = RepasForm(self, index=index)
 
     def edit_products(self):

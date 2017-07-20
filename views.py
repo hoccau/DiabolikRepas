@@ -38,10 +38,14 @@ class MainWidget(QWidget):
             'reserve': self._add_table_model(
                 self.parent.model.qt_table_reserve, 'reserve'),
             'arrivages': self._add_table_model(
-                self.parent.model.qt_table_inputs, 'arrivages'),
-            'repas': self._add_table_model(
-                self.parent.model.qt_table_repas, 'repas consommés')
+                self.parent.model.qt_table_inputs, 'arrivages')
             }
+            #'repas': self._add_table_model(
+            #    self.parent.model.qt_table_repas, 'repas consommés')
+            
+        self.tables['repas'] = QTableView(self)
+        self.tables['repas'].setModel(self.parent.model.qt_table_repas)
+        self.tabs.addTab(self.tables['repas'], 'repas consommés')
         #self.tabs.addTab(PrevisionnelColumnView(self), 'Prévisionnel')
         self.tabs.currentChanged.connect(self.parent.current_tab_changed)
         
@@ -51,6 +55,7 @@ class MainWidget(QWidget):
         self.tables['repas'].hideColumn(3) # hide repas_prev_id (not used...)
         date_delegate = DateDelegate(self)
         self.tables['repas'].setItemDelegateForColumn(1, date_delegate)
+        #self.tables['repas'].setSortingEnabled(False)
         # Autorize Edit for 'arrivages'
         self.tables['arrivages'].setEditTriggers(QAbstractItemView.DoubleClicked)
         self.tables['arrivages'].setItemDelegateForColumn(2, DateDelegate())
@@ -59,7 +64,7 @@ class MainWidget(QWidget):
         table = QTableView(self)
         proxy = QSortFilterProxyModel()
         proxy.setSourceModel(model)
-        table.setModel(proxy)
+        table.setModel(model)
         table.setItemDelegate(QSqlRelationalDelegate())
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table.setSortingEnabled(True)
@@ -546,11 +551,13 @@ class RepasForm(Form):
                 logging.warning('Widget ' + str(widget) + 'not mapped.')
         
         if index is not None:
-            logging.debug(index.data())
-            self.index = index
-            id_ = index.model().data(index)
-            logging.info('User want to update repas ' + str(id_))
-            self.mapper.setCurrentModelIndex(index)
+            #logging.debug(index.data())
+            #self.index = index
+            id_ = index.model().data(index.model().index(index.row(), 0))
+            #logging.info('User want to update repas ' + str(id_))
+            logging.debug(id_)
+            logging.debug(index.row())
+            self.mapper.setCurrentIndex(index.row())
         else: # if this is a new one
             inserted = self.model.insertRow(self.model.rowCount())
             if not inserted:
