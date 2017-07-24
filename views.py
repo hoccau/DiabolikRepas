@@ -553,9 +553,9 @@ class RepasForm(Form):
         if index is not None:
             #logging.debug(index.data())
             #self.index = index
-            id_ = index.model().data(index.model().index(index.row(), 0))
+            self.id_ = index.model().data(index.model().index(index.row(), 0))
             #logging.info('User want to update repas ' + str(id_))
-            logging.debug(id_)
+            logging.debug(self.id_)
             logging.debug(index.row())
             self.mapper.setCurrentIndex(index.row())
         else: # if this is a new one
@@ -570,19 +570,19 @@ class RepasForm(Form):
                 self.model.index(self.model.rowCount() - 1, 2),
                 1)
             index = self.model.index(self.model.rowCount() - 1, 0)
-            id_ = index.model().data(index)
+            self.id_ = index.model().data(index)
 
             self.index = self.model.index(self.model.rowCount() -1, 0)
             self.mapper.toLast()
         
-        self.output_model.setFilter('repas_id = ' + str(id_))
+        self.output_model.setFilter('repas_id = ' + str(self.id_))
 
         self.add_output_button.clicked.connect(self.add_output_row)
         self.del_output_button.clicked.connect(self.del_output_row)
         self.auto_fill_button.clicked.connect(self.auto_fill)
         self.initUI()
         
-        self.setWindowTitle("Repas #" + str(id_))
+        self.setWindowTitle("Repas #" + str(self.id_))
         
     def add_output_row(self):
         if self.model.isDirty():
@@ -592,15 +592,16 @@ class RepasForm(Form):
         nbr_rows = self.output_model.rowCount()
         inserted = self.output_model.insertRow(nbr_rows)
         if inserted:
-            id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
+            #id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
             self.output_model.setData(
                 self.output_model.index(self.output_model.rowCount() - 1, 2),
-                id_)
+                self.id_)
         logging.debug(inserted)
 
     def del_output_row(self):
         at_least_one_to_submit = False
         for index in self.outputs_view.selectedIndexes():
+            logging.debug("index: "+ str(index.data))
             if index.model().isDirty(index):
                 self.output_model.revertRow(index.row())
             else:
@@ -630,9 +631,9 @@ class RepasForm(Form):
     def submit_datas(self):
         repas_submited = self.model.submitAll()
         if repas_submited:
-            id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
-            logging.info('repas ' + str(id_) + ' submited.')
-            self.submit_output(id_)
+            #id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
+            logging.info('repas ' + str(self.id_) + ' submited.')
+            self.submit_output(self.id_)
         if not repas_submited:
             error = self.model.lastError()
             logging.warning(error.text())
