@@ -569,8 +569,10 @@ class RepasForm(Form):
             self.model.setData(
                 self.model.index(self.model.rowCount() - 1, 2),
                 1)
-            index = self.model.index(self.model.rowCount() - 1, 0)
-            self.id_ = index.model().data(index)
+            # retrieve the last repas id's index
+            index = self.model.index(self.model.rowCount() - 2, 0)
+            # incremente id of 1 to immite the database
+            self.id_ = index.model().data(index) + 1
 
             self.index = self.model.index(self.model.rowCount() -1, 0)
             self.mapper.toLast()
