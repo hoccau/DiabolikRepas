@@ -514,8 +514,9 @@ class RepasForm(Form):
         self.type = QComboBox()
         self.type.setModel(self.type_model)
         self.type.setModelColumn(1)
-        self.date = QDateEdit()
-        self.date.setDate(QDate.currentDate())
+        self.date = QCalendarWidget()
+        self.date.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
+        #self.date.setDate(QDate.currentDate())
         self.auto_fill_button = QPushButton('Importer le prévisionnel')
         self.comment = QTextEdit()
         self.comment.setFixedHeight(50)
@@ -542,7 +543,7 @@ class RepasForm(Form):
         self.grid.addLayout(buttons_outputs_layout, 6, 1)
 
         self.mapper.setItemDelegate(QSqlRelationalDelegate(self))
-        self.mapper.addMapping(self.date, 1)
+        self.mapper.addMapping(self.date, 1, QByteArray(b'selectedDate'))
         self.mapper.addMapping(self.type, 2)
         self.mapper.addMapping(self.comment, 4, QByteArray(b'plainText'))
 
@@ -565,7 +566,7 @@ class RepasForm(Form):
                     'Row not inserted in model {0}'.format(self.model))
             self.model.setData(
                 self.model.index(self.model.rowCount() - 1, 1),
-                self.date.date().toString('yyyy-MM-dd'))
+                self.date.selectedDate().toString('yyyy-MM-dd'))
             self.model.setData(
                 self.model.index(self.model.rowCount() - 1, 2),
                 1)
@@ -613,7 +614,7 @@ class RepasForm(Form):
             self.output_model.submitAll()
 
     def auto_fill(self):
-        date = self.date.date()
+        date = self.date.selectedDate()
         rel_model = self.model.relationModel(2)
         type_id = rel_model.data(rel_model.index(self.type.currentIndex(), 0))
         ingrs = self.parent.model.get_prev_ingrs(
@@ -631,6 +632,7 @@ class RepasForm(Form):
             self.output_model.setData(idx, ingr[0]) # product
     
     def submit_datas(self):
+        self.mapper.submit()
         repas_submited = self.model.submitAll()
         if repas_submited:
             #id_ = self.model.data(self.model.index(self.model.rowCount() -1, 0))
