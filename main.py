@@ -22,7 +22,7 @@ import repas_db_to_xml
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-VERSION = "0.0.10"
+VERSION = "0.0.11"
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
