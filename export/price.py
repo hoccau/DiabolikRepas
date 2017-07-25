@@ -76,7 +76,7 @@ def html_price(model, date):
         html += '<th>' + output[1] + '</th>'
         html += '<th>' + str(output[2]) + '</th>'
         try:
-            html += '<th>' + str(round(avg_prices[output[0]]), 2) + '</th>'
+            html += '<th>' + str(round(avg_prices[output[0]], 2)) + '</th>'
         except KeyError:
             logging.warning("Erreur: un produit n'a pas été entré")
             return False, "Un produit n'a pas été entré en arrivage de denrées"
