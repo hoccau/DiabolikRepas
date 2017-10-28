@@ -48,7 +48,7 @@ def html_menu(menu={}):
         for rep in ['petit déjeuner', 'déjeuner', 'goûter', 'dîner', 'piquenique']:
             if rep in repas.keys():
                 html += "<div class='repas'><H2>" + rep + "</H2></div>\n"
-                for plat in ['entrée', 'plat', 'dessert']:
+                for plat in ['entrée', 'plat', 'dessert', 'autre']:
                     if plat in repas[rep].keys():
                         html += '<p>' + repas[rep][plat] + '</p>\n'
 
