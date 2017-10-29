@@ -624,7 +624,9 @@ class RepasForm(Form):
             date.toString('yyyy-MM-dd'), type_id)
         logging.debug(ingrs)
         if not ingrs:
-            message = "Aucun produit n'a été trouvé dans le prévisionnel"
+            message = "Aucun produit n'a été trouvé dans le prévisionnel "\
+            + "pour le " + self.type.currentText() + " du "\
+            + date.toString("dd MMMM")
             logging.warning(message)
             QMessageBox.warning(self, "Erreur", message)
         for ingr in ingrs:
@@ -1351,23 +1353,20 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
         editor.setModel(proxy)
         editor.setModelColumn(1)
         editor.setEditable(True)
+        editor.completer().setCaseSensitivity(1) # must be case sensitive
         #editor.currentIndexChanged.connect(self.sender)
         return editor
 
     def setModelData(self, editor, model, index):
-        #output_model = model
-        #input_model = editor.model()
-        #product_model = input_model.relationModel(3)
-        #index_input = input_model.index(editor.currentIndex(), 3)
-        product_id = self.parent.products_model.get_index_by_name(
-            editor.currentText()).data()
-        #name = input_model.data(index_input)
-        #if name:
-        #    product_model.setFilter("name = '" + name + "'")
-        #value = product_model.data(product_model.index(0, 0))
-        #logging.debug(value) # il faut récupéreer l'ID, pas le résultat de la relation...o
-        logging.debug(product_id)
-        model.setData(index, product_id)
+        product_id_idx = self.parent.products_model.get_index_by_name(
+            editor.currentText())
+        if not product_id_idx:
+            message = "Ce produit n'existe pas"
+            logging.warning(message)
+            QMessageBox.warning(None, "Erreur", message)
+        else:
+            product_id = product_id_idx.data()
+            model.setData(index, product_id)
 
 class ProductInputDelegate(QSqlRelationalDelegate):
     def __init__(self, parent=None):
