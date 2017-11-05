@@ -87,7 +87,8 @@ class BigButtons(QWidget):
 
         previsionnel_button.clicked.connect(parent.add_previsionnel)
         input_button.clicked.connect(parent.add_input)
-        output_button.clicked.connect(parent.add_repas)
+        #output_button.clicked.connect(parent.add_repas)
+        output_button.clicked.connect(parent.all_repas)
         products_button.clicked.connect(parent.edit_products)
 
     def _create_button(self, image, text):
@@ -172,7 +173,7 @@ class Form(QDialog):
         self.setLayout(self.grid)
         self.submitButton.clicked.connect(self.submit_datas)
         self.quitButton.clicked.connect(self.reject)
-        self.show()
+        self.exec_()
     
     def resizeEvent(self, size):
         pass
@@ -496,8 +497,80 @@ class InputsArray(QDialog):
         self.model.revertAll()
         super().reject()
 
+class AllRepasArray(QDialog):
+    def __init__(self, parent=None, model=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.model = model
+
+        self.setWindowTitle("Repas effectifs")
+        read_me = QLabel("Sélectionnez la date pour visualiser les "\
+        + "repas effectués :")
+        self.calendar = QCalendarWidget()
+        self.view = QTableView(self)
+        self.proxy = QSortFilterProxyModel()
+        self.proxy.setSourceModel(model)
+        self.view.setModel(self.proxy)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.view.setColumnHidden(0, True) # hide id
+        self.view.setColumnHidden(3, True) # hide repas_prev_id
+        add_repas_button = QPushButton("Nouveau repas")
+        del_repas_button = QPushButton("Supprimer")
+        close_button = QPushButton("Fermer")
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(read_me, stretch=0)
+        main_layout.addWidget(self.calendar, stretch=0)
+        main_layout.addWidget(self.view, stretch=10)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(add_repas_button)
+        buttons_layout.addWidget(del_repas_button)
+        buttons_layout.addWidget(close_button)
+        main_layout.addLayout(buttons_layout)
+        self.setLayout(main_layout)
+
+        add_repas_button.clicked.connect(self.add_repas)
+        del_repas_button.clicked.connect(self.del_repas)
+        close_button.clicked.connect(self.close)
+        self.view.doubleClicked.connect(self.edit_repas)
+        self.calendar.selectionChanged.connect(self.set_date_filter)
+        self.set_date_filter()
+
+        self.exec_()
+
+    def add_repas(self):
+        self.repas_window = RepasForm(self.parent)
+        self.repas_window.date.setSelectedDate(self.calendar.selectedDate())
+
+    def del_repas(self):
+        index_rows = self.view.selectionModel().selectedRows()
+        if not index_rows:
+            QMessageBox.warning(None, "Erreur", "Veuillez d'abord sélectionner "\
+            + "au minimum un repas dans la liste.")
+        else:
+            res = QMessageBox.question(None, "Sûr(e)?", "Vous allez définitivement "\
+            + "détruire ce(s) repas. Êtes-vous sûr(e)?",\
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if res == QMessageBox.Yes:
+                for idx in index_rows:
+                    self.view.model().removeRow(idx.row())
+                self.view.model().sourceModel().submitAll()
+
+    def edit_repas(self, index):
+        row = index.row()
+        if row != -1:
+            index = self.proxy.mapToSource(index)
+            self.repas_window = RepasForm(self.parent, index=index)
+
+    def set_date_filter(self):
+        date = self.calendar.selectedDate().toString("yyyy-MM-dd")
+        logging.debug(date)
+        self.proxy.setFilterRegExp(QRegExp(date))
+        self.proxy.setFilterKeyColumn(1)
+
 class RepasForm(Form):
-    """ Form to add or modify an effective repas (with product outputs) """
+    """ Form to add or modify an effective repas (with product outputs)
+    parent arg must be main window """
     def __init__(self, parent=None, index=None):
         super(RepasForm, self).__init__(parent)
 

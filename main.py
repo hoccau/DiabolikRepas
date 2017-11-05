@@ -15,7 +15,7 @@ from model import Model
 from views import (
     ProductForm, RepasForm, InfosCentreDialog, RapportDialog, Previsionnel, 
     DatesRangeDialog, InputsArray, MainWidget, DateDialog, AllProducts, 
-    FournisseurForm)
+    FournisseurForm, AllRepasArray)
 import repas_xml_to_db
 import repas_db_to_xml
 
@@ -290,6 +290,9 @@ class MainWindow(QMainWindow):
 
     def edit_products(self):
         AllProducts(self)
+
+    def all_repas(self):
+        AllRepasArray(self, self.model.qt_table_repas)
 
     def export_pdf_liste(self):
         date_start, date_stop = DatesRangeDialog(self).get_dates()
