@@ -890,6 +890,15 @@ class FournisseurModel(QSqlTableModel):
         self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.select()
 
+    def setData(self, index, value, role):
+        # hook : add fournisseur refresh relational model with QSqlRelation
+        inserted = super().setData(index, value, role)
+        if inserted:
+            logging.debug("inserted")
+            self.parent().qt_table_inputs.select()
+            return True
+        return False
+
 class PiqueniqueConfModel(QSqlTableModel):
     def __init__(self, parent, db):
         super().__init__(parent, db)
