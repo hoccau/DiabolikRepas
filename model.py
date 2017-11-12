@@ -849,6 +849,27 @@ class InputsModel(QSqlRelationalTableModel):
         self.setHeaderData(6, Qt.Horizontal, "Quantité")
         self.select()
 
+    def select(self):
+        """ override select to add on column with units """
+        select_success = super().select()
+        self.insertColumns(self.columnCount(), 1)
+        self.setHeaderData(7, Qt.Horizontal, "Unité")
+        return select_success
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.column() == 7 and role==Qt.DisplayRole:
+            rm = self.relationModel(3)
+            product = self.data(self.index(index.row(), 3), 0)
+            rm.setFilter("name = '" + product + "'")
+            unit = rm.data(rm.index(0, 2))
+            unit_rel = {1:'pièces',2:'Kg',3:'L'}
+            if unit in unit_rel.keys():
+                unit = unit_rel[unit]
+            rm.setFilter('')
+            return str(unit)
+        else:
+            return super().data(index, role)
+
 class ProductsModel(QSqlRelationalTableModel):
     def __init__(self, parent, db):
         super(ProductsModel, self).__init__(parent, db)

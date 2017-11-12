@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QCalendarWidget, QTableView, QComboBox, QTextEdit, QLabel, QVBoxLayout,
     QHBoxLayout, QCompleter, QDoubleSpinBox, QButtonGroup, QLineEdit, 
     QFormLayout, QDataWidgetMapper, QDialogButtonBox, QMessageBox, QDateEdit,
-    QAbstractItemView, QTabWidget, QCheckBox, QSpinBox)
+    QAbstractItemView, QTabWidget, QCheckBox, QSpinBox, QAbstractItemDelegate)
 from PyQt5.QtCore import (
     QRegExp, QDate, Qt, QStringListModel, QSize, QByteArray, 
     QSortFilterProxyModel)
@@ -87,7 +87,6 @@ class BigButtons(QWidget):
 
         previsionnel_button.clicked.connect(parent.add_previsionnel)
         input_button.clicked.connect(parent.add_input)
-        #output_button.clicked.connect(parent.add_repas)
         output_button.clicked.connect(parent.all_repas)
         products_button.clicked.connect(parent.edit_products)
 
@@ -386,8 +385,6 @@ class InputsArray(QDialog):
         self.view.setItemDelegate(sql_delegate)
         date_delegate = DateDelegate()
         self.view.setItemDelegateForColumn(2, date_delegate)
-        products_delegate = ProductInputDelegate(self) 
-        self.view.setItemDelegateForColumn(3, products_delegate)
         self.view.hideColumn(0) # hide id
         self.view.hideColumn(2) # hide date
         self.view.hideColumn(4) # hide ingredient_prev_id
@@ -422,11 +419,12 @@ class InputsArray(QDialog):
         close_button.clicked.connect(self.close)
 
         self.resize(660, 360)
-        self.exec_()
         self.set_day_filter()
+        self.exec_()
 
     def set_day_filter(self):
         self.date = self.calendar.selectedDate()
+        logging.debug(self.date)
         self.model.setFilter(
             "date = '" + self.date.toString('yyyy-MM-dd') + "'")
 
@@ -1442,9 +1440,21 @@ class ProductOutputDelegate(QSqlRelationalDelegate):
             model.setData(index, product_id)
 
 class ProductInputDelegate(QSqlRelationalDelegate):
+    """ not used. I keep it just for example """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+
+    def paint(self, painter, opt, index):
+        painter.save()
+        product = index.data()
+        autre_truc = index.sibling(index.row(), 7).data()
+        logging.debug(autre_truc)
+        painter.drawText(opt.rect, Qt.AlignLeft, product)
+        painter.restore()
+
+    def setEditorData(self, editor, index):
+        super().setEditorData(editor, index)
 
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
@@ -1453,10 +1463,13 @@ class ProductInputDelegate(QSqlRelationalDelegate):
         self.proxy.sort(1)
         editor.setModel(self.proxy)
         editor.setModelColumn(1)
+        delegate = ComboBoxProductWithUnit()
+        editor.setItemDelegate(delegate)
         return editor
 
     def setModelData(self, editor, model, index):
         id_ = self.proxy.data(self.proxy.index(editor.currentIndex(), 0))
+        logging.debug(id_)
         model.setData(index, id_)
 
 class PlatPrevNameDelegate(QStyledItemDelegate):
