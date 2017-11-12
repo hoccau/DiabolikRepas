@@ -34,12 +34,14 @@ def create_liste(products):
         html += '<th>Produit</th>'
         html += '<th>quantité</th>'
         html += '<th>unité de mesure</th>'
+        html += '<th>Qté (stock déduit)</th>'
         html += "</tr>"
         for p in product:
             html += '<tr><th>'\
             +p[0]+'</th>'\
             +'<th>'+str(round(p[1], 2))+'</th>'\
-            +'<th>'+p[2]+'</th></tr>'
+            +'<th>'+p[2]+'</th>'\
+            +'<th>'+str(round(p[3], 2))+'</th></tr>'
         html += '</table>'
     return html
 

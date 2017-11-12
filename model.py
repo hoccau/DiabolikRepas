@@ -122,8 +122,9 @@ class Model(QSqlQueryModel):
         """ Almost the same request, but for liste PDF export. liste_courses
         is a view. """
         self.exec_(
-            "SELECT * FROM liste_courses "\
-            + "WHERE date BETWEEN '" + date_start + "' AND '" + date_stop + "'")
+            "SELECT fournisseur, product, total(quantity), unit FROM liste_courses "\
+            + "WHERE date BETWEEN '" + date_start + "' AND '" + date_stop + "'"\
+            + "GROUP BY product")
         liste = self._query_to_lists(4)
         self.exec_(
             "SELECT product_id, products.name, total(quantity) FROM ( "\
@@ -145,7 +146,10 @@ class Model(QSqlQueryModel):
         for line in liste:
             # if product is in stock
             if line[1] in [i[1] for i in stock]:
-                line[2] = line[2] - [i[2] for i in stock if i[1] == line[1]][0]
+                #line[2] = line[2] - [i[2] for i in stock if i[1] == line[1]][0]
+                line.append(line[2] - [i[2] for i in stock if i[1] == line[1]][0])
+            else:
+                line.append(line[2])
         return liste
 
     def get_prev_products_for_export(self):

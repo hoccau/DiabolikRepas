@@ -176,13 +176,12 @@ AND repas_prev.date <=infos_periodes.date_stop ORDER BY repas_prev.date;
 
 CREATE VIEW `liste_courses` AS
 SELECT fournisseurs.nom as 'fournisseur', products.name as 'product', 
-total(quantity), units.unit, repas_prev.date
+quantity, units.unit, repas_prev.date
 FROM ingredients_prev
 INNER JOIN dishes_prev ON dishes_prev.id = ingredients_prev.dishes_prev_id
 INNER JOIN repas_prev ON repas_prev.id = dishes_prev.repas_prev_id
 INNER JOIN products ON products.id = ingredients_prev.product_id
 INNER JOIN units ON units.id = products.unit_id
 LEFT JOIN fournisseurs ON fournisseurs.id = products.fournisseur_id
-GROUP BY products.id
 ORDER BY fournisseurs.nom;
 
