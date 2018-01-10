@@ -110,7 +110,7 @@ class CreateXml():
             return 'ml'
     
     def write_file(self, name='xml_test.xml'):
-        with open(name, 'w') as f:
+        with open(name, 'w', encoding="utf-8") as f:
             f.write(self.doc.toString())
 
 if '__main__' == __name__:
