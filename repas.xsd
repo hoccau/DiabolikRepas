@@ -39,7 +39,7 @@
 		<xs:sequence>
 			 <xs:element name = "age-6" type="xs:decimal"/>
 			 <xs:element name = "age6-12" type="xs:decimal"/>
-			 <xs:element name = "age12" type="xs:decimal"/>
+			 <xs:element name = "age-12" type="xs:decimal"/>
 		</xs:sequence>
    		<xs:attribute name = 'unit' type = 'unitType'/>
 	</xs:complexType>

@@ -9,6 +9,7 @@ ingredients quantity.
 
 from PyQt5.QtCore import QUrl, QFile, QIODevice, QDate
 from PyQt5.QtXml import QDomDocument, QXmlInputSource
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtXmlPatterns import QXmlSchema, QXmlSchemaValidator 
 import logging
         
@@ -34,6 +35,8 @@ class Repas():
         return valid
 
     def _set_dom(self):
+        if not self.xml_is_valid():
+            QMessageBox.warning(None, 'Erreur', 'Fichier non conforme')
         if self.xml_is_valid():
             with open(self.xml_file, 'r', encoding='utf-8') as f:
                 xml = f.read()
@@ -70,7 +73,7 @@ class Repas():
         logging.info('ingr: '+ str(ingr)+ ' unit:' + str(unit))
         quantities_array.append(quantities.firstChildElement('age-6'))
         quantities_array.append(quantities.firstChildElement('age6-12'))
-        quantities_array.append(quantities.firstChildElement('age12'))
+        quantities_array.append(quantities.firstChildElement('age-12'))
         quantities_array = [float(el.text()) for el in quantities_array]
         
         unit_map = {'pièce':1, 'gr':2, 'ml':3}
