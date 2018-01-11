@@ -967,6 +967,8 @@ class Previsionnel(QDialog):
         self.ingredients_prev_view.setColumnHidden(0, True) #hide id
         #self.ingredients_prev_view.setColumnHidden(2, True) #hide dish parent
         self.ingredients_prev_view.setColumnWidth(1, 150)
+        read_only_delegate = ReadOnlyDelegate(self)
+        self.ingredients_prev_view.setItemDelegateForColumn(3, read_only_delegate)
         self.select_repas()
         
         self.layout.addWidget(self.compute_quantities_button)
@@ -1471,6 +1473,14 @@ class ProductInputDelegate(QSqlRelationalDelegate):
         id_ = self.proxy.data(self.proxy.index(editor.currentIndex(), 0))
         logging.debug(id_)
         model.setData(index, id_)
+
+class ReadOnlyDelegate(QStyledItemDelegate):
+    def paint(self, painter, opt, index):
+        painter.save()
+        color = opt.palette.color(QPalette.Mid)
+        painter.setPen(QPen(color))
+        painter.drawText(opt.rect, Qt.AlignCenter, index.data())
+        painter.restore()
 
 class PlatPrevNameDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
