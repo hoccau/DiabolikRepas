@@ -15,9 +15,9 @@ CREATE TABLE infos_periodes(
     id integer PRIMARY KEY,
     date_start varchar(10),
     date_stop varchar(10),
-    nombre_enfants_6 int,
-    nombre_enfants_6_12 int,
-    nombre_enfants_12 int
+    nombre_enfants_6 int NOT NULL DEFAULT 0,
+    nombre_enfants_6_12 int NOT NULL DEFAULT 0,
+    nombre_enfants_12 int NOT NULL DEFAULT 0
     );
 
 CREATE TABLE fournisseurs(

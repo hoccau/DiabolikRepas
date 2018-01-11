@@ -816,6 +816,9 @@ class InfosCentreDialog(QDialog):
         record = model.record()
         record.setValue('date_start', date_start.toString('yyyy-MM-dd'))
         record.setValue('date_stop', date_start.toString('yyyy-MM-dd'))
+        record.setValue('nombre_enfants_6', 0)
+        record.setValue('nombre_enfants_6_12', 0)
+        record.setValue('nombre_enfants_12', 0)
         record.setGenerated('id', False)
         record_is_set = model.setRecord(model.rowCount() -1, record)
 
