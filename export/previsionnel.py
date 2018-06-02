@@ -53,6 +53,8 @@ def html_stock(model):
                 for row in table:
                     html += '<tr>'
                     for cell in row[1:]:
+                        if isinstance(cell, float):
+                            cell = round(cell, 2)
                         html += '<th>' + str(cell) + '</th>'
                     html += '</tr>'
                 html += '</table>'
