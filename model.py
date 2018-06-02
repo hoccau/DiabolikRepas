@@ -854,23 +854,28 @@ class InputsModel(QSqlRelationalTableModel):
         self.select()
 
     def select(self):
-        """ override select to add on column with units """
+        """ override select to add one column with units """
         select_success = super().select()
         self.insertColumns(self.columnCount(), 1)
         self.setHeaderData(7, Qt.Horizontal, "Unité")
         return select_success
 
+    def _get_unit_by_name(self, name, model):
+        """ get unit with given name without SQL request """
+        unit_rel = {1:'pièces',2:'Kg',3:'L'}
+        for row in range(model.rowCount()):
+            if model.data(model.index(row, 1)) == name:
+                return unit_rel[model.data(model.index(row, 2))]
+        return None
+
     def data(self, index, role=Qt.DisplayRole):
+        """ rewrite to show unit at last col (7) """
+        #TODO: calling _get_unit_by_name mean high CPU usage...
+        # But not better solution for the moment :(
         if index.column() == 7 and role==Qt.DisplayRole:
-            rm = self.relationModel(3)
+            product_model = self.relationModel(3)
             product = self.data(self.index(index.row(), 3), 0)
-            rm.setFilter("name = '" + product + "'")
-            unit = rm.data(rm.index(0, 2))
-            unit_rel = {1:'pièces',2:'Kg',3:'L'}
-            if unit in unit_rel.keys():
-                unit = unit_rel[unit]
-            rm.setFilter('')
-            return str(unit)
+            return self._get_unit_by_name(product, product_model)
         else:
             return super().data(index, role)
 
